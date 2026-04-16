@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vehicle-rental-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=vehicle_rental
+      - JWT_SECRET=${JWT_SECRET:-super-secret-key-2024}
+      - JWT_EXPIRES_IN=7d
+      - FRONTEND_URL=http://localhost:5173
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - vehicle-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vehicle-rental-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - vehicle-network
+
+  # MariaDB Database
+  mariadb:
+    image: mariadb:10.11
+    container_name: vehicle-rental-db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=vehicle_rental
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./backend/src/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vehicle-network
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: vehicle-rental-phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_USER=root
+      - PMA_PASSWORD=rootpassword
+    depends_on:
+      - mariadb
+    networks:
+      - vehicle-network
+
+networks:
+  vehicle-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
