@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   # Backend API
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: vehicle-rental-backend
     ports:
@@ -17,19 +15,24 @@ services:
       - DB_USER=root
       - DB_PASSWORD=rootpassword
       - DB_NAME=vehicle_rental
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET:-super-secret-key-2024}
       - JWT_EXPIRES_IN=7d
       - FRONTEND_URL=http://localhost:5173
     depends_on:
       mariadb:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - vehicle-network
+    restart: unless-stopped
 
   # Frontend
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: vehicle-rental-frontend
     ports:
@@ -38,6 +41,7 @@ services:
       - backend
     networks:
       - vehicle-network
+    restart: unless-stopped
 
   # MariaDB Database
   mariadb:
@@ -50,7 +54,7 @@ services:
       - MYSQL_DATABASE=vehicle_rental
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./backend/src/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../backend/src/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -58,6 +62,25 @@ services:
       retries: 5
     networks:
       - vehicle-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: vehicle-rental-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vehicle-network
+    restart: unless-stopped
 
   # phpMyAdmin
   phpmyadmin:
@@ -73,6 +96,7 @@ services:
       - mariadb
     networks:
       - vehicle-network
+    restart: unless-stopped
 
 networks:
   vehicle-network:
@@ -80,3 +104,4 @@ networks:
 
 volumes:
   mariadb_data:
+  redis_data:
