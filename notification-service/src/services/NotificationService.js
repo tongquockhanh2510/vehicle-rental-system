@@ -1,0 +1,140 @@
+import { NotificationRepository } from '../repositories/NotificationRepository.js';
+import { EventBus } from '../events/EventBus.js';
+import amqp from 'amqplib';
+
+const notificationRepository = new NotificationRepository();
+const eventBus = new EventBus();
+
+export class NotificationService {
+  async sendNotification(userId, title, message, type, referenceId, actionUrl) {
+    const notification = await notificationRepository.create({
+      user_id: userId,
+      title,
+      message,
+      type,
+      reference_id: referenceId,
+      action_url: actionUrl
+    });
+
+    // Publish notification event
+    await eventBus.publish('notification_sent', {
+      notificationId: notification._id,
+      userId,
+      type
+    });
+
+    return notification;
+  }
+
+  async getNotifications(userId) {
+    return await notificationRepository.findByUserId(userId);
+  }
+
+  async getUnreadNotifications(userId) {
+    return await notificationRepository.findUnreadByUserId(userId);
+  }
+
+  async markAsRead(notificationId) {
+    return await notificationRepository.markAsRead(notificationId);
+  }
+
+  async markAllAsRead(userId) {
+    return await notificationRepository.markAllAsRead(userId);
+  }
+
+  async subscribeToEvents() {
+    // Subscribe to rental events
+    this.subscribeToEvent('rental_request_created', (data) => {
+      this.sendNotification(
+        data.ownerId,
+        'Có yêu cầu thuê xe mới',
+        `Có yêu cầu thuê xe từ người dùng`,
+        'RENTAL_REQUEST',
+        data.rentalId
+      );
+    });
+
+    // Subscribe to payment events
+    this.subscribeToEvent('payment_completed', (data) => {
+      this.sendNotification(
+        data.renterId,
+        'Thanh toán thành công',
+        `Thanh toán ${data.amount} đã hoàn tất`,
+        'PAYMENT_SUCCESS',
+        data.paymentId
+      );
+    });
+
+    // Subscribe to tracking events
+    this.subscribeToEvent('vehicle_out_of_bounds', (data) => {
+      this.sendNotification(
+        data.ownerId,
+        'Cảnh báo: Xe vượt phạm vi',
+        `Xe của bạn đã di chuyển ra khỏi khu vực được phép`,
+        'VEHICLE_OUT_OF_BOUNDS',
+        data.rentalRequestId
+      );
+    });
+
+    // Subscribe to dispute events
+    this.subscribeToEvent('dispute_created', (data) => {
+      this.sendNotification(
+        data.renterId,
+        'Có khiếu nại mới',
+        `Có khiếu nại về hư hỏng xe`,
+        'DISPUTE_CREATED',
+        data.disputeId
+      );
+    });
+  }
+
+  async subscribeToEvent(eventType, callback) {
+    try {
+      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+      const channel = await connection.createChannel();
+      const exchanges = ['rental_events', 'payment_events', 'tracking_events', 'dispute_events'];
+      
+      for (const exchange of exchanges) {
+        const queue = `notification_${eventType}`;
+        
+        try {
+          await channel.assertExchange(exchange, 'topic', { durable: true });
+          await channel.assertQueue(queue, { durable: true });
+          await channel.bindQueue(queue, exchange, `*.${eventType}`);
+          
+          channel.consume(queue, async (msg) => {
+            if (msg) {
+              const eventData = JSON.parse(msg.content.toString());
+              await callback(eventData);
+              channel.ack(msg);
+            }
+          });
+        } catch (err) {
+          // Exchange might not exist yet
+        }
+      }
+    } catch (error) {
+      console.error('Event subscription error:', error);
+    }
+  }
+}
+
+export class EventBus {
+  async publish(eventType, eventData) {
+    try {
+      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+      const channel = await connection.createChannel();
+      const exchange = 'notification_events';
+      
+      await channel.assertExchange(exchange, 'topic', { durable: true });
+      await channel.publish(exchange, `notification.${eventType}`, Buffer.from(JSON.stringify(eventData)));
+      
+      await channel.close();
+      await connection.close();
+    } catch (error) {
+      console.error('Event publication error:', error);
+    }
+  }
+}
+
+export default new NotificationService();
