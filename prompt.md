@@ -64,9 +64,10 @@ Các services gồm có:
 \- api-gateway: Vai trò: route request, auth JWT, rate limiting, forward request đến service, central entry point
 \- config-service: Chứa: DB config, JWT config, RabbitMQ config, môi trường dev/prod
 
-Lưu ý: tôi đã tạo sẵn file docker-compose.yml và sử dụng các công cụ trong đó. Tôi đã tạo sẵn các thư mục service. Sử dụng pnpm để sử dụng lại thư viện chung
+Lưu ý: tôi đã tạo sẵn file docker-compose.yml và đã cài đặt và đang sử dụng các công cụ trong đó. DB sử dụng MongoDB có tên cơ sở dữ liệu là redis_vehicle_db. Tôi đã tạo sẵn các thư mục service. Sử dụng pnpm để sử dụng lại thư viện chung
+
+Riêng cấu trúc csdl bạn hãy tự thiết kế cho phù hợp với các yêu cầu sau: tên collection phải có s ở cuối và ngăn cách bằng _, tên các thuộc tính ngăn cách bằng _
 
 
 Với những mô tả và yêu cầu phía bên trên hãy hoàng thành project cho tôi
-
 
