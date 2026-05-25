@@ -1,8 +1,5 @@
 import express from 'express';
 import userService from '../services/UserService.js';
-import identityVerificationService from '../services/IdentityVerificationService.js';
-import licenseVerificationService from '../services/LicenseVerificationService.js';
-import bankVerificationService from '../services/BankVerificationService.js';
 import { authenticateToken } from '../middlewares/auth.js';
 import upload from '../middlewares/upload.js';
 
@@ -68,7 +65,8 @@ router.put('/:userId/verify', async (req, res) => {
 /**
  * POST /:userId/identity-verification
  * Submit identity verification with images
- * Required fields: id_number, id_type, full_name
+ * Updates user document with id_number and images
+ * Required fields: id_number
  * Files: id_image_front (required), id_image_back (optional)
  */
 router.post('/:userId/identity-verification', upload.fields([
@@ -84,33 +82,21 @@ router.post('/:userId/identity-verification', upload.fields([
       return res.status(400).json({ error: 'id_image_front is required' });
     }
 
-    if (!req.body.id_number || !req.body.id_type || !req.body.full_name) {
-      return res.status(400).json({
-        error: 'Missing required fields: id_number, id_type, full_name'
-      });
+    if (!req.body.id_number) {
+      return res.status(400).json({ error: 'Missing required field: id_number' });
     }
 
-    const verification = await identityVerificationService.submitIdentityVerification(
+    const user = await userService.submitIdentityVerification(
       req.params.userId,
-      {
-        id_number: req.body.id_number,
-        id_type: req.body.id_type,
-        full_name: req.body.full_name,
-        date_of_birth: req.body.date_of_birth,
-        gender: req.body.gender,
-        nationality: req.body.nationality,
-        address: req.body.address,
-        issued_date: req.body.issued_date,
-        expiry_date: req.body.expiry_date
-      },
+      { id_number: req.body.id_number },
       req.files.id_image_front[0],
       req.files.id_image_back ? req.files.id_image_back[0] : null
     );
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'Identity verification submitted successfully',
-      data: verification
+      data: user
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -119,15 +105,18 @@ router.post('/:userId/identity-verification', upload.fields([
 
 /**
  * GET /:userId/identity-verification
- * Get identity verification info
+ * Get user identity verification info
  */
-router.get('/:userId/identity-verification', authenticateToken, async (req, res) => {
+router.get('/identity-verification', authenticateToken, async (req, res) => {
   try {
-    if (req.userId !== req.params.userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
+    const user = await userService.getUserProfile(req.params.user_id);
+    
+    const verification = {
+      id_number: user.id_number,
+      id_image_front: user.id_image_front,
+      id_image_back: user.id_image_back
+    };
 
-    const verification = await identityVerificationService.getIdentityVerification(req.params.userId);
     res.json({
       success: true,
       data: verification
@@ -137,55 +126,36 @@ router.get('/:userId/identity-verification', authenticateToken, async (req, res)
   }
 });
 
-// ========== LICENSE VERIFICATION ENDPOINTS ==========
-
-/**
- * POST /:userId/license-verification
- * Submit license verification with images
- * Required fields: license_number, license_type, full_name, issued_date, expiry_date
- * Files: license_image_front (required), license_image_back (optional)
- */
-router.post('/:userId/license-verification', upload.fields([
+router.post('/license-verification', upload.fields([
   { name: 'license_image_front', maxCount: 1 },
   { name: 'license_image_back', maxCount: 1 }
 ]), authenticateToken, async (req, res) => {
   try {
-    if (req.userId !== req.params.userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
 
     if (!req.files || !req.files.license_image_front) {
       return res.status(400).json({ error: 'license_image_front is required' });
     }
 
-    if (!req.body.license_number || !req.body.license_type || !req.body.full_name ||
-        !req.body.issued_date || !req.body.expiry_date) {
+    if (!req.body.license_number || !req.body.expiry_date) {
       return res.status(400).json({
-        error: 'Missing required fields: license_number, license_type, full_name, issued_date, expiry_date'
+        error: 'Missing required fields: license_number, expiry_date'
       });
     }
 
-    const verification = await licenseVerificationService.submitLicenseVerification(
-      req.params.userId,
+    const user = await userService.submitLicenseVerification(
+      req.body.user_id,
       {
         license_number: req.body.license_number,
-        license_type: req.body.license_type,
-        full_name: req.body.full_name,
-        date_of_birth: req.body.date_of_birth,
-        issued_date: req.body.issued_date,
-        expiry_date: req.body.expiry_date,
-        issued_country: req.body.issued_country,
-        driving_class: req.body.driving_class,
-        restrictions: req.body.restrictions
+        expiry_date: req.body.expiry_date
       },
       req.files.license_image_front[0],
       req.files.license_image_back ? req.files.license_image_back[0] : null
     );
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'License verification submitted successfully',
-      data: verification
+      data: user
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -194,15 +164,19 @@ router.post('/:userId/license-verification', upload.fields([
 
 /**
  * GET /:userId/license-verification
- * Get license verification info
+ * Get user license verification info
  */
 router.get('/:userId/license-verification', authenticateToken, async (req, res) => {
   try {
-    if (req.userId !== req.params.userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
 
-    const verification = await licenseVerificationService.getLicenseVerification(req.params.userId);
+    const user = await userService.getUserProfile(req.params.userId);
+    
+    const verification = {
+      license_number: user.license_number,
+      license_image: user.license_image,
+      license_expiry_date: user.license_expiry_date
+    };
+
     res.json({
       success: true,
       data: verification
@@ -217,7 +191,8 @@ router.get('/:userId/license-verification', authenticateToken, async (req, res) 
 /**
  * POST /:userId/bank-verification
  * Submit bank verification with images
- * Required fields: bank_account_number, bank_name, account_holder_name, account_type
+ * Updates user document with bank_account and bank_name
+ * Required fields: bank_account_number, bank_name
  * Files: bank_statement_image (required), id_card_image (optional)
  */
 router.post('/:userId/bank-verification', upload.fields([
@@ -233,33 +208,26 @@ router.post('/:userId/bank-verification', upload.fields([
       return res.status(400).json({ error: 'bank_statement_image is required' });
     }
 
-    if (!req.body.bank_account_number || !req.body.bank_name || 
-        !req.body.account_holder_name || !req.body.account_type) {
+    if (!req.body.bank_account_number || !req.body.bank_name) {
       return res.status(400).json({
-        error: 'Missing required fields: bank_account_number, bank_name, account_holder_name, account_type'
+        error: 'Missing required fields: bank_account_number, bank_name'
       });
     }
 
-    const verification = await bankVerificationService.submitBankVerification(
+    const user = await userService.submitBankVerification(
       req.params.userId,
       {
         bank_account_number: req.body.bank_account_number,
-        bank_name: req.body.bank_name,
-        account_holder_name: req.body.account_holder_name,
-        account_type: req.body.account_type,
-        bank_code: req.body.bank_code,
-        branch_name: req.body.branch_name,
-        verification_method: req.body.verification_method,
-        is_default: req.body.is_default
+        bank_name: req.body.bank_name
       },
       req.files.bank_statement_image[0],
       req.files.id_card_image ? req.files.id_card_image[0] : null
     );
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'Bank verification submitted successfully',
-      data: verification
+      data: user
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -268,7 +236,7 @@ router.post('/:userId/bank-verification', upload.fields([
 
 /**
  * GET /:userId/bank-verification
- * Get bank verification info (default account)
+ * Get user bank verification info
  */
 router.get('/:userId/bank-verification', authenticateToken, async (req, res) => {
   try {
@@ -276,33 +244,19 @@ router.get('/:userId/bank-verification', authenticateToken, async (req, res) => 
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    const verification = await bankVerificationService.getBankVerification(req.params.userId);
+    const user = await userService.getUserProfile(req.params.userId);
+    
+    const verification = {
+      bank_account: user.bank_account,
+      bank_name: user.bank_name
+    };
+
     res.json({
       success: true,
       data: verification
     });
   } catch (error) {
     res.status(404).json({ error: error.message });
-  }
-});
-
-/**
- * GET /:userId/bank-verifications
- * Get all bank verifications for user
- */
-router.get('/:userId/bank-verifications', authenticateToken, async (req, res) => {
-  try {
-    if (req.userId !== req.params.userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    const verifications = await bankVerificationService.getAllBankVerifications(req.params.userId);
-    res.json({
-      success: true,
-      data: verifications
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
   }
 });
 

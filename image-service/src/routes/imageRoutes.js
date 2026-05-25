@@ -5,113 +5,35 @@ import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
-/**
- * Upload image
- * POST /api/images/upload
- * Body: file, service_type, reference_id
- */
 router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
   try {
-    if (!req.body.service_type || !req.body.reference_id) {
-      return res.status(400).json({
-        error: 'Missing required fields: service_type, reference_id'
-      });
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
     }
 
-    const image = await imageService.uploadImage(
-      req.file,
-      req.body.service_type,
-      req.body.reference_id,
-      req.userId
-    );
+    const url = await imageService.uploadImage(req.file, req.body.folder || 'others');
 
     res.status(201).json({
       success: true,
       message: 'Image uploaded successfully',
-      data: image
+      data: { url }
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-/**
- * Get image information
- * GET /api/images/:imageId
- */
-router.get('/:imageId', async (req, res) => {
+router.delete('/delete', authenticateToken, async (req, res) => {
   try {
-    const image = await imageService.getImageInfo(req.params.imageId);
-    res.json({
-      success: true,
-      data: image
-    });
-  } catch (error) {
-    res.status(404).json({ error: error.message });
-  }
-});
+    if (!req.body.imageUrl) {
+      return res.status(400).json({ error: 'imageUrl is required' });
+    }
 
-/**
- * Get images by reference ID
- * GET /api/images/reference/:referenceId
- */
-router.get('/reference/:referenceId', async (req, res) => {
-  try {
-    const images = await imageService.getImagesByReference(req.params.referenceId);
-    res.json({
-      success: true,
-      data: images
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+    await imageService.deleteImage(req.body.imageUrl);
 
-/**
- * Delete image
- * DELETE /api/images/:imageId
- */
-router.delete('/:imageId', authenticateToken, async (req, res) => {
-  try {
-    const image = await imageService.deleteImage(req.params.imageId);
     res.json({
       success: true,
-      message: 'Image deleted successfully',
-      data: image
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-/**
- * Delete all images for a reference ID
- * DELETE /api/images/reference/:referenceId
- */
-router.delete('/reference/:referenceId', authenticateToken, async (req, res) => {
-  try {
-    const images = await imageService.deleteImagesByReference(req.params.referenceId);
-    res.json({
-      success: true,
-      message: 'Images deleted successfully',
-      data: images
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-/**
- * Get presigned URL for image
- * GET /api/images/:imageId/presigned-url
- */
-router.get('/:imageId/presigned-url', async (req, res) => {
-  try {
-    const expiresIn = req.query.expiresIn || 3600;
-    const url = await imageService.getPresignedUrl(req.params.imageId, parseInt(expiresIn));
-    res.json({
-      success: true,
-      data: { presigned_url: url }
+      message: 'Image deleted successfully'
     });
   } catch (error) {
     res.status(400).json({ error: error.message });

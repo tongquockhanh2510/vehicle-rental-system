@@ -4,9 +4,10 @@ import multer from 'multer';
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  // Allow only image files
   const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   
+  console.log('file mimetype:', file.mimetype); // kiểm tra mime type thực tế
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
