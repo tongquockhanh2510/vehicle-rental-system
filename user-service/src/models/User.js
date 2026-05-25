@@ -59,8 +59,8 @@ const user_schema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['RENTER', 'OWNER', 'ADMIN'],
-      default: 'RENTER'
+      enum: ['USER', 'ADMIN'],
+      default: 'USER'
     },
     rating: {
       type: Number,
