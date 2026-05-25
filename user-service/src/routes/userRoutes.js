@@ -59,9 +59,27 @@ router.put('/:userId/verify', async (req, res) => {
   }
 });
 
-router.put('/:userId/kyc-status', async (req, res) => {
+router.put('/:userId/identity-verification', async (req, res) => {
   try {
-    const user = await userService.updateKycStatus(req.params.userId, req.body.status);
+    const user = await userService.updateIdentityVerification(req.params.userId, req.body);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/:userId/license-verification', async (req, res) => {
+  try {
+    const user = await userService.updateLicenseVerification(req.params.userId, req.body);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/:userId/bank-verification', async (req, res) => {
+  try {
+    const user = await userService.updateBankVerification(req.params.userId, req.body);
     res.json(user);
   } catch (error) {
     res.status(400).json({ error: error.message });
