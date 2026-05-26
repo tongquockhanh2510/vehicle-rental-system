@@ -64,6 +64,16 @@ export class NotificationService {
       );
     });
 
+    this.subscribeToEvent('rental_rejected', (data) => {
+      this.sendNotification(
+        data.renterId,
+        'Yêu cầu thuê xe đã bị từ chối',
+        `Yêu cầu thuê xe của bạn đã bị từ chối`,
+        'RENTAL_REJECTED',
+        data.rentalId
+      );
+    });
+
     // Subscribe to payment events
     this.subscribeToEvent('payment_completed', (data) => {
       this.sendNotification(

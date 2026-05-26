@@ -6,10 +6,7 @@ const router = express.Router();
 
 router.post('/request', authenticateToken, async (req, res) => {
   try {
-    const rentalRequest = await rentalService.createRentalRequest({
-      ...req.body,
-      renter_id: req.userId
-    });
+    const rentalRequest = await rentalService.createRentalRequest(req.userId, req.body);
     res.status(201).json(rentalRequest);
   } catch (error) {
     res.status(400).json({ error: error.message });

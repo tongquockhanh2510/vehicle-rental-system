@@ -6,15 +6,17 @@ const rentalRepository = new RentalRepository();
 const eventBus = new EventBus();
 
 export class RentalService {
-  async createRentalRequest(rentalData) {
-    const vehicleResponse = await axios.get(
-      `${process.env.VEHICLE_SERVICE_URL}/api/vehicles/${rentalData.vehicle_id}`
-    );
+  async createRentalRequest(renterId, rentalData) {
+    const vehicleRes = await axios.get(`${process.env.VEHICLE_SERVICE_URL}/api/vehicles/${rentalData.vehicle_id}`);
 
-    const vehicle = vehicleResponse.data;
+    const vehicle = vehicleRes.data;
 
     if (!vehicle) {
       throw new Error('Vehicle not found');
+    }
+
+    if (vehicle.owner_id.toString() === renterId) {
+      throw new Error('Cannot rent your own vehicle');
     }
 
     const startDate = new Date(rentalData.rental_start_date);
@@ -49,6 +51,7 @@ export class RentalService {
 
     const rental = await rentalRepository.create({
       ...rentalData,
+      renter_id: renterId,
       owner_id: vehicle.owner_id,
       daily_rate: dailyRate,
       deposit_percentage: depositPercentage,
@@ -60,7 +63,7 @@ export class RentalService {
 
     await eventBus.publish('rental_request_created', {
       rentalId: rental._id,
-      renterId: rental.renter_id,
+      renterId: renterId,
       ownerId: rental.owner_id,
       vehicleId: rental.vehicle_id
     });
@@ -73,7 +76,7 @@ export class RentalService {
     if (!rental) {
       throw new Error('Rental not found');
     }
-    console.log('ownerId:', ownerId, 'rental owner_id:', rental.owner_id);
+
     if (rental.owner_id.toString() !== ownerId) {
       throw new Error('Not authorized to confirm this rental');
     }
@@ -91,17 +94,25 @@ export class RentalService {
   }
 
   async rejectRental(rentalId, userId) {
-    const rental = await rentalRepository.update(rentalId, {
-      status: 'REJECTED'
-    });
+ const rental = await rentalRepository.findById(rentalId);
+    if (!rental) {
+      throw new Error('Rental not found');
+    }
+    console.log('ownerId:', ownerId, 'rental owner_id:', rental.owner_id);
+    if (rental.owner_id.toString() !== ownerId) {
+      throw new Error('Not authorized to confirm this rental');
+    }
+
+    const rental_updated = await rentalRepository.update(rentalId, { status: 'REJECTED' });
 
     // Publish event
     await eventBus.publish('rental_rejected', {
       rentalId: rental._id,
-      renterId: rental.renter_id
+      renterId: rental.renter_id,
+      ownerId: rental.owner_id
     });
 
-    return rental;
+    return rental_updated;
   }
 
   async cancelRental(rentalId) {
