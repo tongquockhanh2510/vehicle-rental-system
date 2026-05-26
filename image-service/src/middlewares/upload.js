@@ -6,7 +6,7 @@ const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   
-  console.log('file mimetype:', file.mimetype); // kiểm tra mime type thực tế
+  console.log('file mimetype:', file.mimetype);
 
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);

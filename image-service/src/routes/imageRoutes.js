@@ -11,7 +11,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    const url = await imageService.uploadImage(req.file, req.body.folder || 'others');
+    const url = await imageService.uploadImage(req.file);
 
     res.status(201).json({
       success: true,

@@ -3,16 +3,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class ImageService {
   constructor() {
-    this.bucketName = process.env.AWS_BUCKET_NAME || 'vehicle-rental-images';
+    this.bucketName = process.env.AWS_BUCKET_NAME;
   }
 
-  async uploadImage(file, folder) {
+  async uploadImage(file) {
     if (!file) {
       throw new Error('No file provided');
     }
 
     const fileExtension = file.originalname.split('.').pop();
-    const filePath = `${folder}/${uuidv4()}.${fileExtension}`;
+    const filePath = `${uuidv4()}.${fileExtension}`;
 
     const params = {
       Bucket: this.bucketName,

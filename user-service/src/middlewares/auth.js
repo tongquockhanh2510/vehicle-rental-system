@@ -21,7 +21,7 @@ export const authenticateToken = (req, res, next) => {
       algorithms: ['RS256']
     });
 
-    req.userId = decoded.sub || decoded.id || decoded.userId;
+    req.userId =  decoded.id;
     req.userRole = decoded.role;
     req.user = decoded;
 
@@ -37,22 +37,4 @@ export const authenticateToken = (req, res, next) => {
       error: 'Invalid or expired token'
     });
   }
-};
-
-export const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!req.userRole) {
-      return res.status(403).json({
-        error: 'No role provided'
-      });
-    }
-
-    if (!roles.includes(req.userRole)) {
-      return res.status(403).json({
-        error: 'Forbidden'
-      });
-    }
-
-    next();
-  };
 };
