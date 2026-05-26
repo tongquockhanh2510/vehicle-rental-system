@@ -82,7 +82,15 @@ export class RentalService {
     await eventBus.publish('rental_confirmed', {
       rentalId: rental._id,
       renterId: rental.renter_id,
-      ownerId: rental.owner_id
+      ownerId: rental.owner_id,
+      vehicleId: rental.vehicle_id,
+      rentalStartDate: rental.rental_start_date,
+      rentalEndDate: rental.rental_end_date,
+      dailyRate: rental.daily_rate,
+      totalDays: rental.total_days,
+      totalAmount: rental.total_amount,
+      depositAmount: rental.deposit_amount,
+      platformFee: rental.platform_fee
     });
 
     return rental_updated;

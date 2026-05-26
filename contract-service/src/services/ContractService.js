@@ -87,22 +87,19 @@ export class ContractService {
   async subscribeToEvents() {
     await eventBus.subscribe('rental_confirmed', async (data) => {
       try {
-        const response = await axios.get(`${process.env.RENTAL_SERVICE_URL}/api/rentals/${data.rentalId}`);
-        const rentalRequest = response.data;
-
         const contract = await contractRepository.create({
           rental_request_id: data.rentalId,
-          renter_id: rentalRequest.renter_id,
-          owner_id: rentalRequest.owner_id,
-          vehicle_id: rentalRequest.vehicle_id,
-          rental_start_date: rentalRequest.rental_start_date,
-          rental_end_date: rentalRequest.rental_end_date,
-          daily_rate: rentalRequest.daily_rate,
-          total_days: rentalRequest.total_days,
-          rental_cost: rentalRequest.total_amount,
-          deposit_amount: rentalRequest.deposit_amount,
-          platform_fee: rentalRequest.platform_fee,
-          total_cost: rentalRequest.total_amount + rentalRequest.platform_fee,
+          renter_id: data.renterId,
+          owner_id: data.ownerId,
+          vehicle_id: data.vehicleId,
+          rental_start_date: data.rentalStartDate,
+          rental_end_date: data.rentalEndDate,
+          daily_rate: data.dailyRate,
+          total_days: data.totalDays,
+          rental_cost: data.totalAmount,
+          deposit_amount: data.depositAmount,
+          platform_fee: data.platformFee,
+          total_cost: data.totalAmount + data.depositAmount,
           status: 'ACTIVE'
         });
 
