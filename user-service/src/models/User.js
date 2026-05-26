@@ -42,26 +42,6 @@ const user_schema = new mongoose.Schema(
       type: [String],
       default: []
     },
-    license_number: {
-      type: String,
-      sparse: true
-    },
-    license_image_front: {
-      type: String
-    },
-    license_image_back: {
-      type: String
-    },
-    license_type: {
-      type: String,
-      enum: ['A', 'B', 'B1', 'C', 'D', 'E']
-    },
-    license_expiry_date: {
-      type: Date
-    },
-    bank_account: {
-      type: String
-    },
     bank_name: {
       type: String
     },
