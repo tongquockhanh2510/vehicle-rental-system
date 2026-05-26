@@ -35,18 +35,14 @@ export class RentalService {
     }
 
     const dailyRate = Number(vehicle.daily_rate || vehicle.price_per_day);
-    const depositPercentage = Number(vehicle.deposit_percentage || rentalData.deposit_percentage || 0);
 
     if (isNaN(dailyRate)) {
       throw new Error('Invalid vehicle daily rate');
     }
 
-    if (isNaN(depositPercentage)) {
-      throw new Error('Invalid deposit percentage');
-    }
 
     const totalAmount = dailyRate * totalDays;
-    const depositAmount = totalAmount * (depositPercentage / 100);
+    const depositAmount = vehicle.deposit_amount;
     const platformFee = totalAmount * 0.04;
 
     const rental = await rentalRepository.create({
@@ -54,10 +50,9 @@ export class RentalService {
       renter_id: renterId,
       owner_id: vehicle.owner_id,
       daily_rate: dailyRate,
-      deposit_percentage: depositPercentage,
+      deposit_amount: depositAmount,
       total_days: totalDays,
       total_amount: totalAmount,
-      deposit_amount: depositAmount,
       platform_fee: platformFee
     });
 

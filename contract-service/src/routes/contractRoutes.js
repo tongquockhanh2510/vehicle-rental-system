@@ -4,15 +4,6 @@ import { authenticateToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  try {
-    const contract = await contractService.createContract(req.body);
-    res.status(201).json(contract);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
 router.get('/:contractId', async (req, res) => {
   try {
     const contract = await contractService.getContractById(req.params.contractId);

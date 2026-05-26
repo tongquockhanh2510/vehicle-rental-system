@@ -29,7 +29,6 @@ const contract_schema = new mongoose.Schema(
     deposit_amount: Number,
     platform_fee: Number,
     total_cost: Number,
-    terms_and_conditions: String,
     status: {
       type: String,
       enum: ['ACTIVE', 'COMPLETED', 'CANCELLED', 'DISPUTED'],
@@ -42,7 +41,10 @@ const contract_schema = new mongoose.Schema(
     cancellation_fee_amount: Number,
     refund_amount: Number,
     cancellation_reason: String,
-    cancelled_by: String,
+    cancelled_by: {
+      type: String,
+      enum: ['OWNER', 'RENTER']
+    },
     cancelled_at: Date,
     created_at: {
       type: Date,

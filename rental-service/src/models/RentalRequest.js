@@ -35,7 +35,7 @@ const rental_request_schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'IN_PROGRESS', 'COMPLETED'],
+      enum: ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED'],
       default: 'PENDING'
     },
     daily_rate: Number,
