@@ -16,7 +16,7 @@ router.post('/request', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:rentalId', async (req, res) => {
+router.get('/:rentalId', authenticateToken, async (req, res) => {
   try {
     const rental = await rentalService.getRentalById(req.params.rentalId);
     res.json(rental);
@@ -25,7 +25,7 @@ router.get('/:rentalId', async (req, res) => {
   }
 });
 
-router.put('/:rentalId/confirm', async (req, res) => {
+router.put('/:rentalId/confirm', authenticateToken, async (req, res) => {
   try {
     const rental = await rentalService.confirmRental(req.params.rentalId, req.userId);
     res.json(rental);
@@ -34,7 +34,7 @@ router.put('/:rentalId/confirm', async (req, res) => {
   }
 });
 
-router.put('/:rentalId/reject', async (req, res) => {
+router.put('/:rentalId/reject', authenticateToken, async (req, res) => {
   try {
     const rental = await rentalService.rejectRental(req.params.rentalId, req.userId);
     res.json(rental);
@@ -43,7 +43,7 @@ router.put('/:rentalId/reject', async (req, res) => {
   }
 });
 
-router.put('/:rentalId/cancel', async (req, res) => {
+router.put('/:rentalId/cancel', authenticateToken, async (req, res) => {
   try {
     const rental = await rentalService.cancelRental(req.params.rentalId);
     res.json(rental);
@@ -70,7 +70,7 @@ router.get('/owner/my-rentals', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/check-availability', async (req, res) => {
+router.post('/check-availability', authenticateToken, async (req, res) => {
   try {
     const available = await rentalService.checkAvailability(
       req.body.vehicle_id,

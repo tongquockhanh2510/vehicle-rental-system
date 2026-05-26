@@ -54,6 +54,16 @@ export class NotificationService {
       );
     });
 
+    this.subscribeToEvent('rental_confirmed', (data) => {
+      this.sendNotification(
+        data.renterId,
+        'Yêu cầu thuê xe đã được xác nhận',
+        `Yêu cầu thuê xe của bạn đã được chấp nhận`,
+        'RENTAL_CONFIRMED',
+        data.rentalId
+      );
+    });
+
     // Subscribe to payment events
     this.subscribeToEvent('payment_completed', (data) => {
       this.sendNotification(
@@ -93,15 +103,15 @@ export class NotificationService {
       const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
       const channel = await connection.createChannel();
       const exchanges = ['rental_events', 'payment_events', 'tracking_events', 'dispute_events'];
-      
+
       for (const exchange of exchanges) {
         const queue = `notification_${eventType}`;
-        
+
         try {
           await channel.assertExchange(exchange, 'topic', { durable: true });
           await channel.assertQueue(queue, { durable: true });
           await channel.bindQueue(queue, exchange, `*.${eventType}`);
-          
+
           channel.consume(queue, async (msg) => {
             if (msg) {
               const eventData = JSON.parse(msg.content.toString());
@@ -125,10 +135,10 @@ export class NotificationService {
 //       const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
 //       const channel = await connection.createChannel();
 //       const exchange = 'notification_events';
-      
+
 //       await channel.assertExchange(exchange, 'topic', { durable: true });
 //       await channel.publish(exchange, `notification.${eventType}`, Buffer.from(JSON.stringify(eventData)));
-      
+
 //       await channel.close();
 //       await connection.close();
 //     } catch (error) {

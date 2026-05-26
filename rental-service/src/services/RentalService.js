@@ -73,6 +73,7 @@ export class RentalService {
     if (!rental) {
       throw new Error('Rental not found');
     }
+    console.log('ownerId:', ownerId, 'rental owner_id:', rental.owner_id);
     if (rental.owner_id.toString() !== ownerId) {
       throw new Error('Not authorized to confirm this rental');
     }
