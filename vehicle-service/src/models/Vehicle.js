@@ -39,7 +39,6 @@ const vehicle_schema = new mongoose.Schema(
       enum: ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']
     },
     seats: Number,
-    mileage: Number,
     description: String,
     images: [String],
     daily_rate: {
@@ -53,7 +52,7 @@ const vehicle_schema = new mongoose.Schema(
     },
     allowed_regions: {
       type: [String],
-      default: ['VIETNAM']
+      default: ['VIETNAM', 'INTERNATIONAL']
     },
     is_available: {
       type: Boolean,
