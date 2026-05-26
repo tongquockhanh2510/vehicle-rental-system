@@ -45,14 +45,13 @@ const vehicle_schema = new mongoose.Schema(
       type: Number,
       required: true
     },
-    deposit_percentage: {
+    deposit: {
       type: Number,
-      required: true,
-      default: 20
+      required: true
     },
-    allowed_regions: {
-      type: [String],
-      default: ['VIETNAM', 'INTERNATIONAL']
+    allowed_region: {
+      type: String,
+      enum: ['VIETNAM', 'INTERNATIONAL']
     },
     is_available: {
       type: Boolean,
@@ -81,5 +80,13 @@ const vehicle_schema = new mongoose.Schema(
   },
   { collection: 'vehicles' }
 );
+
+// Add indexes for frequently searched fields
+vehicle_schema.index({ owner_id: 1 });
+vehicle_schema.index({ is_available: 1 });
+vehicle_schema.index({ vehicle_type: 1 });
+vehicle_schema.index({ brand: 1 });
+vehicle_schema.index({ daily_rate: 1 });
+vehicle_schema.index({ created_at: -1 });
 
 export default mongoose.model('Vehicle', vehicle_schema);
