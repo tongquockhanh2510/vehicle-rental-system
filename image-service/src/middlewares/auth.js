@@ -6,6 +6,13 @@ const publicKeyPath = path.resolve('./public.key');
 const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 export const authenticateToken = (req, res, next) => {
+  // Check for service token (service-to-service communication)
+  const serviceToken = req.headers['x-service-token'];
+  if (serviceToken && serviceToken === process.env.SERVICE_TOKEN) {
+    req.isService = true;
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

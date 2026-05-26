@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import FormData from 'form-data';
 import { UserRepository } from '../repositories/UserRepository.js';
 import fs from 'fs';
 
@@ -86,16 +87,65 @@ export class UserService {
     return await userRepository.update(userId, filteredData);
   }
 
-  async getUsersByRole(role) {
-    return await userRepository.findByRole(role);
-  }
+  async verifyPersonalInformation(userId, infoData, files, authHeader) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
-  async verifyUser(userId) {
-    return await userRepository.update(userId, { verified: true });
-  }
+    if (!infoData.id_number) {
+      throw new Error('Missing required field: id_number');
+    }
 
-  async updateKycStatus(userId, status) {
-    return await userRepository.update(userId, { kyc_status: status });
+    if (!files || !files.id_image_front || !files.id_image_back) {
+      throw new Error('Missing required image files: id_image_front and id_image_back');
+    }
+
+    try {
+      const uploadImage = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype
+        });
+
+        const response = await axios.post(`${process.env.IMAGE_SERVICE_URL}/api/images/upload`, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            'Authorization': authHeader
+          }
+        });
+
+        return response.data.data.url;
+      };
+
+      const frontImageUrl = await uploadImage(files.id_image_front[0]);
+      const backImageUrl = await uploadImage(files.id_image_back[0]);
+
+      const updateData = {
+        id_number: infoData.id_number,
+        id_image_front: frontImageUrl,
+        id_image_back: backImageUrl,
+        kyc_status: 'APPROVED'
+      };
+
+      const updatedUser = await userRepository.update(userId, updateData);
+
+      return {
+        success: true,
+        message: 'Personal information verified successfully',
+        user: {
+          id: updatedUser._id,
+          email: updatedUser.email,
+          first_name: updatedUser.first_name,
+          last_name: updatedUser.last_name,
+          id_number: updatedUser.id_number,
+          kyc_status: updatedUser.kyc_status
+        }
+      };
+    } catch (error) {
+      throw new Error(`Failed to verify personal information: ${error.message}`);
+    }
   }
 }
 

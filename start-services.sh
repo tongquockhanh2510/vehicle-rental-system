@@ -19,13 +19,14 @@ run_service "user-service" 3001
 run_service "vehicle-service" 3002
 run_service "rental-service" 3003
 run_service "contract-service" 3004
-run_service "payment-service" 3005
-run_service "tracking-service" 3006
-run_service "inspection-service" 3007
-run_service "dispute-service" 3008
-run_service "review-service" 3009
-run_service "notification-service" 3010
-run_service "statistic-service" 3011
+run_service "image-service" 3005
+run_service "payment-service" 3006
+run_service "tracking-service" 3007
+run_service "inspection-service" 3008
+run_service "dispute-service" 3009
+run_service "review-service" 3010
+run_service "notification-service" 3011
+run_service "statistic-service" 3012
 run_service "api-gateway" 8000
 run_service "web" 5173
 

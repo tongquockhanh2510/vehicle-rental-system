@@ -60,13 +60,9 @@ const user_schema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    verified: {
-      type: Boolean,
-      default: false
-    },
     kyc_status: {
       type: String,
-      enum: ['UNVERIFIED', 'PENDING', 'APPROVED', 'REJECTED'],
+      enum: ['UNVERIFIED', 'APPROVED', 'REJECTED'],
       default: 'UNVERIFIED'
     },
     is_active: {
@@ -74,6 +70,10 @@ const user_schema = new mongoose.Schema(
       default: true
     },
     created_at: {
+      type: Date,
+      default: Date.now
+    },
+    updated_at: {
       type: Date,
       default: Date.now
     }
