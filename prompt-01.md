@@ -40,7 +40,7 @@ Chia thành các module nhỏ bên dưới (mỗi module là 1 thư mục). Ngo�
 
 Các services gồm có:
 
-\- user-service: Quản lý tài khoản trong hệ thống. Đăng ký, đăng nhập. Quản lý thông tin người thuê xe. Quản lý thông tin người cho thuê xe. Quản lý admin. Phân quyền theo role: RENTER, OWNER, ADMIN
+\- user-service: Quản lý tài khoản trong hệ thống. Đăng ký, đăng nhập. Quản lý thông tin người thuê xe. Quản lý thông tin người cho thuê xe. Quản lý admin. Phân quyền theo role: USER, ADMIN
 
 \- vehicle-service: Quản lý xe và bài đăng cho thuê xe. Người cho thuê đăng xe. Cập nhật thông tin xe. Thêm hình ảnh xe. Cấu hình giá thuê theo ngày. Cấu hình phần trăm đặt cọc. Cấu hình phạm vi được phép di chuyển
 

@@ -10,7 +10,7 @@ const PORT = process.env.RENTAL_SERVICE_PORT || 3003;
 
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://admin:password@localhost:27017/redis_vehicle_db?authSource=admin')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log('MongoDB connection error:', err));
 

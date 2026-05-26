@@ -45,7 +45,7 @@ const vehicle_schema = new mongoose.Schema(
       type: Number,
       required: true
     },
-    deposit: {
+    deposit_amount: {
       type: Number,
       required: true
     },

@@ -27,7 +27,7 @@ router.get('/:rentalId', async (req, res) => {
 
 router.put('/:rentalId/confirm', async (req, res) => {
   try {
-    const rental = await rentalService.confirmRental(req.params.rentalId);
+    const rental = await rentalService.confirmRental(req.params.rentalId, req.userId);
     res.json(rental);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -36,7 +36,7 @@ router.put('/:rentalId/confirm', async (req, res) => {
 
 router.put('/:rentalId/reject', async (req, res) => {
   try {
-    const rental = await rentalService.rejectRental(req.params.rentalId, req.body.reason);
+    const rental = await rentalService.rejectRental(req.params.rentalId, req.userId);
     res.json(rental);
   } catch (error) {
     res.status(400).json({ error: error.message });

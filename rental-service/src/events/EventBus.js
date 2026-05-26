@@ -3,7 +3,7 @@ import amqp from 'amqplib';
 export class EventBus {
   async publish(eventType, eventData) {
     try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+      const connection = await amqp.connect(process.env.RABBITMQ_URI);
       const channel = await connection.createChannel();
       const exchange = 'rental_events';
       
@@ -19,7 +19,7 @@ export class EventBus {
 
   async subscribe(eventType, callback) {
     try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+      const connection = await amqp.connect(process.env.RABBITMQ_URI);
       const channel = await connection.createChannel();
       const exchange = 'rental_events';
       const queue = `rental_${eventType}`;

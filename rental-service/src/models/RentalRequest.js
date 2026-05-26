@@ -43,7 +43,6 @@ const rental_request_schema = new mongoose.Schema(
     total_amount: Number,
     deposit_amount: Number,
     platform_fee: Number,
-    rejection_reason: String,
     notes: String,
     created_at: {
       type: Date,

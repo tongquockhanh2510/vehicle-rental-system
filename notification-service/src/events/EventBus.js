@@ -3,7 +3,7 @@ import amqp from 'amqplib';
 export class EventBus {
   async publish(eventType, eventData) {
     try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+      const connection = await amqp.connect(process.env.RABBITMQ_URI);
       const channel = await connection.createChannel();
       const exchange = 'notification_events';
       

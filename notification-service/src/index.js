@@ -11,13 +11,12 @@ const PORT = process.env.NOTIFICATION_SERVICE_PORT || 3010;
 
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://admin:password@localhost:27017/redis_vehicle_db?authSource=admin')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log('MongoDB connection error:', err));
 
 app.use('/api/notifications', notificationRoutes);
 
-// Subscribe to events
 notificationService.subscribeToEvents();
 
 app.listen(PORT, () => {
