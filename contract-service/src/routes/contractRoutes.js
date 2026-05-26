@@ -1,10 +1,11 @@
 import express from 'express';
 import contractService from '../services/ContractService.js';
 import { authenticateToken } from '../middlewares/auth.js';
+import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
-router.get('/:contractId', async (req, res) => {
+router.get('/:contractId', authenticateToken, async (req, res) => {
   try {
     const contract = await contractService.getContractById(req.params.contractId);
     res.json(contract);
@@ -13,21 +14,30 @@ router.get('/:contractId', async (req, res) => {
   }
 });
 
-router.put('/:contractId/complete', async (req, res) => {
+router.put('/:contractId/pickup', authenticateToken, upload.fields([{ name: 'pickup_images', maxCount: 10 }]), async (req, res) => {
   try {
-    const contract = await contractService.completeContract(req.params.contractId);
+    const contract = await contractService.pickupVehicle(req.params.contractId, req.files.pickup_images, req.body, req.headers.authorization);
     res.json(contract);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-router.put('/:contractId/cancel', async (req, res) => {
+router.put('/:contractId/return', authenticateToken, upload.fields([{ name: 'return_images', maxCount: 10 }]), async (req, res) => {
+  try {
+    const contract = await contractService.returnVehicle(req.params.contractId, req.files.return_images, req.body, req.headers.authorization);
+    res.json(contract);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/:contractId/cancel', authenticateToken, async (req, res) => {
   try {
     const contract = await contractService.cancelContract(
       req.params.contractId,
-      req.body.cancelled_by,
-      req.body.reason
+      req.userId,
+      req.body
     );
     res.json(contract);
   } catch (error) {

@@ -1,10 +1,9 @@
+import './env.js';
 import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import contractRoutes from './routes/contractRoutes.js';
 import contractService from './services/ContractService.js';
 
-dotenv.config();
 
 const app = express();
 const PORT = process.env.CONTRACT_SERVICE_PORT;

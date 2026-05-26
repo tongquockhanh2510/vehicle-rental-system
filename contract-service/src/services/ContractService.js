@@ -35,12 +35,104 @@ export class ContractService {
     return contract;
   }
 
-  async completeContract(contractId) {
-    return await this.updateContract(contractId, { status: 'COMPLETED' });
+  async pickupVehicle(contractId, files, body, authHeader) {
+    const contract = await contractRepository.findById(contractId);
+    if (!contract) {
+      throw new Error('Contract not found');
+    }
+    if (contract.status !== 'ACTIVE') {
+      throw new Error('Only active contracts can be picked up');
+    }
+    if (!files || files.length === 0) {
+      throw new Error('Pickup images are required');
+    }
+    if(contract.pickup_images.length > 0) {
+      throw new Error('Picked up vehicle cannot be picked up again');
+    }
+    // Upload images to image service
+    let pickupImageUrls = [];
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append('image', file.buffer, file.originalname);
+        const response = await axios.post(`${process.env.IMAGE_SERVICE_URL}/api/images/upload`, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            'Authorization': authHeader
+          }
+        });
+        pickupImageUrls.push(response.data.url);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        throw new Error('Failed to upload pickup images');
+      }
+    }
+    const updatedContract = await contractRepository.update(contractId, {
+      pickup_images: pickupImageUrls,
+      pickup_description: body.description,
+      pickup_time: new Date(),
+    });
+
+    return updatedContract;
   }
 
-  async cancelContract(contractId, cancelledBy, reason) {
+  async returnVehicle(contractId, files, body, authHeader) {
     const contract = await contractRepository.findById(contractId);
+    if (!contract) {
+      throw new Error('Contract not found');
+    }
+    if (contract.status !== 'ACTIVE') {
+      throw new Error('Only active contracts can be returned');
+    }
+    if (!files || files.length === 0) {
+      throw new Error('Return images are required');
+    }
+    if(contract.return_images.length > 0) {
+      throw new Error('Returned vehicle cannot be returned again');
+    }
+    // Upload images to image service
+    let returnImageUrls = [];
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append('image', file.buffer, file.originalname);
+        const response = await axios.post(`${process.env.IMAGE_SERVICE_URL}/api/images/upload`, formData, {
+          headers: {
+            ...formData.getHeaders(),
+            'Authorization': authHeader
+          }
+        });
+        returnImageUrls.push(response.data.url);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        throw new Error('Failed to upload return images');
+      }
+    }
+    const updatedContract = await contractRepository.update(contractId, {
+      return_images: returnImageUrls,
+      return_description: body.description,
+      return_time: new Date(),
+    });
+
+    return updatedContract;
+  }
+
+  async cancelContract(contractId, userId, body) {
+    const contract = await contractRepository.findById(contractId);
+    if (!contract) {
+      throw new Error('Contract not found');
+    }
+    if (contract.status !== 'ACTIVE') {
+      throw new Error('Only active contracts can be cancelled');
+    }
+    let cancelledBy;
+    if (contract.renter_id.toString() == userId) {
+      cancelledBy = 'RENTER';
+    } else if (contract.owner_id.toString() == userId) {
+      cancelledBy = 'OWNER';
+    } else {
+      throw new Error('Not authorized to cancel this contract');
+    }
 
     // Calculate refund based on who cancelled
     let refundAmount = contract.deposit_amount;
@@ -61,7 +153,7 @@ export class ContractService {
       cancellation_fee_applied: true,
       cancellation_fee_amount: cancellationFeeAmount,
       refund_amount: refundAmount,
-      cancellation_reason: reason,
+      cancellation_reason: body.reason,
       cancelled_by: cancelledBy,
       cancelled_at: new Date()
     });
@@ -94,6 +186,8 @@ export class ContractService {
           vehicle_id: data.vehicleId,
           rental_start_date: data.rentalStartDate,
           rental_end_date: data.rentalEndDate,
+          pickup_location: data.pickupLocation,
+          return_location: data.returnLocation,
           daily_rate: data.dailyRate,
           total_days: data.totalDays,
           rental_cost: data.totalAmount,

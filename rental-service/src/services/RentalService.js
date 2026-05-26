@@ -86,6 +86,8 @@ export class RentalService {
       vehicleId: rental.vehicle_id,
       rentalStartDate: rental.rental_start_date,
       rentalEndDate: rental.rental_end_date,
+      pickupLocation: rental.pickup_location,
+      returnLocation: rental.return_location,
       dailyRate: rental.daily_rate,
       totalDays: rental.total_days,
       totalAmount: rental.total_amount,

@@ -34,6 +34,14 @@ const contract_schema = new mongoose.Schema(
       enum: ['ACTIVE', 'COMPLETED', 'CANCELLED', 'DISPUTED'],
       default: 'ACTIVE'
     },
+    pickup_location: String,
+    return_location: String,
+    pickup_images: [String],
+    pickup_description: String,
+    pickup_time: Date,
+    return_images: [String],
+    return_description: String,
+    return_time: Date,
     cancellation_fee_applied: {
       type: Boolean,
       default: false
@@ -53,7 +61,8 @@ const contract_schema = new mongoose.Schema(
     updated_at: {
       type: Date,
       default: Date.now
-    }
+    },
+
   },
   { collection: 'contracts' }
 );

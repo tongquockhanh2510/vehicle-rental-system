@@ -2,6 +2,7 @@ import express from 'express';
 import rentalService from '../services/RentalService.js';
 import { authenticateToken } from '../middlewares/auth.js';
 
+
 const router = express.Router();
 
 router.post('/request', authenticateToken, async (req, res) => {
