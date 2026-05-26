@@ -35,7 +35,6 @@ router.put('/:vehicleId', authenticateToken, async (req, res) => {
   try {
     const vehicle = await vehicleService.getVehicleById(req.params.vehicleId);
 
-    // Check if user is the owner
     if (vehicle.owner_id.toString() !== req.userId) {
       return res.status(403).json({ error: 'Not authorized to update this vehicle' });
     }
@@ -84,7 +83,7 @@ router.get('/available/list', async (req, res) => {
   }
 });
 
-router.post('/:vehicleId/images', authenticateToken, upload.array('images', 10), async (req, res) => {
+router.post('/:vehicleId/images', authenticateToken, upload.fields([{ name: 'images', maxCount: 10 }]), async (req, res) => {
   try {
     const vehicle = await vehicleService.getVehicleById(req.params.vehicleId);
 
@@ -132,31 +131,7 @@ router.put('/:vehicleId/availability', async (req, res) => {
 
 router.delete('/:vehicleId', authenticateToken, async (req, res) => {
   try {
-    const vehicle = await vehicleService.getVehicleById(req.params.vehicleId);
-
-    // Check if user is the owner
-    if (vehicle.owner_id.toString() !== req.userId) {
-      return res.status(403).json({ error: 'Not authorized to delete this vehicle' });
-    }
-
-    // Delete images from image-service if they exist
-    if (vehicle.images && vehicle.images.length > 0) {
-      const imageServiceUrl = process.env.IMAGE_SERVICE_URL || `http://localhost:${process.env.IMAGE_SERVICE_PORT || 3005}`;
-      for (const imageUrl of vehicle.images) {
-        try {
-          await axios.delete(`${imageServiceUrl}/api/images/delete`, {
-            data: { imageUrl },
-            headers: {
-              'X-Service-Token': process.env.SERVICE_TOKEN || ''
-            }
-          });
-        } catch (err) {
-          console.log('Error deleting image from service:', err.message);
-        }
-      }
-    }
-
-    await vehicleService.deleteVehicle(req.params.vehicleId);
+    await vehicleService.deleteVehicle(req.params.vehicleId, req.userId, req.headers.authorization);
     res.json({ message: 'Vehicle deleted successfully' });
   } catch (error) {
     res.status(400).json({ error: error.message });
