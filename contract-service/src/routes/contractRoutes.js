@@ -26,6 +26,7 @@ router.put('/:contractId/pickup', authenticateToken, upload.fields([{ name: 'pic
 router.put('/:contractId/return', authenticateToken, upload.fields([{ name: 'return_images', maxCount: 10 }]), async (req, res) => {
   try {
     const contract = await contractService.returnVehicle(req.params.contractId, req.files.return_images, req.body, req.headers.authorization);
+    
     res.json(contract);
   } catch (error) {
     res.status(400).json({ error: error.message });

@@ -2,6 +2,7 @@ import { ContractRepository } from '../repositories/ContractRepository.js';
 import { EventBus } from '../events/EventBus.js';
 import axios from 'axios';
 import amqp from 'amqplib';
+import FormData from 'form-data';
 
 const contractRepository = new ContractRepository();
 const eventBus = new EventBus();
@@ -54,14 +55,17 @@ export class ContractService {
     for (const file of files) {
       try {
         const formData = new FormData();
-        formData.append('image', file.buffer, file.originalname);
+        formData.append('file', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype
+        });
         const response = await axios.post(`${process.env.IMAGE_SERVICE_URL}/api/images/upload`, formData, {
           headers: {
             ...formData.getHeaders(),
             'Authorization': authHeader
           }
         });
-        pickupImageUrls.push(response.data.url);
+        pickupImageUrls.push(response.data.data.url);
       } catch (error) {
         console.error('Error uploading image:', error);
         throw new Error('Failed to upload pickup images');
@@ -95,14 +99,17 @@ export class ContractService {
     for (const file of files) {
       try {
         const formData = new FormData();
-        formData.append('image', file.buffer, file.originalname);
+        formData.append('file', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype
+        });
         const response = await axios.post(`${process.env.IMAGE_SERVICE_URL}/api/images/upload`, formData, {
           headers: {
             ...formData.getHeaders(),
             'Authorization': authHeader
           }
         });
-        returnImageUrls.push(response.data.url);
+        returnImageUrls.push(response.data.data.url);
       } catch (error) {
         console.error('Error uploading image:', error);
         throw new Error('Failed to upload return images');
