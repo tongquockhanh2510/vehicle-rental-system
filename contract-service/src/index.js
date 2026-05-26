@@ -17,7 +17,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 app.use('/api/contracts', contractRoutes);
 
-contractService.subscribeToEvents();
+await contractService.subscribeToEvents();
 
 app.listen(PORT, () => {
   console.log(`Contract Service running on port ${PORT}`);

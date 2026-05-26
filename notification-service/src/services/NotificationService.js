@@ -44,7 +44,7 @@ export class NotificationService {
 
   async subscribeToEvents() {
     // Subscribe to rental events
-    this.subscribeToEvent('rental_request_created', (data) => {
+    await eventBus.subscribe('rental_request_created', (data) => {
       this.sendNotification(
         data.ownerId,
         'Có yêu cầu thuê xe mới',
@@ -54,7 +54,7 @@ export class NotificationService {
       );
     });
 
-    this.subscribeToEvent('rental_confirmed', (data) => {
+    await eventBus.subscribe('rental_confirmed', (data) => {
       this.sendNotification(
         data.renterId,
         'Yêu cầu thuê xe đã được xác nhận',
@@ -64,7 +64,7 @@ export class NotificationService {
       );
     });
 
-    this.subscribeToEvent('rental_rejected', (data) => {
+    await eventBus.subscribe('rental_rejected', (data) => {
       this.sendNotification(
         data.renterId,
         'Yêu cầu thuê xe đã bị từ chối',
@@ -75,7 +75,7 @@ export class NotificationService {
     });
 
     // Subscribe to payment events
-    this.subscribeToEvent('payment_completed', (data) => {
+    await eventBus.subscribe('payment_completed', (data) => {
       this.sendNotification(
         data.renterId,
         'Thanh toán thành công',
@@ -86,7 +86,7 @@ export class NotificationService {
     });
 
     // Subscribe to tracking events
-    this.subscribeToEvent('vehicle_out_of_bounds', (data) => {
+    await eventBus.subscribe('vehicle_out_of_bounds', (data) => {
       this.sendNotification(
         data.ownerId,
         'Cảnh báo: Xe vượt phạm vi',
@@ -97,7 +97,7 @@ export class NotificationService {
     });
 
     // Subscribe to dispute events
-    this.subscribeToEvent('dispute_created', (data) => {
+    await eventBus.subscribe('dispute_created', (data) => {
       this.sendNotification(
         data.renterId,
         'Có khiếu nại mới',
@@ -106,36 +106,6 @@ export class NotificationService {
         data.disputeId
       );
     });
-  }
-
-  async subscribeToEvent(eventType, callback) {
-    try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
-      const channel = await connection.createChannel();
-      const exchanges = ['rental_events', 'payment_events', 'tracking_events', 'dispute_events'];
-
-      for (const exchange of exchanges) {
-        const queue = `notification_${eventType}`;
-
-        try {
-          await channel.assertExchange(exchange, 'topic', { durable: true });
-          await channel.assertQueue(queue, { durable: true });
-          await channel.bindQueue(queue, exchange, `*.${eventType}`);
-
-          channel.consume(queue, async (msg) => {
-            if (msg) {
-              const eventData = JSON.parse(msg.content.toString());
-              await callback(eventData);
-              channel.ack(msg);
-            }
-          });
-        } catch (err) {
-          // Exchange might not exist yet
-        }
-      }
-    } catch (error) {
-      console.error('Event subscription error:', error);
-    }
   }
 }
 

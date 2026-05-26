@@ -1,5 +1,7 @@
 import { ContractRepository } from '../repositories/ContractRepository.js';
 import { EventBus } from '../events/EventBus.js';
+import axios from 'axios';
+import amqp from 'amqplib';
 
 const contractRepository = new ContractRepository();
 const eventBus = new EventBus();
@@ -83,44 +85,32 @@ export class ContractService {
   }
 
   async subscribeToEvents() {
-    this.subscribeToEvent('rental_confirmed', async (data) => {
-      const rentalRequest = await axios.get(`${process.env.RENTAL_SERVICE_URL}/api/rentals/${data.rentalId}`)
-      const contract = await contractRepository.create({
-        ...rentalRequest,
-        rental_request_id: data.rentalId,
-        status: 'ACTIVE'
-      });
-    });
-  }
+    await eventBus.subscribe('rental_confirmed', async (data) => {
+      try {
+        const response = await axios.get(`${process.env.RENTAL_SERVICE_URL}/api/rentals/${data.rentalId}`);
+        const rentalRequest = response.data;
 
-  async subscribeToEvent(eventType, callback) {
-    try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URI);
-      const channel = await connection.createChannel();
-      const exchanges = ['rental_events', 'payment_events', 'tracking_events', 'dispute_events'];
+        const contract = await contractRepository.create({
+          rental_request_id: data.rentalId,
+          renter_id: rentalRequest.renter_id,
+          owner_id: rentalRequest.owner_id,
+          vehicle_id: rentalRequest.vehicle_id,
+          rental_start_date: rentalRequest.rental_start_date,
+          rental_end_date: rentalRequest.rental_end_date,
+          daily_rate: rentalRequest.daily_rate,
+          total_days: rentalRequest.total_days,
+          rental_cost: rentalRequest.total_amount,
+          deposit_amount: rentalRequest.deposit_amount,
+          platform_fee: rentalRequest.platform_fee,
+          total_cost: rentalRequest.total_amount + rentalRequest.platform_fee,
+          status: 'ACTIVE'
+        });
 
-      for (const exchange of exchanges) {
-        const queue = `notification_${eventType}`;
-
-        try {
-          await channel.assertExchange(exchange, 'topic', { durable: true });
-          await channel.assertQueue(queue, { durable: true });
-          await channel.bindQueue(queue, exchange, `*.${eventType}`);
-
-          channel.consume(queue, async (msg) => {
-            if (msg) {
-              const eventData = JSON.parse(msg.content.toString());
-              await callback(eventData);
-              channel.ack(msg);
-            }
-          });
-        } catch (err) {
-          // Exchange might not exist yet
-        }
+        console.log('Contract created:', contract._id);
+      } catch (err) {
+        console.error('Failed to create contract:', err.message);
       }
-    } catch (error) {
-      console.error('Event subscription error:', error);
-    }
+    });
   }
 }
 
