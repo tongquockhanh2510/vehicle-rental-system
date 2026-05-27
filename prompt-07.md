@@ -1,1 +1,1 @@
-http://localhost:5173/my-contracts
+Trong trang MyContractsPage.jsx. Khi nhận xe yêu cầu phản có pickup_images (danh sách các ảnh xe khi nhận) và description mô tả xe khi nhận. Khi trả xe yêu cầu phản có return_images (danh sách các ảnh xe khi nhận) và description mô tả xe khi nhận
