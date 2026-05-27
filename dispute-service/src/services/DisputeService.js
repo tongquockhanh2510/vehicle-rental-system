@@ -36,11 +36,11 @@ export class DisputeService {
       status: 'PENDING'
     });
 
-
     await eventBus.publish('dispute_created', {
       disputeId: dispute._id,
       ownerId: dispute.owner_id,
       renterId: dispute.renter_id,
+      adminId: "6a16d3c79ca9cb4b80f23e90",
       claimedAmount: dispute.claimed_amount
     });
 
@@ -73,7 +73,7 @@ export class DisputeService {
 
     await eventBus.publish('dispute_approved', {
       disputeId: dispute._id,
-      renterId: dispute.renter_id,
+      ownerId: dispute.owner_id,
       compensationAmount: body.admin_decision_amount
     });
 
@@ -97,7 +97,7 @@ export class DisputeService {
 
     await eventBus.publish('dispute_rejected', {
       disputeId: dispute._id,
-      renterId: dispute.renter_id
+      ownerId: dispute.owner_id
     });
 
     return dispute;

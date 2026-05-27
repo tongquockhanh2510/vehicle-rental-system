@@ -19,7 +19,7 @@ export class EventBus {
   
   async subscribe(eventType, callback) {
     try {
-      const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+      const connection = await amqp.connect(process.env.RABBITMQ_URI);
       const channel = await connection.createChannel();
       const exchanges = ['rental_events', 'payment_events', 'tracking_events', 'dispute_events'];
 

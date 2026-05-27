@@ -99,10 +99,30 @@ export class NotificationService {
     // Subscribe to dispute events
     await eventBus.subscribe('dispute_created', (data) => {
       this.sendNotification(
-        data.renterId,
+        data.adminId,
         'Có khiếu nại mới',
         `Có khiếu nại về hư hỏng xe`,
         'DISPUTE_CREATED',
+        data.disputeId
+      );
+    });
+
+    await eventBus.subscribe('dispute_approved', (data) => {
+      this.sendNotification(
+        data.ownerId,
+        'Khiếu nại đã được chấp nhận',
+        `Khiếu nại của bạn đã được chấp nhận, số tiền bồi thường: ${data.compensationAmount}`,
+        'DISPUTE_APPROVED',
+        data.disputeId
+      );
+    });
+
+    await eventBus.subscribe('dispute_rejected', (data) => {
+      this.sendNotification(
+        data.ownerId,
+        'Khiếu nại đã bị từ chối',
+        `Khiếu nại của bạn đã bị từ chối`,
+        'DISPUTE_REJECTED',
         data.disputeId
       );
     });

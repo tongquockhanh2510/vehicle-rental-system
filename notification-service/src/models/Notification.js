@@ -29,6 +29,8 @@ const notification_schema = new mongoose.Schema(
         'PAYMENT_FAILED',
         'RETURN_REMINDER',
         'REVIEW_REQUEST',
+        'DISPUTE_APPROVED',
+        'DISPUTE_REJECTED',
         'OTHER'
       ],
       required: true
