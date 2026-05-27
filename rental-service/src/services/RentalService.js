@@ -98,11 +98,11 @@ export class RentalService {
       totalAmount: rental.total_amount,
       depositAmount: rental.deposit_amount,
       platformFee: rental.platform_fee,
-      brand: vehicle.brand,
-      model: vehicle.model,
-      year: vehicle.year,
-      license_plate: vehicle.license_plate,
-      images: vehicle.images
+      brand: rental.brand,
+      model: rental.model,
+      year: rental.year,
+      license_plate: rental.license_plate,
+      images: rental.images
     });
 
     return rental_updated;
