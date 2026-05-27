@@ -76,7 +76,12 @@ export class DisputeService {
   async getPendingDisputes() {
     return await disputeRepository.findByStatus('PENDING');
   }
-
+  async getApprovedDisputes() {
+    return await disputeRepository.findByStatus('APPROVED');
+  }
+  async getRejectedDisputes() {
+    return await disputeRepository.findByStatus('REJECTED');
+  }
   async getDisputesByOwner(ownerId) {
     return await disputeRepository.findByOwnerId(ownerId);
   }

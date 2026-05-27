@@ -25,27 +25,23 @@ const dispute_schema = new mongoose.Schema(
       required: true,
       ref: 'Vehicle'
     },
-    dispute_type: {
-      type: String,
-      enum: ['DAMAGE_CLAIM', 'LATE_RETURN', 'OTHER'],
-      required: true
-    },
     description: {
       type: String,
       required: true
     },
-    damage_images: [String],
     claimed_amount: {
       type: Number,
       required: true
     },
-    evidence: [{
-      type: String,
-      description: String
-    }],
+    pickup_location: String,
+    pickup_date: Date,
+    pickup_images: [String],
+    return_location: String,
+    return_date: Date,
+    return_images: [String],
     status: {
       type: String,
-      enum: ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'RESOLVED'],
+      enum: ['PENDING', 'APPROVED', 'REJECTED'],
       default: 'PENDING'
     },
     admin_notes: String,
@@ -54,7 +50,6 @@ const dispute_schema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
-    reviewed_at: Date,
     resolved_at: Date,
     created_at: {
       type: Date,
