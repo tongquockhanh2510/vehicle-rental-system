@@ -17,6 +17,24 @@ const rental_request_schema = new mongoose.Schema(
       required: true,
       ref: 'Vehicle'
     },
+    brand: {
+      type: String,
+      required: true
+    },
+    model: {
+      type: String,
+      required: true
+    },
+    year: {
+      type: Number,
+      required: true
+    },
+    license_plate: {
+      type: String,
+      required: true,
+      unique: true
+    },
+    images: [String],
     rental_start_date: {
       type: Date,
       required: true

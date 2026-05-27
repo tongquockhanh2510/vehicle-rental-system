@@ -361,6 +361,46 @@ export default function MyContractsPage() {
                                         {getStatusBadge(contract.status)}
                                     </div>
                                 </div>
+                                <div className="mb-4">
+                                    <p className="text-gray-600 text-sm mb-2">
+                                        Ảnh xe khi nhận
+                                    </p>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                                        {contract.pickup_images?.map((image, index) => (
+                                            <div
+                                                key={index}
+                                                className="border rounded-lg overflow-hidden shadow-sm"
+                                            >
+                                                <img
+                                                    src={image}
+                                                    alt={`pickup-${index}`}
+                                                    className="w-full h-40 object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="mb-4">
+                                    <p className="text-gray-600 text-sm mb-2">
+                                        Ảnh xe khi trả
+                                    </p>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                                        {contract.return_images?.map((image, index) => (
+                                            <div
+                                                key={index}
+                                                className="border rounded-lg overflow-hidden shadow-sm"
+                                            >
+                                                <img
+                                                    src={image}
+                                                    alt={`pickup-${index}`}
+                                                    className="w-full h-40 object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
 
                                 <div className="flex gap-2 flex-wrap">
                                     {activeTab === 'renter' &&

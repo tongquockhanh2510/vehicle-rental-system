@@ -53,7 +53,13 @@ export class RentalService {
       deposit_amount: depositAmount,
       total_days: totalDays,
       total_amount: totalAmount,
-      platform_fee: platformFee
+      platform_fee: platformFee,
+      vehicle_type: vehicle.vehicle_type,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: vehicle.year,
+      license_plate: vehicle.license_plate,
+      images: vehicle.images
     });
 
     await eventBus.publish('rental_request_created', {
