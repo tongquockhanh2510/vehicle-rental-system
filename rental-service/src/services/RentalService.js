@@ -54,7 +54,6 @@ export class RentalService {
       total_days: totalDays,
       total_amount: totalAmount,
       platform_fee: platformFee,
-      vehicle_type: vehicle.vehicle_type,
       brand: vehicle.brand,
       model: vehicle.model,
       year: vehicle.year,
@@ -98,14 +97,19 @@ export class RentalService {
       totalDays: rental.total_days,
       totalAmount: rental.total_amount,
       depositAmount: rental.deposit_amount,
-      platformFee: rental.platform_fee
+      platformFee: rental.platform_fee,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: vehicle.year,
+      license_plate: vehicle.license_plate,
+      images: vehicle.images
     });
 
     return rental_updated;
   }
 
   async rejectRental(rentalId, userId) {
- const rental = await rentalRepository.findById(rentalId);
+    const rental = await rentalRepository.findById(rentalId);
     if (!rental) {
       throw new Error('Rental not found');
     }

@@ -31,8 +31,7 @@ const rental_request_schema = new mongoose.Schema(
     },
     license_plate: {
       type: String,
-      required: true,
-      unique: true
+      required: true
     },
     images: [String],
     rental_start_date: {

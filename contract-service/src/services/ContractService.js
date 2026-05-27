@@ -47,7 +47,7 @@ export class ContractService {
     if (!files || files.length === 0) {
       throw new Error('Pickup images are required');
     }
-    if(contract.pickup_images.length > 0) {
+    if (contract.pickup_images.length > 0) {
       throw new Error('Picked up vehicle cannot be picked up again');
     }
     // Upload images to image service
@@ -91,7 +91,7 @@ export class ContractService {
     if (!files || files.length === 0) {
       throw new Error('Return images are required');
     }
-    if(contract.return_images.length > 0) {
+    if (contract.return_images.length > 0) {
       throw new Error('Returned vehicle cannot be returned again');
     }
     // Upload images to image service
@@ -191,6 +191,11 @@ export class ContractService {
           renter_id: data.renterId,
           owner_id: data.ownerId,
           vehicle_id: data.vehicleId,
+          brand: data.brand,
+          model: data.model,
+          year: data.year,
+          license_plate: data.license_plate,
+          images: data.images,
           rental_start_date: data.rentalStartDate,
           rental_end_date: data.rentalEndDate,
           pickup_location: data.pickupLocation,

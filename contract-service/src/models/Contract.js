@@ -21,6 +21,23 @@ const contract_schema = new mongoose.Schema(
       required: true,
       ref: 'Vehicle'
     },
+    brand: {
+      type: String,
+      required: true
+    },
+    model: {
+      type: String,
+      required: true
+    },
+    year: {
+      type: Number,
+      required: true
+    },
+    license_plate: {
+      type: String,
+      required: true
+    },
+    images: [String],
     rental_start_date: Date,
     rental_end_date: Date,
     daily_rate: Number,
