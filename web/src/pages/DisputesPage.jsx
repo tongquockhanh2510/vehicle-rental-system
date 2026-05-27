@@ -1,7 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/api';
 import { Loader, AlertCircle, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+
+// Safe date formatting helper
+const formatDate = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  try {
+    let date;
+    if (typeof dateValue === 'string') {
+      date = parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      date = dateValue;
+    } else {
+      return 'N/A';
+    }
+    
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+    return format(date, 'dd/MM/yyyy');
+  } catch (error) {
+    console.error('Date format error:', error, 'Value:', dateValue);
+    return 'N/A';
+  }
+};
 
 export default function DisputesPage() {
   const [disputes, setDisputes] = useState([]);
@@ -143,7 +166,7 @@ export default function DisputesPage() {
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Ngày tạo</p>
-                    <p className="font-semibold">{format(new Date(dispute.created_at), 'dd/MM/yyyy')}</p>
+                    <p className="font-semibold">{formatDate(dispute.created_at)}</p>
                   </div>
                 </div>
 

@@ -6,6 +6,7 @@ import { MapPin, DollarSign, Fuel, Loader } from 'lucide-react';
 export default function VehicleListPage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     page: 1,
     limit: 12,
@@ -21,6 +22,7 @@ export default function VehicleListPage() {
   const loadVehicles = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       params.append('page', filters.page);
       params.append('limit', filters.limit);
@@ -29,9 +31,23 @@ export default function VehicleListPage() {
       if (filters.max_price) params.append('max_price', filters.max_price);
 
       const response = await api.get(`/api/vehicles/available/list?${params}`);
-      setVehicles(response.data.vehicles || []);
+      console.log('Vehicle API response:', response.data);
+      
+      // Handle different response formats
+      let vehicleList = [];
+      if (Array.isArray(response.data)) {
+        vehicleList = response.data;
+      } else if (response.data.vehicles && Array.isArray(response.data.vehicles)) {
+        vehicleList = response.data.vehicles;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        vehicleList = response.data.data;
+      }
+      
+      setVehicles(vehicleList);
     } catch (error) {
       console.error('Error loading vehicles:', error);
+      setError(error.response?.data?.error || error.message || 'Lỗi tải danh sách xe');
+      setVehicles([]);
     } finally {
       setLoading(false);
     }
@@ -96,6 +112,14 @@ export default function VehicleListPage() {
             </div>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert">
+            <p className="font-bold">Lỗi</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Vehicle Grid */}
         {loading ? (

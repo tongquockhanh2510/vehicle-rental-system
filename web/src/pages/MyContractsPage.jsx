@@ -1,11 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/api';
 import { Loader, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+
+// Safe date formatting helper
+const formatDate = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  try {
+    let date;
+    if (typeof dateValue === 'string') {
+      date = parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      date = dateValue;
+    } else {
+      return 'N/A';
+    }
+    
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+    return format(date, 'dd/MM/yyyy HH:mm');
+  } catch (error) {
+    console.error('Date format error:', error, 'Value:', dateValue);
+    return 'N/A';
+  }
+};
 
 export default function MyContractsPage() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('renter'); // renter or owner
   const [selectedContract, setSelectedContract] = useState(null);
   const [showPickupForm, setShowPickupForm] = useState(false);
@@ -27,13 +51,28 @@ export default function MyContractsPage() {
   const loadContracts = async () => {
     try {
       setLoading(true);
+      setError('');
       const endpoint = activeTab === 'renter' 
         ? '/api/contracts/renter/my-contracts' 
         : '/api/contracts/owner/my-contracts';
       const response = await api.get(endpoint);
-      setContracts(response.data || []);
+      console.log('Contracts API response:', response.data);
+      
+      // Handle different response formats
+      let contractList = [];
+      if (Array.isArray(response.data)) {
+        contractList = response.data;
+      } else if (response.data.contracts && Array.isArray(response.data.contracts)) {
+        contractList = response.data.contracts;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        contractList = response.data.data;
+      }
+      
+      setContracts(contractList);
     } catch (error) {
       console.error('Error loading contracts:', error);
+      setError(error.response?.data?.error || error.message || 'Lỗi tải danh sách hợp đồng');
+      setContracts([]);
     } finally {
       setLoading(false);
     }
@@ -48,7 +87,8 @@ export default function MyContractsPage() {
       setPickupData({ odometer_reading: '', fuel_level: '' });
       loadContracts();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to record pickup');
+      console.error('Pickup error:', error);
+      alert(error.response?.data?.error || 'Lỗi khi nhập xe');
     }
   };
 
@@ -61,7 +101,8 @@ export default function MyContractsPage() {
       setReturnData({ odometer_reading: '', fuel_level: '', damage_report: '' });
       loadContracts();
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to record return');
+      console.error('Return error:', error);
+      alert(error.response?.data?.error || 'Lỗi khi trả xe');
     }
   };
 
@@ -87,6 +128,14 @@ export default function MyContractsPage() {
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-800 mb-8">Hợp Đồng Thuê Xe</h1>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert">
+            <p className="font-bold">Lỗi</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6">
@@ -129,11 +178,11 @@ export default function MyContractsPage() {
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Từ ngày</p>
-                    <p className="font-semibold">{format(new Date(contract.start_date), 'dd/MM/yyyy HH:mm')}</p>
+                    <p className="font-semibold">{formatDate(contract.start_date)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Đến ngày</p>
-                    <p className="font-semibold">{format(new Date(contract.end_date), 'dd/MM/yyyy HH:mm')}</p>
+                    <p className="font-semibold">{formatDate(contract.end_date)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Trạng thái</p>

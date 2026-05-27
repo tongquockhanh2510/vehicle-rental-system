@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bell, LogOut, Menu } from 'lucide-react';
+import { Bell, LogOut, Menu, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Navbar() {
@@ -28,6 +28,10 @@ export default function Navbar() {
               <Link to="/my-rentals" className="hover:text-blue-200">Yêu cầu thuê</Link>
               <Link to="/my-contracts" className="hover:text-blue-200">Hợp đồng</Link>
               <Link to="/my-vehicles" className="hover:text-blue-200">Xe của tôi</Link>
+              <Link to="/disputes" className="hover:text-blue-200 flex items-center gap-1">
+                <AlertCircle size={18} />
+                Khiếu nại
+              </Link>
               <Link to="/notifications" className="hover:text-blue-200">
                 <Bell size={20} />
               </Link>
@@ -66,6 +70,8 @@ export default function Navbar() {
               <Link to="/my-rentals" className="hover:text-blue-200">Yêu cầu thuê</Link>
               <Link to="/my-contracts" className="hover:text-blue-200">Hợp đồng</Link>
               <Link to="/my-vehicles" className="hover:text-blue-200">Xe của tôi</Link>
+              <Link to="/disputes" className="hover:text-blue-200">Khiếu nại</Link>
+              <Link to="/notifications" className="hover:text-blue-200">Thông báo</Link>
               <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded hover:bg-red-600">
                 Đăng xuất
               </button>

@@ -3,7 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 import { CheckCircle, XCircle, Clock, Loader, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+
+// Safe date formatting helper
+const formatDate = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  try {
+    let date;
+    if (typeof dateValue === 'string') {
+      date = parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      date = dateValue;
+    } else {
+      return 'N/A';
+    }
+    
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+    return format(date, 'dd/MM/yyyy');
+  } catch (error) {
+    console.error('Date format error:', error, 'Value:', dateValue);
+    return 'N/A';
+  }
+};
 
 export default function MyRentalsPage() {
   const { user } = useAuth();
@@ -125,11 +148,11 @@ export default function MyRentalsPage() {
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Từ ngày</p>
-                    <p className="font-semibold">{format(new Date(rental.rental_start_date), 'dd/MM/yyyy')}</p>
+                    <p className="font-semibold">{formatDate(rental.rental_start_date)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Đến ngày</p>
-                    <p className="font-semibold">{format(new Date(rental.rental_end_date), 'dd/MM/yyyy')}</p>
+                    <p className="font-semibold">{formatDate(rental.rental_end_date)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600 text-sm">Trạng thái</p>
