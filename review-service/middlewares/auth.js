@@ -5,21 +5,7 @@ import path from 'path';
 const publicKeyPath = path.resolve('./public.key');
 const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
-const publicRoutes = [
-  { path: '/api/users/login', method: 'POST' },
-  { path: '/api/users/register', method: 'POST' },
-  { path: '/health', method: 'GET' },
-];
-
 export const authenticateToken = (req, res, next) => {
-  console.log('req.path:', req.path);
-  console.log('req.method:', req.method);
-  const isPublic = publicRoutes.some(
-    route => req.path === route.path && req.method === route.method
-  );
-
-  if (isPublic) return next();
-
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -35,7 +21,7 @@ export const authenticateToken = (req, res, next) => {
       algorithms: ['RS256']
     });
 
-    req.userId = decoded.id;
+    req.userId =  decoded.id;
     req.userRole = decoded.role;
     req.user = decoded;
 
@@ -51,18 +37,4 @@ export const authenticateToken = (req, res, next) => {
       error: 'Invalid or expired token'
     });
   }
-};
-
-export const requireAuth = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-  next();
-};
-
-export const requireRole = (roles) => (req, res, next) => {
-  if (!req.user || !roles.includes(req.userRole)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  next();
 };
