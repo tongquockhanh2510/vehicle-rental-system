@@ -75,26 +75,26 @@ export class NotificationService {
     });
 
     // Subscribe to payment events
-    await eventBus.subscribe('payment_completed', (data) => {
-      this.sendNotification(
-        data.renterId,
-        'Thanh toán thành công',
-        `Thanh toán ${data.amount} đã hoàn tất`,
-        'PAYMENT_SUCCESS',
-        data.paymentId
-      );
-    });
+    // await eventBus.subscribe('payment_completed', (data) => {
+    //   this.sendNotification(
+    //     data.renterId,
+    //     'Thanh toán thành công',
+    //     `Thanh toán ${data.amount} đã hoàn tất`,
+    //     'PAYMENT_SUCCESS',
+    //     data.paymentId
+    //   );
+    // });
 
-    // Subscribe to tracking events
-    await eventBus.subscribe('vehicle_out_of_bounds', (data) => {
-      this.sendNotification(
-        data.ownerId,
-        'Cảnh báo: Xe vượt phạm vi',
-        `Xe của bạn đã di chuyển ra khỏi khu vực được phép`,
-        'VEHICLE_OUT_OF_BOUNDS',
-        data.rentalRequestId
-      );
-    });
+    // // Subscribe to tracking events
+    // await eventBus.subscribe('vehicle_out_of_bounds', (data) => {
+    //   this.sendNotification(
+    //     data.ownerId,
+    //     'Cảnh báo: Xe vượt phạm vi',
+    //     `Xe của bạn đã di chuyển ra khỏi khu vực được phép`,
+    //     'VEHICLE_OUT_OF_BOUNDS',
+    //     data.rentalRequestId
+    //   );
+    // });
 
     // Subscribe to dispute events
     await eventBus.subscribe('dispute_created', (data) => {
@@ -110,8 +110,8 @@ export class NotificationService {
     await eventBus.subscribe('dispute_approved', (data) => {
       this.sendNotification(
         data.ownerId,
-        'Khiếu nại đã được chấp nhận',
-        `Khiếu nại của bạn đã được chấp nhận, số tiền bồi thường: ${data.compensationAmount}`,
+        'Khiếu nại đã được phê duyệt',
+        `Khiếu nại về hư hỏng xe đã được phê duyệt với số tiền bồi thường ${data.compensationAmount}`,
         'DISPUTE_APPROVED',
         data.disputeId
       );
@@ -121,7 +121,7 @@ export class NotificationService {
       this.sendNotification(
         data.ownerId,
         'Khiếu nại đã bị từ chối',
-        `Khiếu nại của bạn đã bị từ chối`,
+        `Khiếu nại về hư hỏng xe đã bị từ chối`,
         'DISPUTE_REJECTED',
         data.disputeId
       );
