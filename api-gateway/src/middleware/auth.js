@@ -18,6 +18,8 @@ export const authenticateToken = (req, res, next) => {
     route => req.path === route.path && req.method === route.method
   );
 
+  console.log(isPublic)
+
   if (isPublic) return next();
 
   const authHeader = req.headers.authorization;
