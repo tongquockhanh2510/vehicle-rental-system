@@ -1,12 +1,12 @@
 import express from 'express';
 import disputeService from '../services/DisputeService.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const dispute = await disputeService.createDispute(req.body);
+    const dispute = await disputeService.createDispute(req.body, req.userId, req.header.authorization);
     res.status(201).json(dispute);
   } catch (error) {
     res.status(400).json({ error: error.message });

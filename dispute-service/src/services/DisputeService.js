@@ -1,12 +1,38 @@
 import { DisputeRepository } from '../repositories/DisputeRepository.js';
 import { EventBus } from '../events/EventBus.js';
+import axios from 'axios';
 
 const disputeRepository = new DisputeRepository();
 const eventBus = new EventBus();
 
 export class DisputeService {
-  async createDispute(disputeData) {
-    const dispute = await disputeRepository.create(disputeData);
+  async createDispute(disputeData, userId, authHeader) {
+    const contractId = disputeData.contract_id;
+    const contractResponse = await axios.get(`${process.env.CONTRACT_SERVICE_URL}/contracts/${contractId}`, {
+      headers: { 'Authorization': authHeader }
+    });
+
+    const contract = await contractResponse.data;
+    if (contract.renter_id.toString() !== userId) {
+      throw new Error('Unauthorized: Only the renter can create a dispute for this contract');
+    }
+
+    const dispute = await disputeRepository.create({
+      contract_id: contractId,
+      owner_id: contract.owner_id,
+      renter_id: contract.renter_id,
+      vehicle_id: contract.vehicle_id,
+      claimed_amount: disputeData.claimed_amount,
+      description: disputeData.description,
+      pickup_location: contract.pickup_location,
+      pickup_date: contract.pickup_date,
+      pickup_images: contract.pickup_images,
+      return_location: contract.return_location,
+      return_date: contract.return_date,
+      return_images: contract.return_images,
+      status: 'PENDING'
+    });
+
 
     await eventBus.publish('dispute_created', {
       disputeId: dispute._id,
