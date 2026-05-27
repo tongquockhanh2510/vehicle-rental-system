@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const dispute = await disputeService.createDispute(req.body, req.userId, req.header.authorization);
+    const dispute = await disputeService.createDispute(req.body, req.userId, req.headers.authorization);
     res.status(201).json(dispute);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -27,8 +27,7 @@ router.put('/:disputeId/approve', authenticateToken, async (req, res) => {
     const dispute = await disputeService.approveDispute(
       req.params.disputeId,
       req.userId,
-      req.body.decision_amount,
-      req.body.admin_notes
+      req.body
     );
     res.json(dispute);
   } catch (error) {
@@ -41,7 +40,7 @@ router.put('/:disputeId/reject', authenticateToken, async (req, res) => {
     const dispute = await disputeService.rejectDispute(
       req.params.disputeId,
       req.userId,
-      req.body.admin_notes
+      req.body
     );
     res.json(dispute);
   } catch (error) {

@@ -8,16 +8,19 @@ const eventBus = new EventBus();
 export class DisputeService {
   async createDispute(disputeData, userId, authHeader) {
     const contractId = disputeData.contract_id;
-    const contractResponse = await axios.get(`${process.env.CONTRACT_SERVICE_URL}/contracts/${contractId}`, {
-      headers: { 'Authorization': authHeader }
+    const contractResponse = await axios.get(`${process.env.CONTRACT_SERVICE_URL}/api/contracts/${contractId}`, {
+      headers: {
+        Authorization: authHeader
+      }
     });
 
     const contract = await contractResponse.data;
-    if (contract.renter_id.toString() !== userId) {
-      throw new Error('Unauthorized: Only the renter can create a dispute for this contract');
+    if (contract.owner_id.toString() !== userId) {
+      throw new Error('Unauthorized: Only the owner can create a dispute for this contract');
     }
 
     const dispute = await disputeRepository.create({
+      rental_request_id: contract.rental_request_id,
       contract_id: contractId,
       owner_id: contract.owner_id,
       renter_id: contract.renter_id,
@@ -52,11 +55,18 @@ export class DisputeService {
     return await disputeRepository.update(disputeId, updateData);
   }
 
-  async approveDispute(disputeId, adminId, decisionAmount, adminNotes) {
+  async approveDispute(disputeId, adminId, body) {
+    const disputeFind = await disputeRepository.findById(disputeId);
+    if (!disputeFind) {
+      throw new Error('Dispute not found');
+    }
+    if (disputeFind.status !== 'PENDING') {
+      throw new Error('Only pending disputes can be approved');
+    }
     const dispute = await disputeRepository.update(disputeId, {
       status: 'APPROVED',
-      admin_decision_amount: decisionAmount,
-      admin_notes: adminNotes,
+      admin_decision_amount: body.admin_decision_amount,
+      admin_notes: body.admin_notes,
       admin_reviewed_by: adminId,
       reviewed_at: new Date()
     });
@@ -64,16 +74,23 @@ export class DisputeService {
     await eventBus.publish('dispute_approved', {
       disputeId: dispute._id,
       renterId: dispute.renter_id,
-      compensationAmount: decisionAmount
+      compensationAmount: body.admin_decision_amount
     });
 
     return dispute;
   }
 
-  async rejectDispute(disputeId, adminId, adminNotes) {
+  async rejectDispute(disputeId, adminId, body) {
+    const disputeFind = await disputeRepository.findById(disputeId);
+    if (!disputeFind) {
+      throw new Error('Dispute not found');
+    }
+    if (disputeFind.status !== 'PENDING') {
+      throw new Error('Only pending disputes can be approved');
+    }
     const dispute = await disputeRepository.update(disputeId, {
       status: 'REJECTED',
-      admin_notes: adminNotes,
+      admin_notes: body.admin_notes,
       admin_reviewed_by: adminId,
       reviewed_at: new Date()
     });
