@@ -1,8 +1,8 @@
 Nhiệm vụ 1: hãy đọc kỹ các thư mục service có trong project thật kĩ, để hiểu về hệ thống space-based và event-driven. Đọc kỹ để biết từng enpoint của từng service yêu cầu thuộc tính như thế nào để truyền cho phù hợp
 
 Nhiệm vụ 2: xây dựng trang web
-Trong thư mục web hãy xây dựng giao diện cho hệ thông cho thuê xe
-Yêu cầu: dùng react vite tailwind, giao diện đơn giản đẹp, sử dụng các icon
+Trong thư mục web (đã được tạo sắn) hãy xây dựng giao diện cho hệ thông cho thuê xe
+Yêu cầu: dùng react vite tailwind, giao diện đơn giản đẹp, sử dụng các icon, sử dụng câu lện pnpm thay vì npm
 
 enpoint được lấy từ api gateway có dạng: http://localhost:8000
 

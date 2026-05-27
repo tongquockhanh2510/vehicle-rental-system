@@ -1,6 +1,7 @@
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 import { authenticateToken } from './middleware/auth.js';
 import {
@@ -8,11 +9,18 @@ import {
   authLimiter,
   paymentLimiter
 } from './middleware/rateLimiter.js';
-
 dotenv.config();
 
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || 8000;
+
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 
 const services = {
   users: process.env.USER_SERVICE_URL,
@@ -110,6 +118,8 @@ app.use((err, req, res, next) => {
     message: err.message
   });
 });
+
+app.options('*', cors());
 
 app.listen(PORT, () => {
   console.log(`API Gateway running on port ${PORT}`);
