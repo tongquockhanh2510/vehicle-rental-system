@@ -39,4 +39,9 @@ const review_schema = new mongoose.Schema(
   { collection: 'reviews' }
 );
 
+review_schema.index({ vehicle_id: 1, created_at: -1 });
+review_schema.index({ reviewer_id: 1, created_at: -1 });
+review_schema.index({ reviewed_user_id: 1, created_at: -1 });
+review_schema.index({ rental_request_id: 1 }, { unique: true });
+
 export default mongoose.model('Review', review_schema);

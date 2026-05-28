@@ -108,14 +108,14 @@ export class RentalService {
     return rental_updated;
   }
 
-  async rejectRental(rentalId, userId) {
+  async rejectRental(rentalId, ownerId) {
     const rental = await rentalRepository.findById(rentalId);
     if (!rental) {
       throw new Error('Rental not found');
     }
-    console.log('ownerId:', ownerId, 'rental owner_id:', rental.owner_id);
+
     if (rental.owner_id.toString() !== ownerId) {
-      throw new Error('Not authorized to confirm this rental');
+      throw new Error('Not authorized to reject this rental');
     }
 
     const rental_updated = await rentalRepository.update(rentalId, { status: 'REJECTED' });

@@ -63,4 +63,9 @@ const dispute_schema = new mongoose.Schema(
   { collection: 'disputes' }
 );
 
+dispute_schema.index({ renter_id: 1, created_at: -1 });
+dispute_schema.index({ owner_id: 1, created_at: -1 });
+dispute_schema.index({ contract_id: 1 }, { unique: true });
+dispute_schema.index({ status: 1, created_at: -1 });
+
 export default mongoose.model('Dispute', dispute_schema);

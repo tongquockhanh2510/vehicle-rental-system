@@ -73,4 +73,10 @@ const rental_request_schema = new mongoose.Schema(
   { collection: 'rental_requests' }
 );
 
+rental_request_schema.index({ renter_id: 1, created_at: -1 });
+rental_request_schema.index({ owner_id: 1, created_at: -1 });
+rental_request_schema.index({ vehicle_id: 1, status: 1, rental_start_date: 1, rental_end_date: 1 });
+rental_request_schema.index({ status: 1, created_at: -1 });
+rental_request_schema.index({ created_at: -1 });
+
 export default mongoose.model('RentalRequest', rental_request_schema);

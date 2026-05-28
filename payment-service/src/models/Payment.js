@@ -50,4 +50,10 @@ const payment_schema = new mongoose.Schema(
   { collection: 'payments' }
 );
 
+payment_schema.index({ renter_id: 1, created_at: -1 });
+payment_schema.index({ owner_id: 1, created_at: -1 });
+payment_schema.index({ contract_id: 1, created_at: -1 });
+payment_schema.index({ status: 1, payment_type: 1, created_at: -1 });
+payment_schema.index({ created_at: -1 });
+
 export default mongoose.model('Payment', payment_schema);
