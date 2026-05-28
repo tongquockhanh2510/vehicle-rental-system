@@ -2,7 +2,6 @@ import express from 'express';
 import vehicleService from '../services/VehicleService.js';
 import { authenticateToken } from '../middlewares/auth.js';
 import upload from '../middlewares/upload.js';
-import axios from 'axios';
 
 const router = express.Router();
 
@@ -67,9 +66,16 @@ router.get('/available/list', async (req, res) => {
 
     // Extract filters from query params
     const filters = {};
+    if (req.query.q) filters.keyword = req.query.q;
     if (req.query.vehicle_type) filters.vehicle_type = req.query.vehicle_type;
     if (req.query.brand) filters.brand = req.query.brand;
     if (req.query.fuel_type) filters.fuel_type = req.query.fuel_type;
+    if (req.query.transmission) filters.transmission = req.query.transmission;
+    if (req.query.min_seats || req.query.max_seats) {
+      filters.seats = {};
+      if (req.query.min_seats) filters.seats.$gte = parseInt(req.query.min_seats);
+      if (req.query.max_seats) filters.seats.$lte = parseInt(req.query.max_seats);
+    }
     if (req.query.min_price || req.query.max_price) {
       filters.daily_rate = {};
       if (req.query.min_price) filters.daily_rate.$gte = parseInt(req.query.min_price);
@@ -78,6 +84,44 @@ router.get('/available/list', async (req, res) => {
 
     const result = await vehicleService.getAvailableVehicles(filters, page, limit, sort);
     res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/search/list', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || '-created_at';
+
+    const filters = {};
+    if (req.query.q) filters.keyword = req.query.q;
+    if (req.query.vehicle_type) filters.vehicle_type = req.query.vehicle_type;
+    if (req.query.brand) filters.brand = req.query.brand;
+    if (req.query.fuel_type) filters.fuel_type = req.query.fuel_type;
+    if (req.query.transmission) filters.transmission = req.query.transmission;
+    if (req.query.is_available === 'true') filters.is_available = true;
+    if (req.query.is_available === 'false') filters.is_available = false;
+    if (req.query.min_price || req.query.max_price) {
+      filters.daily_rate = {};
+      if (req.query.min_price) filters.daily_rate.$gte = parseInt(req.query.min_price);
+      if (req.query.max_price) filters.daily_rate.$lte = parseInt(req.query.max_price);
+    }
+
+    const result = await vehicleService.searchVehicles(filters, page, limit, sort);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/search/suggestions', async (req, res) => {
+  try {
+    const keyword = req.query.q || '';
+    const limit = parseInt(req.query.limit) || 8;
+    const suggestions = await vehicleService.suggestKeywords(keyword, limit);
+    res.json({ data: suggestions });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -86,7 +86,29 @@ vehicle_schema.index({ owner_id: 1 });
 vehicle_schema.index({ is_available: 1 });
 vehicle_schema.index({ vehicle_type: 1 });
 vehicle_schema.index({ brand: 1 });
+vehicle_schema.index({ fuel_type: 1 });
+vehicle_schema.index({ transmission: 1 });
+vehicle_schema.index({ seats: 1 });
 vehicle_schema.index({ daily_rate: 1 });
 vehicle_schema.index({ created_at: -1 });
+vehicle_schema.index({ is_available: 1, vehicle_type: 1, daily_rate: 1, created_at: -1 });
+vehicle_schema.index({ is_available: 1, brand: 1, daily_rate: 1 });
+vehicle_schema.index(
+  {
+    brand: 'text',
+    model: 'text',
+    description: 'text',
+    license_plate: 'text'
+  },
+  {
+    name: 'vehicle_text_idx',
+    weights: {
+      brand: 8,
+      model: 6,
+      description: 2,
+      license_plate: 10
+    }
+  }
+);
 
 export default mongoose.model('Vehicle', vehicle_schema);
