@@ -14,6 +14,7 @@ import MyVehiclesPage from './pages/MyVehiclesPage';
 import AddVehiclePage from './pages/AddVehiclePage';
 import NotificationsPage from './pages/NotificationsPage';
 import DisputesPage from './pages/DisputesPage';
+import StatisticsPage from './pages/StatisticsPage';
 
 function App() {
   return (
@@ -77,6 +78,15 @@ function App() {
             element={
               <PrivateRoute>
                 <DisputesPage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/statistics"
+            element={
+              <PrivateRoute>
+                <StatisticsPage />
               </PrivateRoute>
             }
           />
