@@ -2,6 +2,9 @@ import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import compression from 'compression';
+import helmet from 'helmet';
+import { randomUUID } from 'crypto';
 
 import { authenticateToken } from './middleware/auth.js';
 import {
@@ -14,13 +17,30 @@ dotenv.config();
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || 8000;
 
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(compression());
 app.use(cors({
   origin: 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
   credentials: true
 }));
 
+app.use((req, res, next) => {
+  req.requestId = req.headers['x-request-id'] || randomUUID();
+  res.setHeader('X-Request-ID', req.requestId);
+  const startedAt = Date.now();
+
+  res.on('finish', () => {
+    const durationMs = Date.now() - startedAt;
+    console.log(
+      `[${req.requestId}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${durationMs}ms)`
+    );
+  });
+
+  next();
+});
 
 const services = {
   users: process.env.USER_SERVICE_URL,
@@ -37,70 +57,92 @@ const services = {
 
 app.use(generalLimiter);
 
-const proxy = (target) =>
-  createProxyMiddleware({
+const unavailableProxy = (serviceName) => (req, res) => {
+  res.status(503).json({
+    error: 'Service unavailable',
+    service: serviceName,
+    message: `${serviceName} is not configured`
+  });
+};
+
+const proxy = (serviceName) => {
+  const target = services[serviceName];
+
+  if (!target) {
+    return unavailableProxy(serviceName);
+  }
+
+  return createProxyMiddleware({
     target,
     changeOrigin: true,
     proxyTimeout: 30000,
     timeout: 30000,
+    onProxyReq(proxyReq, req) {
+      proxyReq.setHeader('X-Request-ID', req.requestId);
+    },
     onError(err, req, res) {
-      console.error('Proxy error:', err.message);
+      console.error(`[${req.requestId}] Proxy error (${serviceName}):`, err.message);
       res.status(502).json({
         error: 'Bad gateway',
+        service: serviceName,
+        request_id: req.requestId,
         message: err.message
       });
     }
   });
+};
 
 // Health check
 app.get('/health', (req, res) => {
   res.json({
     message: 'API Gateway is running',
-    port: PORT
+    port: PORT,
+    services
   });
 });
 
 // ================= USER ROUTES =================
 
 // public
-app.use('/api/users/register', authLimiter, proxy(services.users));
-app.use('/api/users/login', authLimiter, proxy(services.users));
+app.use('/api/users/register', authLimiter, proxy('users'));
+app.use('/api/users/login', authLimiter, proxy('users'));
 
 // protected
-app.use('/api/users', authenticateToken, proxy(services.users));
+app.use('/api/users', authenticateToken, proxy('users'));
 
 // ================= VEHICLE ROUTES =================
 
 // public vehicle routes
-app.use('/api/vehicles/available/list', proxy(services.vehicles));
-app.use('/api/vehicles/owner', proxy(services.vehicles));
-app.use('/api/vehicles/:vehicleId', proxy(services.vehicles));
+app.use('/api/vehicles/available/list', proxy('vehicles'));
+app.use('/api/vehicles/search', proxy('vehicles'));
+app.use('/api/vehicles/owner', proxy('vehicles'));
+app.use('/api/vehicles/:vehicleId', proxy('vehicles'));
 
 // protected vehicle routes
-app.use('/api/vehicles', authenticateToken, proxy(services.vehicles));
+app.use('/api/vehicles', authenticateToken, proxy('vehicles'));
 
 // ================= OTHER SERVICES =================
 
-app.use('/api/rentals', authenticateToken, proxy(services.rentals));
+app.use('/api/rentals', authenticateToken, proxy('rentals'));
 
-app.use('/api/contracts', authenticateToken, proxy(services.contracts));
+app.use('/api/contracts', authenticateToken, proxy('contracts'));
 
 app.use(
   '/api/payments',
   authenticateToken,
   paymentLimiter,
-  proxy(services.payments)
+  proxy('payments')
 );
 
-app.use('/api/tracking', authenticateToken, proxy(services.tracking));
+app.use('/api/tracking', authenticateToken, proxy('tracking'));
 
-app.use('/api/disputes', authenticateToken, proxy(services.disputes));
+app.use('/api/disputes', authenticateToken, proxy('disputes'));
 
-app.use('/api/reviews', authenticateToken, proxy(services.reviews));
+app.use('/api/reviews', authenticateToken, proxy('reviews'));
 
-app.use('/api/notifications', authenticateToken, proxy(services.notifications));
+app.use('/api/notifications', authenticateToken, proxy('notifications'));
 
-app.use('/api/statistics', authenticateToken, proxy(services.statistics));
+app.use('/api/statistics', authenticateToken, proxy('statistics'));
 
 // 404 handler
 app.use((req, res) => {

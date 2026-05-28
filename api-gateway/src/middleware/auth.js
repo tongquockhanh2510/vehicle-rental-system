@@ -12,13 +12,9 @@ const publicRoutes = [
 ];
 
 export const authenticateToken = (req, res, next) => {
-  console.log('req.path:', req.path);
-  console.log('req.method:', req.method);
   const isPublic = publicRoutes.some(
     route => req.path === route.path && req.method === route.method
   );
-
-  console.log(isPublic)
 
   if (isPublic) return next();
 
