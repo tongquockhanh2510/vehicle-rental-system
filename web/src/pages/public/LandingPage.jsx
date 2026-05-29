@@ -16,7 +16,7 @@ import CarCard from '../../components/car/CarCard';
 import SectionHeader from '../../components/common/SectionHeader';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import { CITY_OPTIONS, getDistrictOptions } from '../../constants/locationOptions';
-import { VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
+import { VEHICLE_TYPE_FILTER_OPTIONS } from '../../constants/vehicle';
 import { pickArray } from '../../utils/formatters';
 import { getOwnerCta } from '../../utils/ownerCta';
 
@@ -204,7 +204,7 @@ export default function LandingPage() {
                 className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
               >
                 <option value="">Tất cả loại phương tiện</option>
-                {VEHICLE_TYPE_OPTIONS.filter((item) => item.value !== 'OTHER').map((item) => (
+                {VEHICLE_TYPE_FILTER_OPTIONS.map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
                   </option>

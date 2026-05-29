@@ -4,7 +4,7 @@ import {
   FUEL_TYPE_OPTIONS,
   TRANSMISSION_OPTIONS,
   VEHICLE_STATUS_OPTIONS,
-  VEHICLE_TYPE_OPTIONS
+  VEHICLE_TYPE_FILTER_OPTIONS
 } from '../../constants/vehicle';
 import {
   CITY_OPTIONS,
@@ -128,7 +128,7 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             >
               <option value="">Tất cả</option>
-              {VEHICLE_TYPE_OPTIONS.map((item) => (
+              {VEHICLE_TYPE_FILTER_OPTIONS.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
                 </option>
