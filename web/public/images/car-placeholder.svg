@@ -1,0 +1,20 @@
+﻿<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <g opacity="0.28">
+    <circle cx="212" cy="160" r="180" fill="#22D3EE"/>
+    <circle cx="980" cy="130" r="220" fill="#2563EB"/>
+    <circle cx="590" cy="700" r="260" fill="#0F172A"/>
+  </g>
+  <path d="M266 488C286 432 336 388 392 368L616 292C666 274 720 274 772 292L882 330C926 344 962 374 986 414L1038 500V610H986C978 662 934 702 878 702C822 702 778 662 770 610H438C430 662 386 702 330 702C274 702 230 662 222 610H168V532C168 520 174 508 184 500L266 488Z" fill="#0B2442" stroke="#93C5FD" stroke-width="10"/>
+  <circle cx="330" cy="610" r="76" fill="#0F172A" stroke="#38BDF8" stroke-width="10"/>
+  <circle cx="878" cy="610" r="76" fill="#0F172A" stroke="#38BDF8" stroke-width="10"/>
+  <rect x="485" y="354" width="274" height="96" rx="24" fill="#1E3A8A" stroke="#60A5FA" stroke-width="8"/>
+  <text x="600" y="760" text-anchor="middle" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="34" letter-spacing="4">RENTCAR PREMIUM</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#020617"/>
+      <stop offset="0.5" stop-color="#0B2442"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+</svg>

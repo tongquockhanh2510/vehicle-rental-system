@@ -1,0 +1,49 @@
+﻿export const STATUS_STYLES = {
+  AVAILABLE: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
+  PENDING: 'bg-amber-500/15 text-amber-300 border border-amber-400/40',
+  APPROVED: 'bg-blue-500/20 text-blue-200 border border-blue-400/40',
+  CONFIRMED: 'bg-blue-500/20 text-blue-200 border border-blue-400/40',
+  REJECTED: 'bg-rose-500/15 text-rose-300 border border-rose-400/40',
+  ACTIVE: 'bg-cyan-500/15 text-cyan-200 border border-cyan-400/40',
+  COMPLETED: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
+  CANCELLED: 'bg-slate-500/20 text-slate-200 border border-slate-400/30',
+  DISPUTED: 'bg-orange-500/20 text-orange-200 border border-orange-400/40',
+  REFUNDED: 'bg-violet-500/20 text-violet-200 border border-violet-400/40',
+  REVIEWING: 'bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-400/40',
+  PAID: 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/40',
+  OUT_OF_BOUNDARY: 'bg-red-500/20 text-red-200 border border-red-400/40',
+  IN_BOUNDARY: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
+  DEFAULT: 'bg-slate-500/20 text-slate-200 border border-slate-400/30'
+};
+
+export const STATUS_LABELS = {
+  AVAILABLE: 'Available',
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  CONFIRMED: 'Approved',
+  REJECTED: 'Rejected',
+  ACTIVE: 'Active',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+  DISPUTED: 'Disputed',
+  REFUNDED: 'Refunded',
+  REVIEWING: 'Reviewing',
+  PAID: 'Paid',
+  OUT_OF_BOUNDARY: 'Out of boundary',
+  IN_BOUNDARY: 'In boundary'
+};
+
+export function normalizeStatus(status) {
+  if (!status) return 'DEFAULT';
+  return String(status).toUpperCase();
+}
+
+export function getStatusStyle(status) {
+  const key = normalizeStatus(status);
+  return STATUS_STYLES[key] || STATUS_STYLES.DEFAULT;
+}
+
+export function getStatusLabel(status) {
+  const key = normalizeStatus(status);
+  return STATUS_LABELS[key] || key.replace(/_/g, ' ');
+}
