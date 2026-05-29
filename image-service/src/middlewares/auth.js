@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
 
-const publicKeyPath = path.resolve('./public.key');
+const publicKeyPath = path.resolve(process.env.JWT_PUBLIC_KEY_PATH || './public.key');
 const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 export const authenticateToken = (req, res, next) => {

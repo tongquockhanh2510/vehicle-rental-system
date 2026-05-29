@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CarFront } from 'lucide-react';
 import { vehicleApi } from '../../api';
@@ -7,7 +7,7 @@ import FilterPanel from '../../components/car/FilterPanel';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import SectionHeader from '../../components/common/SectionHeader';
-import { VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
+import { VEHICLE_TYPE_OPTIONS, normalizeVehicleTypeValue } from '../../constants/vehicle';
 import { normalizeLocationText } from '../../constants/locationOptions';
 import { mapMockVehicle, MOCK_VEHICLES } from '../../data/mockVehicles';
 import { pickArray } from '../../utils/formatters';
@@ -30,17 +30,14 @@ const defaultFilters = {
   status: ''
 };
 
-function normalizeVehicleType(value) {
-  const key = String(value || '').toUpperCase();
-  if (key === '7_SEAT_CAR') return 'SEVEN_SEAT_CAR';
-  return key;
-}
-
 function toLocationBlob(vehicle) {
   const raw = [
+    vehicle.city,
+    vehicle.district,
     vehicle.allowed_region,
     vehicle.location,
     vehicle.pickup_location,
+    vehicle.return_location,
     vehicle.pickup_area,
     vehicle.address
   ]
@@ -54,7 +51,7 @@ function applyClientFilters(items, filters) {
   const city = normalizeLocationText(filters.city);
   const district = normalizeLocationText(filters.district);
   const pickupArea = normalizeLocationText(filters.pickup_area);
-  const vehicleType = normalizeVehicleType(filters.vehicle_type);
+  const vehicleType = normalizeVehicleTypeValue(filters.vehicle_type);
   const minSeats = Number(filters.min_seats || 0);
   const minPrice = Number(filters.min_price || 0);
   const maxPrice = Number(filters.max_price || 0);
@@ -68,7 +65,7 @@ function applyClientFilters(items, filters) {
       `${vehicle.brand || ''} ${vehicle.model || ''} ${vehicle.license_plate || ''}`
     );
     const locationBlob = toLocationBlob(vehicle);
-    const type = normalizeVehicleType(vehicle.vehicle_type);
+    const type = normalizeVehicleTypeValue(vehicle.vehicle_type);
     const vehicleStatus = String(vehicle.status || (vehicle.is_available ? 'AVAILABLE' : 'PENDING')).toUpperCase();
     const rate = Number(vehicle.daily_rate || 0);
     const seats = Number(vehicle.seats || 0);
@@ -107,6 +104,7 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
     Object.keys(defaultFilters).forEach((key) => {
       incoming[key] = searchParams.get(key) || '';
     });
+    incoming.vehicle_type = normalizeVehicleTypeValue(incoming.vehicle_type);
     setFilters(incoming);
   }, [searchParams]);
 
@@ -120,6 +118,7 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
 
       const params = {
         ...nextFilters,
+        vehicle_type: normalizeVehicleTypeValue(nextFilters.vehicle_type),
         location: location || undefined,
         page: 1,
         limit: 60,
@@ -140,13 +139,13 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
       setAllVehicles(baseRows);
       setVehicles(filtered);
       if (!apiRows.length) {
-        setError('API chưa trả dữ liệu đầy đủ, hệ thống đang dùng dữ liệu mô phỏng để bạn kiểm thử luồng marketplace.');
+        setError('API chÆ°a tráº£ dá»¯ liá»‡u Ä‘áº§y Ä‘á»§, há»‡ thá»‘ng Ä‘ang dÃ¹ng dá»¯ liá»‡u mÃ´ phá»ng Ä‘á»ƒ báº¡n kiá»ƒm thá»­ luá»“ng marketplace.');
       }
     } catch (err) {
       const fallback = MOCK_VEHICLES.map(mapMockVehicle);
       setAllVehicles(fallback);
       setVehicles(applyClientFilters(fallback, nextFilters));
-      setError(err?.response?.data?.error || 'Không thể tải API, đã chuyển sang dữ liệu mô phỏng.');
+      setError(err?.response?.data?.error || 'KhÃ´ng thá»ƒ táº£i API, Ä‘Ã£ chuyá»ƒn sang dá»¯ liá»‡u mÃ´ phá»ng.');
     } finally {
       setLoading(false);
     }
@@ -165,8 +164,9 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
   const handleApply = () => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
-      if (String(value || '').trim()) {
-        params.set(key, value);
+      const normalizedValue = key === 'vehicle_type' ? normalizeVehicleTypeValue(value) : value;
+      if (String(normalizedValue || '').trim()) {
+        params.set(key, normalizedValue);
       }
     });
     setSearchParams(params);
@@ -180,22 +180,22 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
   };
 
   const onSelectCategory = (type) => {
-    const nextType = normalizeVehicleType(type);
+    const nextType = normalizeVehicleTypeValue(type);
     setFilters((prev) => ({ ...prev, vehicle_type: prev.vehicle_type === nextType ? '' : nextType }));
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Marketplace phương tiện"
-        subtitle="Giai đoạn đầu triển khai tại TP.HCM và Hà Nội, mở rộng theo khu vực khi nền tảng tăng trưởng thêm nguồn xe."
+        title="Marketplace phÆ°Æ¡ng tiá»‡n"
+        subtitle="Giai Ä‘oáº¡n Ä‘áº§u triá»ƒn khai táº¡i TP.HCM vÃ  HÃ  Ná»™i, má»Ÿ rá»™ng theo khu vá»±c khi ná»n táº£ng tÄƒng trÆ°á»Ÿng thÃªm nguá»“n xe."
       />
 
       <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Danh mục phương tiện</p>
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Danh má»¥c phÆ°Æ¡ng tiá»‡n</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {VEHICLE_TYPE_OPTIONS.filter((item) => item.value !== '7_SEAT_CAR').map((item) => {
-            const selected = normalizeVehicleType(filters.vehicle_type) === normalizeVehicleType(item.value);
+          {VEHICLE_TYPE_OPTIONS.map((item) => {
+            const selected = normalizeVehicleTypeValue(filters.vehicle_type) === normalizeVehicleTypeValue(item.value);
             return (
               <button
                 key={item.value}
@@ -216,9 +216,9 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3">
             <p className="text-sm text-slate-200">
-              {loading ? 'Đang tải danh sách xe...' : `${vehicles.length} phương tiện phù hợp`}
+              {loading ? 'Äang táº£i danh sÃ¡ch xe...' : `${vehicles.length} phÆ°Æ¡ng tiá»‡n phÃ¹ há»£p`}
             </p>
-            <p className="text-xs text-slate-400">Bộ lọc đang áp dụng: {activeFilterCount}</p>
+            <p className="text-xs text-slate-400">Bá»™ lá»c Ä‘ang Ã¡p dá»¥ng: {activeFilterCount}</p>
           </div>
 
           {error ? (
@@ -230,8 +230,8 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
           ) : vehicles.length === 0 ? (
             <EmptyState
               icon={CarFront}
-              title="Không có phương tiện phù hợp với bộ lọc"
-              description="Thử đổi thành phố/quận hoặc mở rộng điều kiện giá để xem thêm gợi ý phù hợp."
+              title="KhÃ´ng cÃ³ phÆ°Æ¡ng tiá»‡n phÃ¹ há»£p vá»›i bá»™ lá»c"
+              description="Thá»­ Ä‘á»•i thÃ nh phá»‘/quáº­n hoáº·c má»Ÿ rá»™ng Ä‘iá»u kiá»‡n giÃ¡ Ä‘á»ƒ xem thÃªm gá»£i Ã½ phÃ¹ há»£p."
             />
           ) : (
             <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">

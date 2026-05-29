@@ -1,9 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import IconResolver from '../navigation/IconResolver';
-import { getVehicleTypeLabel, VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
+import { getVehicleTypeLabel, normalizeVehicleTypeValue, VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
 
 export default function VehicleTypeBadge({ type, className = '' }) {
-  const key = String(type || '').toUpperCase();
+  const key = normalizeVehicleTypeValue(type);
   const found = VEHICLE_TYPE_OPTIONS.find((item) => item.value === key);
 
   return (

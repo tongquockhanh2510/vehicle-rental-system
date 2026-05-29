@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -18,6 +18,7 @@ import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import { CITY_OPTIONS, getDistrictOptions } from '../../constants/locationOptions';
 import { VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
 import { pickArray } from '../../utils/formatters';
+import { getOwnerCta } from '../../utils/ownerCta';
 
 const howSteps = [
   {
@@ -51,7 +52,7 @@ const platformMetrics = [
 ];
 
 export default function LandingPage() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { user, ownerStatus, isAuthenticated, isAdmin } = useAuth();
   const [videoFailed, setVideoFailed] = useState(false);
   const [featuredCars, setFeaturedCars] = useState([]);
   const [loadingCars, setLoadingCars] = useState(true);
@@ -101,6 +102,7 @@ export default function LandingPage() {
     const query = params.toString();
     return query ? `/vehicles?${query}` : '/vehicles';
   }, [heroSearch]);
+  const ownerCta = useMemo(() => getOwnerCta(user, ownerStatus), [user, ownerStatus]);
 
   if (isAuthenticated && isAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
@@ -149,10 +151,10 @@ export default function LandingPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  to="/become-owner"
+                  to={ownerCta.to}
                   className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                 >
-                  Đăng ký làm chủ xe
+                  {ownerCta.label}
                 </Link>
               </div>
             </div>
@@ -202,7 +204,7 @@ export default function LandingPage() {
                 className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
               >
                 <option value="">Tất cả loại phương tiện</option>
-                {VEHICLE_TYPE_OPTIONS.filter((item) => item.value !== '7_SEAT_CAR').map((item) => (
+                {VEHICLE_TYPE_OPTIONS.filter((item) => item.value !== 'OTHER').map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
                   </option>

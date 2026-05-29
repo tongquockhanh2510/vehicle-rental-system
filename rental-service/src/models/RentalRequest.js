@@ -50,6 +50,18 @@ const rental_request_schema = new mongoose.Schema(
       type: String,
       required: true
     },
+    city: {
+      type: String,
+      default: ''
+    },
+    district: {
+      type: String,
+      default: ''
+    },
+    allowed_region: {
+      type: String,
+      default: ''
+    },
     status: {
       type: String,
       enum: ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED'],

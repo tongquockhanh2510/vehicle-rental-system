@@ -9,7 +9,7 @@ const vehicle_schema = new mongoose.Schema(
     },
     vehicle_type: {
       type: String,
-      enum: ['CAR', 'MOTORCYCLE', 'VAN', 'TRUCK'],
+      enum: ['CAR', 'MOTORCYCLE', 'BICYCLE', 'PICKUP_TRUCK', 'SEVEN_SEATER', 'OTHER'],
       required: true
     },
     brand: {
@@ -32,11 +32,11 @@ const vehicle_schema = new mongoose.Schema(
     color: String,
     transmission: {
       type: String,
-      enum: ['MANUAL', 'AUTOMATIC']
+      enum: ['MANUAL', 'AUTOMATIC', 'NONE']
     },
     fuel_type: {
       type: String,
-      enum: ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']
+      enum: ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID', 'HUMAN_POWERED']
     },
     seats: Number,
     description: String,
@@ -49,9 +49,25 @@ const vehicle_schema = new mongoose.Schema(
       type: Number,
       required: true
     },
+    city: {
+      type: String,
+      default: ''
+    },
+    district: {
+      type: String,
+      default: ''
+    },
+    pickup_location: {
+      type: String,
+      default: ''
+    },
+    return_location: {
+      type: String,
+      default: ''
+    },
     allowed_region: {
       type: String,
-      enum: ['VIETNAM', 'INTERNATIONAL']
+      default: ''
     },
     is_available: {
       type: Boolean,
@@ -90,6 +106,8 @@ vehicle_schema.index({ fuel_type: 1 });
 vehicle_schema.index({ transmission: 1 });
 vehicle_schema.index({ seats: 1 });
 vehicle_schema.index({ daily_rate: 1 });
+vehicle_schema.index({ city: 1, district: 1 });
+vehicle_schema.index({ pickup_location: 1 });
 vehicle_schema.index({ created_at: -1 });
 vehicle_schema.index({ is_available: 1, vehicle_type: 1, daily_rate: 1, created_at: -1 });
 vehicle_schema.index({ is_available: 1, brand: 1, daily_rate: 1 });

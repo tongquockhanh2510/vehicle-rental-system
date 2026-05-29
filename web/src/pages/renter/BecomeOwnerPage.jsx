@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ownerApplicationApi } from '../../api';
@@ -135,8 +135,8 @@ export default function BecomeOwnerPage() {
   if (normalizedOwnerStatus === OWNER_STATUSES.APPROVED) {
     return (
       <div className="space-y-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-6">
-        <h2 className="text-2xl font-bold text-white">Hồ sơ đã được duyệt</h2>
-        <p className="text-sm text-emerald-100">Bạn đã có quyền truy cập Cổng chủ xe để đăng phương tiện.</p>
+        <h2 className="text-2xl font-bold text-white">Hồ sơ chủ xe đã được duyệt</h2>
+        <p className="text-sm text-emerald-100">Bạn đã có thể sử dụng Cổng chủ xe để đăng và quản lý phương tiện.</p>
         <PremiumButton onClick={() => navigate('/owner/dashboard')}>Đi tới Cổng chủ xe</PremiumButton>
       </div>
     );

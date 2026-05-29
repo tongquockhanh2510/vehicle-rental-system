@@ -17,6 +17,24 @@ try {
 }
 
 export class VehicleService {
+  normalizeVehicleType(value) {
+    const raw = String(value || '').toUpperCase();
+    if (!raw) return '';
+    if (raw === 'MOTORBIKE') return 'MOTORCYCLE';
+    if (raw === 'SEVEN_SEAT_CAR' || raw === '7_SEAT_CAR') return 'SEVEN_SEATER';
+    if (raw === 'MINI_TRUCK') return 'OTHER';
+    if (raw === 'SUV' || raw === 'LUXURY_CAR' || raw === 'SELF_DRIVE_CAR' || raw === 'WITH_DRIVER_CAR' || raw === 'ELECTRIC_BIKE' || raw === 'MOUNTAIN_BIKE') return 'CAR';
+    return raw;
+  }
+
+  normalizeVehiclePayload(vehicleData = {}) {
+    const next = { ...vehicleData };
+    if (next.vehicle_type) {
+      next.vehicle_type = this.normalizeVehicleType(next.vehicle_type);
+    }
+    return next;
+  }
+
   cacheEnabled() {
     return redisClient?.isOpen;
   }
@@ -108,7 +126,8 @@ export class VehicleService {
         uploadedUrls.push(response.data.data.url);
       }
 
-      const vehicle = await vehicleRepository.create({ ...vehicleData, owner_id: userId, images: uploadedUrls });
+      const normalizedVehicleData = this.normalizeVehiclePayload(vehicleData);
+      const vehicle = await vehicleRepository.create({ ...normalizedVehicleData, owner_id: userId, images: uploadedUrls });
       await this.invalidateVehicleCaches();
       return vehicle;
     } catch (error) {
@@ -139,7 +158,8 @@ export class VehicleService {
   }
 
   async updateVehicle(vehicleId, updateData) {
-    const vehicle = await vehicleRepository.update(vehicleId, updateData);
+    const normalizedUpdateData = this.normalizeVehiclePayload(updateData);
+    const vehicle = await vehicleRepository.update(vehicleId, normalizedUpdateData);
 
     await this.setCache(`vehicles:detail:${vehicleId}`, vehicle, 3600);
     await this.invalidateVehicleCaches();
@@ -153,7 +173,7 @@ export class VehicleService {
 
   async getAvailableVehicles(filters = {}, page = 1, limit = 10, sort = '-created_at') {
     const keyword = filters.keyword || '';
-    const cleanFilters = { ...filters };
+    const cleanFilters = this.normalizeVehiclePayload({ ...filters });
     delete cleanFilters.keyword;
 
     const cacheKey = this.buildListCacheKey('vehicles:list:available', {
@@ -179,7 +199,7 @@ export class VehicleService {
 
   async searchVehicles(filters = {}, page = 1, limit = 10, sort = '-created_at') {
     const keyword = filters.keyword || '';
-    const cleanFilters = { ...filters };
+    const cleanFilters = this.normalizeVehiclePayload({ ...filters });
     delete cleanFilters.keyword;
 
     const cacheKey = this.buildListCacheKey('vehicles:list:search', {

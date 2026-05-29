@@ -1,6 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { BarChart3, CarFront, ClipboardList, Scale, WalletCards } from 'lucide-react';
 import { disputeApi, paymentApi, rentalApi, vehicleApi } from '../../api';
+import EmptyState from '../../components/common/EmptyState';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatCard from '../../components/common/StatCard';
 import { useAuth } from '../../context/AuthContext';
@@ -56,35 +58,66 @@ export default function OwnerDashboardPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Tổng quan chủ xe"
-        subtitle="Theo dõi hiệu suất đội xe, yêu cầu thuê, hợp đồng và doanh thu theo thời gian thực."
+        title="Tá»•ng quan chá»§ xe"
+        subtitle="Theo dÃµi hiá»‡u suáº¥t Ä‘á»™i xe, yÃªu cáº§u thuÃª, há»£p Ä‘á»“ng vÃ  doanh thu theo thá»i gian thá»±c."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Xe của tôi" value={loading ? '...' : vehicles.length} subtitle={`${activeVehicles} xe khả dụng`} icon={CarFront} />
-        <StatCard title="Yêu cầu thuê" value={loading ? '...' : rentals.length} subtitle={`${pendingRequests} đang chờ`} icon={ClipboardList} />
-        <StatCard title="Doanh thu" value={loading ? '...' : formatCurrency(revenue)} subtitle="Thanh toán đã hoàn tất" icon={WalletCards} />
-        <StatCard title="Khiếu nại" value={loading ? '...' : disputes.length} subtitle="Yêu cầu bồi thường đang xử lý" icon={Scale} />
+        <StatCard title="Xe cá»§a tÃ´i" value={loading ? '...' : vehicles.length} subtitle={`${activeVehicles} xe kháº£ dá»¥ng`} icon={CarFront} />
+        <StatCard title="YÃªu cáº§u thuÃª" value={loading ? '...' : rentals.length} subtitle={`${pendingRequests} Ä‘ang chá»`} icon={ClipboardList} />
+        <StatCard title="Doanh thu" value={loading ? '...' : formatCurrency(revenue)} subtitle="Thanh toÃ¡n Ä‘Ã£ hoÃ n táº¥t" icon={WalletCards} />
+        <StatCard title="Khiáº¿u náº¡i" value={loading ? '...' : disputes.length} subtitle="YÃªu cáº§u bá»“i thÆ°á»ng Ä‘ang xá»­ lÃ½" icon={Scale} />
       </div>
+
+      {!loading && vehicles.length === 0 ? (
+        <EmptyState
+          icon={CarFront}
+          title="Báº¡n chÆ°a cÃ³ phÆ°Æ¡ng tiá»‡n nÃ o"
+          description="HoÃ n táº¥t chiáº¿c xe Ä‘áº§u tiÃªn Ä‘á»ƒ báº¯t Ä‘áº§u nháº­n yÃªu cáº§u thuÃª vÃ  má»Ÿ bÃ¡o cÃ¡o doanh thu."
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/owner/vehicles/new"
+                className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
+              >
+                ÄÄƒng xe Ä‘áº§u tiÃªn
+              </Link>
+              <Link
+                to="/app/explore"
+                className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200"
+              >
+                Quay láº¡i thuÃª xe
+              </Link>
+            </div>
+          }
+        />
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="mb-3 text-lg font-semibold text-white">Yêu cầu gần đây</h3>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h3 className="text-lg font-semibold text-white">YÃªu cáº§u gáº§n Ä‘Ã¢y</h3>
+            <Link to="/owner/requests" className="text-xs font-semibold text-cyan-300 hover:text-cyan-200">Xem táº¥t cáº£</Link>
+          </div>
           <div className="space-y-2">
             {rentals.slice(0, 5).map((rental) => (
               <div key={rental._id} className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-200">
                 <div className="flex items-center justify-between gap-2">
-                  <p>Yêu cầu #{String(rental._id).slice(-6)}</p>
+                  <p>YÃªu cáº§u #{String(rental._id).slice(-6)}</p>
                   <span className="text-xs text-cyan-300">{rental.status}</span>
                 </div>
                 <p className="text-xs text-slate-400">Xe {String(rental.vehicle_id).slice(-6)}</p>
               </div>
             ))}
+            {!rentals.length ? <p className="text-sm text-slate-400">ChÆ°a cÃ³ yÃªu cáº§u thuÃª nÃ o.</p> : null}
           </div>
         </article>
 
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="mb-3 text-lg font-semibold text-white">Hiệu suất doanh thu</h3>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h3 className="text-lg font-semibold text-white">Hiá»‡u suáº¥t doanh thu</h3>
+            <Link to="/owner/payments" className="text-xs font-semibold text-cyan-300 hover:text-cyan-200">Xem thanh toÃ¡n</Link>
+          </div>
           <div className="space-y-2">
             {[1, 2, 3, 4, 5, 6].map((month) => {
               const value = Math.max(8, Math.min(100, 20 + month * 12));
@@ -100,9 +133,16 @@ export default function OwnerDashboardPage() {
           </div>
           <p className="mt-4 inline-flex items-center gap-2 rounded-lg border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">
             <BarChart3 className="h-3.5 w-3.5" />
-            Ảnh chụp nhanh lợi nhuận dựa trên dữ liệu quyết toán.
+            áº¢nh chá»¥p nhanh lá»£i nhuáº­n dá»±a trÃªn dá»¯ liá»‡u quyáº¿t toÃ¡n.
           </p>
         </article>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Link to="/owner/vehicles/new" className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100 hover:bg-cyan-500/20">ÄÄƒng xe má»›i</Link>
+        <Link to="/owner/requests" className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10">Xem yÃªu cáº§u tá»« ngÆ°á»i thuÃª</Link>
+        <Link to="/owner/payments" className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10">Xem thanh toÃ¡n nháº­n Ä‘Æ°á»£c</Link>
+        <Link to="/app/explore" className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10">Quay láº¡i thuÃª xe</Link>
       </div>
     </div>
   );

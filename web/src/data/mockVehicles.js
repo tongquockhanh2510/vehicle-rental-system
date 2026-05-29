@@ -1,4 +1,6 @@
-﻿export const MOCK_VEHICLES = [
+import { normalizeVehicleTypeValue } from '../constants/vehicle';
+
+export const MOCK_VEHICLES = [
   {
     _id: 'mock-001',
     brand: 'Toyota',
@@ -324,8 +326,14 @@
 ];
 
 export function mapMockVehicle(vehicle) {
+  const pickupLocation = vehicle.pickup_location || [vehicle.pickup_area, vehicle.district, vehicle.city].filter(Boolean).join(', ');
+  const returnLocation = vehicle.return_location || pickupLocation;
+
   return {
     ...vehicle,
+    vehicle_type: normalizeVehicleTypeValue(vehicle.vehicle_type),
+    pickup_location: pickupLocation,
+    return_location: returnLocation,
     images: [vehicle.image_url]
   };
 }

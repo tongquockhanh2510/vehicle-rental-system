@@ -1,6 +1,9 @@
 node_modules/
 .env
 .env.*
+.env.local
+!.env.example
+!**/.env.example
 .DS_Store
 *.log
 dist/
@@ -12,5 +15,8 @@ build/
 *~
 .git/
 *.key
+*.pem
+private.key
+keys/private.key
 e2e-result.json
 image-service/uploads/

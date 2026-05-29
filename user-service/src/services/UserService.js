@@ -8,6 +8,11 @@ import fs from 'fs';
 const userRepository = new UserRepository();
 
 export class UserService {
+  getPrivateKey() {
+    const privateKeyPath = process.env.JWT_PRIVATE_KEY_PATH || './private.key';
+    return fs.readFileSync(privateKeyPath, 'utf8');
+  }
+
   async register(userData) {
     const existingUser = await userRepository.findByEmail(userData.email);
     if (existingUser) {
@@ -39,7 +44,7 @@ export class UserService {
       throw new Error('Invalid password');
     }
 
-    const privateKey = fs.readFileSync("./private.key", "utf8");
+    const privateKey = this.getPrivateKey();
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },

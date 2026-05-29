@@ -2,9 +2,9 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { CarFront, LogOut, Menu, ShieldCheck, SwitchCamera } from 'lucide-react';
 import { PUBLIC_NAV } from '../../constants/navigationConfig';
-import { OWNER_STATUSES } from '../../constants/roles';
 import RoleBadge from '../common/RoleBadge';
 import { useAuth } from '../../context/AuthContext';
+import { getOwnerCta, getOwnerStatusHint } from '../../utils/ownerCta';
 
 function NavItem({ to, label }) {
   return (
@@ -21,19 +21,6 @@ function NavItem({ to, label }) {
   );
 }
 
-function getOwnerAction(ownerStatus) {
-  if (ownerStatus === OWNER_STATUSES.APPROVED) {
-    return { label: 'Cổng chủ xe', to: '/owner/dashboard', tone: 'blue' };
-  }
-  if (ownerStatus === OWNER_STATUSES.PENDING) {
-    return { label: 'Hồ sơ đang chờ duyệt', to: '/app/owner-application-status', tone: 'amber' };
-  }
-  if (ownerStatus === OWNER_STATUSES.REJECTED) {
-    return { label: 'Cập nhật hồ sơ chủ xe', to: '/app/become-owner', tone: 'rose' };
-  }
-  return { label: 'Đăng ký làm chủ xe', to: '/app/become-owner', tone: 'cyan' };
-}
-
 export default function Navbar({
   menu = [],
   isPublic = false,
@@ -44,11 +31,19 @@ export default function Navbar({
   const { user, role, ownerStatus, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
-  const ownerAction = useMemo(() => getOwnerAction(ownerStatus), [ownerStatus]);
+  const ownerAction = useMemo(() => getOwnerCta(user, ownerStatus), [user, ownerStatus]);
 
   const publicNav = useMemo(() => {
     if (isAdmin) return [];
-    if (!isAuthenticated) return PUBLIC_NAV;
+    if (!isAuthenticated) {
+      return PUBLIC_NAV.map((item) => {
+        if (item.to === '/become-owner') {
+          const guestOwnerAction = getOwnerCta(null, null);
+          return { ...item, label: guestOwnerAction.label, to: guestOwnerAction.to };
+        }
+        return item;
+      });
+    }
 
     return PUBLIC_NAV.map((item) => {
       if (item.to === '/become-owner') {
@@ -67,15 +62,7 @@ export default function Navbar({
           ? 'border border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
           : 'border border-cyan-400/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20';
 
-  const ownerStatusHint = !isAdmin
-    ? ownerStatus === OWNER_STATUSES.PENDING
-      ? 'Hồ sơ chủ xe: Đang chờ duyệt'
-      : ownerStatus === OWNER_STATUSES.REJECTED
-        ? 'Hồ sơ chủ xe: Cần cập nhật'
-        : ownerStatus === OWNER_STATUSES.APPROVED
-          ? 'Hồ sơ chủ xe: Đã duyệt'
-          : ''
-    : '';
+  const ownerStatusHint = !isAdmin ? getOwnerStatusHint(ownerStatus) : '';
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">

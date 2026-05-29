@@ -12,7 +12,7 @@ router.post('/', authenticateToken, upload.fields([{ name: 'images', maxCount: 1
       {
         ...req.body
       },
-      req.files.images,
+      req.files?.images || [],
       req.headers.authorization
     );
     res.status(201).json(vehicle);
@@ -71,6 +71,19 @@ router.get('/available/list', async (req, res) => {
     if (req.query.brand) filters.brand = req.query.brand;
     if (req.query.fuel_type) filters.fuel_type = req.query.fuel_type;
     if (req.query.transmission) filters.transmission = req.query.transmission;
+    if (req.query.city) filters.city = req.query.city;
+    if (req.query.district) filters.district = req.query.district;
+    if (req.query.allowed_region) filters.allowed_region = req.query.allowed_region;
+    if (req.query.location) {
+      const locationRegex = { $regex: req.query.location, $options: 'i' };
+      filters.$or = [
+        { pickup_location: locationRegex },
+        { return_location: locationRegex },
+        { city: locationRegex },
+        { district: locationRegex },
+        { allowed_region: locationRegex }
+      ];
+    }
     if (req.query.min_seats || req.query.max_seats) {
       filters.seats = {};
       if (req.query.min_seats) filters.seats.$gte = parseInt(req.query.min_seats);
@@ -101,6 +114,19 @@ router.get('/search/list', async (req, res) => {
     if (req.query.brand) filters.brand = req.query.brand;
     if (req.query.fuel_type) filters.fuel_type = req.query.fuel_type;
     if (req.query.transmission) filters.transmission = req.query.transmission;
+    if (req.query.city) filters.city = req.query.city;
+    if (req.query.district) filters.district = req.query.district;
+    if (req.query.allowed_region) filters.allowed_region = req.query.allowed_region;
+    if (req.query.location) {
+      const locationRegex = { $regex: req.query.location, $options: 'i' };
+      filters.$or = [
+        { pickup_location: locationRegex },
+        { return_location: locationRegex },
+        { city: locationRegex },
+        { district: locationRegex },
+        { allowed_region: locationRegex }
+      ];
+    }
     if (req.query.is_available === 'true') filters.is_available = true;
     if (req.query.is_available === 'false') filters.is_available = false;
     if (req.query.min_price || req.query.max_price) {

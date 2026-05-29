@@ -5,6 +5,7 @@ import RoleBadge from '../../components/common/RoleBadge';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
+import { getOwnerCta } from '../../utils/ownerCta';
 
 export default function ProfilePage() {
   const { user, role, ownerStatus } = useAuth();
@@ -16,16 +17,14 @@ export default function ProfilePage() {
     return 'OWNER_NONE';
   }, [ownerStatus]);
 
-  const ownerAction = useMemo(() => {
-    if (ownerStatus === 'APPROVED') return { to: '/owner/dashboard', label: 'Đi tới Cổng chủ xe' };
-    if (ownerStatus === 'PENDING') return { to: '/app/owner-application-status', label: 'Hồ sơ đang chờ duyệt' };
-    if (ownerStatus === 'REJECTED') return { to: '/app/become-owner', label: 'Cập nhật hồ sơ chủ xe' };
-    return { to: '/app/become-owner', label: 'Đăng ký làm chủ xe' };
-  }, [ownerStatus]);
+  const ownerAction = useMemo(() => getOwnerCta(user, ownerStatus), [user, ownerStatus]);
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Hồ sơ tài khoản" subtitle="Thông tin cá nhân, vai trò và trạng thái chủ xe trên nền tảng." />
+      <SectionHeader
+        title="Há»“ sÆ¡ tÃ i khoáº£n"
+        subtitle="ThÃ´ng tin cÃ¡ nhÃ¢n, vai trÃ² vÃ  tráº¡ng thÃ¡i chá»§ xe trÃªn ná»n táº£ng."
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
@@ -34,33 +33,33 @@ export default function ProfilePage() {
               <User className="h-5 w-5 text-cyan-200" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-white">{`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Chưa cập nhật'}</p>
-              <p className="text-sm text-slate-300">{user?.email || 'Chưa cập nhật email'}</p>
+              <p className="text-lg font-semibold text-white">{`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'ChÆ°a cáº­p nháº­t'}</p>
+              <p className="text-sm text-slate-300">{user?.email || 'ChÆ°a cáº­p nháº­t email'}</p>
             </div>
           </div>
 
           <div className="mt-4 grid gap-3 text-sm text-slate-200 md:grid-cols-2">
-            <p>Số điện thoại: <span className="font-semibold text-white">{user?.phone || 'Chưa cập nhật'}</span></p>
-            <p>Mã người dùng: <span className="font-semibold text-white">{String(user?._id || user?.id || '--').slice(-8)}</span></p>
-            <p className="flex items-center gap-2">Vai trò: <RoleBadge role={role} ownerStatus={ownerStatus} /></p>
-            <p className="flex items-center gap-2">Trạng thái chủ xe: <StatusBadge status={ownerBadgeStatus} /></p>
+            <p>Sá»‘ Ä‘iá»‡n thoáº¡i: <span className="font-semibold text-white">{user?.phone || 'ChÆ°a cáº­p nháº­t'}</span></p>
+            <p>MÃ£ ngÆ°á»i dÃ¹ng: <span className="font-semibold text-white">{String(user?._id || user?.id || '--').slice(-8)}</span></p>
+            <p className="flex items-center gap-2">Vai trÃ²: <RoleBadge role={role} ownerStatus={ownerStatus} /></p>
+            <p className="flex items-center gap-2">Tráº¡ng thÃ¡i chá»§ xe: <StatusBadge status={ownerBadgeStatus} /></p>
           </div>
         </article>
 
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="text-lg font-semibold text-white">Tiến trình trở thành chủ xe</h3>
+          <h3 className="text-lg font-semibold text-white">Tiáº¿n trÃ¬nh trá»Ÿ thÃ nh chá»§ xe</h3>
           <div className="mt-4 space-y-3 text-sm text-slate-200">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/40 p-3">
               <BadgeCheck className="h-4 w-4 text-cyan-300" />
-              <span>Đăng ký hồ sơ định danh và thông tin nhận tiền.</span>
+              <span>ÄÄƒng kÃ½ há»“ sÆ¡ Ä‘á»‹nh danh vÃ  thÃ´ng tin nháº­n tiá»n.</span>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/40 p-3">
               <Clock3 className="h-4 w-4 text-amber-300" />
-              <span>Admin thẩm định hồ sơ theo quy trình duyệt.</span>
+              <span>Admin tháº©m Ä‘á»‹nh há»“ sÆ¡ theo quy trÃ¬nh duyá»‡t.</span>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/40 p-3">
               <ShieldCheck className="h-4 w-4 text-emerald-300" />
-              <span>Chỉ khi được duyệt APPROVED, bạn mới vào được Cổng chủ xe.</span>
+              <span>Chá»‰ khi Ä‘Æ°á»£c duyá»‡t APPROVED, báº¡n má»›i vÃ o Ä‘Æ°á»£c Cá»•ng chá»§ xe.</span>
             </div>
           </div>
 

@@ -5,6 +5,20 @@ import axios from 'axios';
 const rentalRepository = new RentalRepository();
 const eventBus = new EventBus();
 
+function buildVehicleLocationSnapshot(vehicle = {}) {
+  const cityDistrict = [vehicle.district, vehicle.city].filter(Boolean).join(', ');
+  const pickupLocation = vehicle.pickup_location || cityDistrict || vehicle.allowed_region || 'Chưa cập nhật';
+  const returnLocation = vehicle.return_location || pickupLocation;
+
+  return {
+    pickup_location: pickupLocation,
+    return_location: returnLocation,
+    city: vehicle.city || '',
+    district: vehicle.district || '',
+    allowed_region: vehicle.allowed_region || ''
+  };
+}
+
 export class RentalService {
   async createRentalRequest(renterId, rentalData) {
     const vehicleRes = await axios.get(`${process.env.VEHICLE_SERVICE_URL}/api/vehicles/${rentalData.vehicle_id}`);
@@ -45,8 +59,12 @@ export class RentalService {
     const depositAmount = vehicle.deposit_amount;
     const platformFee = totalAmount * 0.04;
 
+    const locationSnapshot = buildVehicleLocationSnapshot(vehicle);
     const rental = await rentalRepository.create({
-      ...rentalData,
+      vehicle_id: rentalData.vehicle_id,
+      rental_start_date: startDate,
+      rental_end_date: endDate,
+      notes: rentalData.notes || '',
       renter_id: renterId,
       owner_id: vehicle.owner_id,
       daily_rate: dailyRate,
@@ -58,7 +76,8 @@ export class RentalService {
       model: vehicle.model,
       year: vehicle.year,
       license_plate: vehicle.license_plate,
-      images: vehicle.images
+      images: vehicle.images,
+      ...locationSnapshot
     });
 
     await eventBus.publish('rental_request_created', {
