@@ -67,6 +67,9 @@ export default function RentalRequestsPage() {
                       src={resolveImage(rental.images?.[0], 1)}
                       alt="Xe"
                       className="h-20 w-28 rounded-xl object-cover"
+                      onError={(event) => {
+                        event.currentTarget.src = resolveImage('', 2);
+                      }}
                     />
                     <div>
                       <p className="text-sm font-semibold text-white">Yêu cầu #{compactId(rental._id)}</p>

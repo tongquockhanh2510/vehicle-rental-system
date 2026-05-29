@@ -70,10 +70,12 @@ router.get('/owner/my-rentals', authenticateToken, async (req, res) => {
 
 router.post('/check-availability', authenticateToken, async (req, res) => {
   try {
+    const startDate = req.body.start_date || req.body.rental_start_date;
+    const endDate = req.body.end_date || req.body.rental_end_date;
     const available = await rentalService.checkAvailability(
       req.body.vehicle_id,
-      req.body.start_date,
-      req.body.end_date
+      startDate,
+      endDate
     );
     res.json({ available });
   } catch (error) {

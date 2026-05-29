@@ -101,6 +101,9 @@ export default function OwnerVehiclesPage() {
                 src={resolveImage(vehicle.images?.[0], Number(vehicle.year) || 0)}
                 alt={`${vehicle.brand} ${vehicle.model}`}
                 className="h-48 w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.src = resolveImage('', Number(vehicle.year) || 0);
+                }}
               />
               <div className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">

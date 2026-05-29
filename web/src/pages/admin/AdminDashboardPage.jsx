@@ -154,7 +154,14 @@ export default function AdminDashboardPage() {
               {topVehicles.length ? (
                 topVehicles.slice(0, 5).map((item, idx) => (
                   <div key={`${item.vehicle_id || idx}`} className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-2">
-                    <img src={resolveImage(item.image_url || item.images?.[0], idx)} alt="xe" className="h-12 w-16 rounded-lg object-cover" />
+                    <img
+                      src={resolveImage(item.image_url || item.images?.[0], idx)}
+                      alt="xe"
+                      className="h-12 w-16 rounded-lg object-cover"
+                      onError={(event) => {
+                        event.currentTarget.src = resolveImage('', idx + 5);
+                      }}
+                    />
                     <div className="flex-1 text-sm">
                       <p className="font-semibold text-white">{item.brand || 'Xe'} {item.model || ''}</p>
                       <p className="text-xs text-slate-400">Lượt thuê: {item.rental_count || item.total_rentals || 0}</p>

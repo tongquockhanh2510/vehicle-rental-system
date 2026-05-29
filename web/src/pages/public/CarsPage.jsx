@@ -139,13 +139,13 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
       setAllVehicles(baseRows);
       setVehicles(filtered);
       if (!apiRows.length) {
-        setError('API chÆ°a tráº£ dá»¯ liá»‡u Ä‘áº§y Ä‘á»§, há»‡ thá»‘ng Ä‘ang dÃ¹ng dá»¯ liá»‡u mÃ´ phá»ng Ä‘á»ƒ báº¡n kiá»ƒm thá»­ luá»“ng marketplace.');
+        setError('API chưa trả dữ liệu đầy đủ, hệ thống đang dùng dữ liệu mô phỏng để bạn kiểm thử luồng marketplace.');
       }
     } catch (err) {
       const fallback = MOCK_VEHICLES.map(mapMockVehicle);
       setAllVehicles(fallback);
       setVehicles(applyClientFilters(fallback, nextFilters));
-      setError(err?.response?.data?.error || 'KhÃ´ng thá»ƒ táº£i API, Ä‘Ã£ chuyá»ƒn sang dá»¯ liá»‡u mÃ´ phá»ng.');
+      setError(err?.response?.data?.error || 'Không thể tải API, đã chuyển sang dữ liệu mô phỏng.');
     } finally {
       setLoading(false);
     }
@@ -187,12 +187,12 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Marketplace phÆ°Æ¡ng tiá»‡n"
-        subtitle="Giai Ä‘oáº¡n Ä‘áº§u triá»ƒn khai táº¡i TP.HCM vÃ  HÃ  Ná»™i, má»Ÿ rá»™ng theo khu vá»±c khi ná»n táº£ng tÄƒng trÆ°á»Ÿng thÃªm nguá»“n xe."
+        title="Marketplace phương tiện"
+        subtitle="Giai đoạn đầu triển khai tại TP.HCM và Hà Nội, mở rộng theo khu vực khi nền tảng tăng trưởng thêm nguồn xe."
       />
 
       <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Danh má»¥c phÆ°Æ¡ng tiá»‡n</p>
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Danh mục phương tiện</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {VEHICLE_TYPE_OPTIONS.map((item) => {
             const selected = normalizeVehicleTypeValue(filters.vehicle_type) === normalizeVehicleTypeValue(item.value);
@@ -216,9 +216,9 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3">
             <p className="text-sm text-slate-200">
-              {loading ? 'Äang táº£i danh sÃ¡ch xe...' : `${vehicles.length} phÆ°Æ¡ng tiá»‡n phÃ¹ há»£p`}
+              {loading ? 'Đang tải danh sách xe...' : `${vehicles.length} phương tiện phù hợp`}
             </p>
-            <p className="text-xs text-slate-400">Bá»™ lá»c Ä‘ang Ã¡p dá»¥ng: {activeFilterCount}</p>
+            <p className="text-xs text-slate-400">Bộ lọc đang áp dụng: {activeFilterCount}</p>
           </div>
 
           {error ? (
@@ -230,8 +230,8 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
           ) : vehicles.length === 0 ? (
             <EmptyState
               icon={CarFront}
-              title="KhÃ´ng cÃ³ phÆ°Æ¡ng tiá»‡n phÃ¹ há»£p vá»›i bá»™ lá»c"
-              description="Thá»­ Ä‘á»•i thÃ nh phá»‘/quáº­n hoáº·c má»Ÿ rá»™ng Ä‘iá»u kiá»‡n giÃ¡ Ä‘á»ƒ xem thÃªm gá»£i Ã½ phÃ¹ há»£p."
+              title="Không có phương tiện phù hợp với bộ lọc"
+              description="Thử đổi thành phố/quận hoặc mở rộng điều kiện giá để xem thêm gợi ý phù hợp."
             />
           ) : (
             <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">

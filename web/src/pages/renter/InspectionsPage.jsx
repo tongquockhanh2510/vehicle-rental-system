@@ -168,7 +168,15 @@ export default function InspectionsPage() {
             {[...(selectedContract?.pickup_images || []), ...(selectedContract?.return_images || [])]
               .slice(0, 8)
               .map((image, idx) => (
-                <img key={`${image}-${idx}`} src={resolveImage(image, idx)} alt="kiem-tra-xe" className="h-16 w-full rounded-lg object-cover" />
+                <img
+                  key={`${image}-${idx}`}
+                  src={resolveImage(image, idx)}
+                  alt="kiem-tra-xe"
+                  className="h-16 w-full rounded-lg object-cover"
+                  onError={(event) => {
+                    event.currentTarget.src = resolveImage('', idx + 3);
+                  }}
+                />
               ))}
           </div>
         </div>

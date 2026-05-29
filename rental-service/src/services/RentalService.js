@@ -33,8 +33,10 @@ export class RentalService {
       throw new Error('Cannot rent your own vehicle');
     }
 
-    const startDate = new Date(rentalData.rental_start_date);
-    const endDate = new Date(rentalData.rental_end_date);
+    const startDateValue = rentalData.rental_start_date || rentalData.start_date;
+    const endDateValue = rentalData.rental_end_date || rentalData.end_date;
+    const startDate = new Date(startDateValue);
+    const endDate = new Date(endDateValue);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       throw new Error('Invalid rental dates');
@@ -64,7 +66,7 @@ export class RentalService {
       vehicle_id: rentalData.vehicle_id,
       rental_start_date: startDate,
       rental_end_date: endDate,
-      notes: rentalData.notes || '',
+      notes: rentalData.notes || rentalData.note || '',
       renter_id: renterId,
       owner_id: vehicle.owner_id,
       daily_rate: dailyRate,
