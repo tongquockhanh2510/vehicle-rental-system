@@ -88,7 +88,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
                 <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
               </div>
 
-              {!isAdmin ? (
+              {!isAdmin && ownerStatus !== OWNER_STATUSES.NONE ? (
                 <button
                   type="button"
                   onClick={() => navigate(ownerAction.to)}
