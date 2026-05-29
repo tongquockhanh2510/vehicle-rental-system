@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BadgeCheck,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../../utils/formatters";
-import { getVehicleImage } from "../../utils/image";
+import { getVehicleImage, resolveImage } from "../../utils/image";
 import VehicleTypeBadge from "../common/VehicleTypeBadge";
 import {
   getFuelTypeLabel,
@@ -78,9 +78,28 @@ function VehicleImagePlaceholder({ vehicle }) {
 
 export default function CarCard({ vehicle, to }) {
   const [imageError, setImageError] = useState(false);
+  const [fallbackTried, setFallbackTried] = useState(false);
+  const [imageSrc, setImageSrc] = useState("");
 
   const imageUrl = useMemo(() => getVehicleImage(vehicle), [vehicle]);
-  const canShowImage = Boolean(imageUrl) && !imageError;
+  const fallbackImage = useMemo(
+    () =>
+      resolveImage(
+        "",
+        Number(vehicle?.year) || Number(vehicle?.seats) || 1,
+        vehicle?.vehicle_type || "CAR",
+      ),
+    [vehicle?.vehicle_type, vehicle?.year, vehicle?.seats],
+  );
+
+  useEffect(() => {
+    const initialSrc = imageUrl || fallbackImage || "";
+    setImageSrc(initialSrc);
+    setImageError(!initialSrc);
+    setFallbackTried(!imageUrl);
+  }, [imageUrl, fallbackImage, vehicle?._id]);
+
+  const canShowImage = Boolean(imageSrc) && !imageError;
   const rawStatus = String(vehicle?.status || "").toUpperCase();
   const status = vehicle?.is_available ? "AVAILABLE" : rawStatus || "PENDING";
   const rating = Number(vehicle?.rating || 4.8).toFixed(1);
@@ -100,11 +119,18 @@ export default function CarCard({ vehicle, to }) {
       <div className="relative h-56 w-full overflow-hidden rounded-t-2xl bg-slate-950/80">
         {canShowImage ? (
           <img
-            src={imageUrl}
+            src={imageSrc}
             alt={`${vehicle?.brand || "Phương tiện"} ${vehicle?.model || ""}`.trim()}
             loading="lazy"
             className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
-            onError={() => setImageError(true)}
+            onError={() => {
+              if (!fallbackTried && fallbackImage && imageSrc !== fallbackImage) {
+                setImageSrc(fallbackImage);
+                setFallbackTried(true);
+                return;
+              }
+              setImageError(true);
+            }}
           />
         ) : (
           <VehicleImagePlaceholder vehicle={vehicle} />

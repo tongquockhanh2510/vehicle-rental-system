@@ -61,10 +61,48 @@ export function resolveImage(imageUrl, seed = 0, vehicleType = "CAR") {
   return getFallbackCarImage(seed, vehicleType);
 }
 
+function pickImageFromCandidate(candidate) {
+  if (!candidate) return null;
+
+  if (typeof candidate === "string" && candidate.trim()) {
+    return candidate.trim();
+  }
+
+  if (typeof candidate === "object") {
+    const objectValue =
+      candidate.url ||
+      candidate.src ||
+      candidate.image_url ||
+      candidate.image ||
+      candidate.location;
+    if (typeof objectValue === "string" && objectValue.trim()) {
+      return objectValue.trim();
+    }
+  }
+
+  return null;
+}
+
 export function getVehicleImage(vehicle) {
-  const candidates = [vehicle?.images?.[0], vehicle?.image_url, vehicle?.image];
-  const found = candidates.find(
-    (item) => typeof item === "string" && item.trim().length > 0,
-  );
-  return found?.trim() || null;
+  const listCandidates = Array.isArray(vehicle?.images)
+    ? vehicle.images
+    : vehicle?.images
+      ? [vehicle.images]
+      : [];
+
+  const extraCandidates = [
+    vehicle?.image_url,
+    vehicle?.image,
+    vehicle?.thumbnail,
+    vehicle?.photo_url,
+  ];
+
+  const allCandidates = [...listCandidates, ...extraCandidates];
+
+  for (const candidate of allCandidates) {
+    const url = pickImageFromCandidate(candidate);
+    if (url) return url;
+  }
+
+  return null;
 }
