@@ -9,6 +9,7 @@
   { value: 'MINI_TRUCK', label: 'Xe tải nhỏ', icon: 'Truck' },
   { value: 'LUXURY_CAR', label: 'Xe sang', icon: 'Gem' },
   { value: 'SUV', label: 'SUV', icon: 'CarFront' },
+  { value: 'SEVEN_SEAT_CAR', label: 'Xe 7 chỗ', icon: 'Users' },
   { value: '7_SEAT_CAR', label: 'Xe 7 chỗ', icon: 'Users' },
   { value: 'SELF_DRIVE_CAR', label: 'Xe tự lái', icon: 'Navigation' },
   { value: 'WITH_DRIVER_CAR', label: 'Xe có tài xế', icon: 'User' }
@@ -36,7 +37,8 @@ export const VEHICLE_STATUS_OPTIONS = [
 ];
 
 export function getVehicleTypeLabel(value) {
-  const key = String(value || '').toUpperCase();
+  const raw = String(value || '').toUpperCase();
+  const key = raw === '7_SEAT_CAR' ? 'SEVEN_SEAT_CAR' : raw;
   const found = VEHICLE_TYPE_OPTIONS.find((item) => item.value === key);
   return found?.label || 'Chưa cập nhật';
 }

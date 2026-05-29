@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import { RequireAuth, RequireOwnerApproved, RequireRole } from './components/routing/RouteGuards';
+import { AdminProtectedRoute, OwnerProtectedRoute, ProtectedRoute, RequireRole } from './components/routing/RouteGuards';
 import { AdminLayout, OwnerLayout, PublicLayout, UserLayout } from './components/layout';
 
 import LandingPage from './pages/public/LandingPage';
@@ -76,11 +76,11 @@ function App() {
             <Route
               path="/app"
               element={
-                <RequireAuth>
+                <ProtectedRoute>
                   <RequireRole roles={[ROLES.USER]}>
                     <UserLayout />
                   </RequireRole>
-                </RequireAuth>
+                </ProtectedRoute>
               }
             >
               <Route index element={<AppOverviewPage />} />
@@ -103,13 +103,13 @@ function App() {
             <Route
               path="/owner"
               element={
-                <RequireAuth>
+                <ProtectedRoute>
                   <RequireRole roles={[ROLES.USER]}>
-                    <RequireOwnerApproved>
+                    <OwnerProtectedRoute>
                       <OwnerLayout />
-                    </RequireOwnerApproved>
+                    </OwnerProtectedRoute>
                   </RequireRole>
-                </RequireAuth>
+                </ProtectedRoute>
               }
             >
               <Route index element={<Navigate to="dashboard" replace />} />
@@ -130,11 +130,9 @@ function App() {
             <Route
               path="/admin"
               element={
-                <RequireAuth>
-                  <RequireRole roles={[ROLES.ADMIN]}>
-                    <AdminLayout />
-                  </RequireRole>
-                </RequireAuth>
+                <AdminProtectedRoute>
+                  <AdminLayout />
+                </AdminProtectedRoute>
               }
             >
               <Route index element={<Navigate to="dashboard" replace />} />

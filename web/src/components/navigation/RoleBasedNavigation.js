@@ -1,4 +1,4 @@
-﻿import { ADMIN_MENU, OWNER_MENU, PUBLIC_NAV, RENTER_MENU } from '../../constants/menus';
+﻿import { ADMIN_MENU, PUBLIC_NAV, RENTER_MENU } from '../../constants/navigationConfig';
 import { OWNER_STATUSES, ROLES } from '../../constants/roles';
 
 export function getNavigationForRole({ isAuthenticated, role, ownerStatus }) {
@@ -11,7 +11,7 @@ export function getNavigationForRole({ isAuthenticated, role, ownerStatus }) {
   }
 
   if (ownerStatus === OWNER_STATUSES.APPROVED) {
-    return { navbar: RENTER_MENU, sidebar: RENTER_MENU, ownerSidebar: OWNER_MENU, portal: 'RENTER_OWNER' };
+    return { navbar: RENTER_MENU, sidebar: RENTER_MENU, ownerEntry: '/owner/dashboard', portal: 'RENTER_OWNER' };
   }
 
   return { navbar: RENTER_MENU, sidebar: RENTER_MENU, portal: 'RENTER' };

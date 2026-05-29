@@ -1,7 +1,7 @@
 ﻿import React, { useMemo } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { CarFront, LogOut, Menu, ShieldCheck, SwitchCamera } from 'lucide-react';
-import { PUBLIC_NAV } from '../../constants/menus';
+import { PUBLIC_NAV } from '../../constants/navigationConfig';
 import { OWNER_STATUSES } from '../../constants/roles';
 import RoleBadge from '../common/RoleBadge';
 import { useAuth } from '../../context/AuthContext';
@@ -21,39 +21,44 @@ function NavItem({ to, label }) {
   );
 }
 
+function getOwnerAction(ownerStatus) {
+  if (ownerStatus === OWNER_STATUSES.APPROVED) {
+    return { label: '\u0043\u1ed5\u006e\u0067 \u0063\u0068\u1ee7 \u0078\u0065', to: '/owner/dashboard', tone: 'blue' };
+  }
+  if (ownerStatus === OWNER_STATUSES.PENDING) {
+    return { label: '\u0048\u1ed3 \u0073\u01a1 \u0063\u0068\u1ee7 \u0078\u0065 \u0111\u0061\u006e\u0067 \u0064\u0075\u0079\u1ec7\u0074', to: '/app/owner-application-status', tone: 'amber' };
+  }
+  if (ownerStatus === OWNER_STATUSES.REJECTED) {
+    return { label: '\u0043\u1ead\u0070 \u006e\u0068\u1ead\u0074 \u0068\u1ed3 \u0073\u01a1 \u0063\u0068\u1ee7 \u0078\u0065', to: '/app/become-owner', tone: 'rose' };
+  }
+  return { label: '\u0110\u0103\u006e\u0067 \u006b\u00fd \u006c\u00e0\u006d \u0063\u0068\u1ee7 \u0078\u0065', to: '/app/become-owner', tone: 'cyan' };
+}
+
 export default function Navbar({ menu = [], isPublic = false, title }) {
-  const {
-    user,
-    role,
-    ownerStatus,
-    isAuthenticated,
-    isAdmin,
-    isOwnerApproved,
-    isOwnerPending,
-    logout
-  } = useAuth();
+  const { user, role, ownerStatus, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+
+  const ownerAction = useMemo(() => getOwnerAction(ownerStatus), [ownerStatus]);
 
   const publicNav = useMemo(() => {
     if (!isAuthenticated) return PUBLIC_NAV;
 
     return PUBLIC_NAV.map((item) => {
       if (item.to === '/become-owner') {
-        if (ownerStatus === OWNER_STATUSES.APPROVED) {
-          return { ...item, label: 'Cổng chủ xe', to: '/owner/dashboard' };
-        }
-        if (ownerStatus === OWNER_STATUSES.PENDING) {
-          return { ...item, label: 'Hồ sơ chủ xe', to: '/app/owner-application-status' };
-        }
-        return { ...item, label: 'Đăng ký làm chủ xe', to: '/app/become-owner' };
-      }
-      if (item.to === '/how-it-works') {
-        return { ...item, to: '/how-it-works' };
+        return { ...item, label: ownerAction.label, to: ownerAction.to };
       }
       return item;
     });
-  }, [isAuthenticated, ownerStatus]);
+  }, [isAuthenticated, ownerAction]);
+
+  const ownerToneClass =
+    ownerAction.tone === 'amber'
+      ? 'border border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20'
+      : ownerAction.tone === 'rose'
+        ? 'border border-rose-400/30 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20'
+        : ownerAction.tone === 'blue'
+          ? 'border border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
+          : 'border border-cyan-400/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20';
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
@@ -64,7 +69,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-white">RentCar Premium</p>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Nền tảng thuê phương tiện P2P</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">N\u1ec1n t\u1ea3ng thu\u00ea ph\u01b0\u01a1ng ti\u1ec7n P2P</p>
           </div>
         </Link>
 
@@ -75,45 +80,31 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
         </nav>
 
         <div className="flex items-center gap-2">
-          {title ? <span className="hidden text-xs uppercase tracking-[0.2em] text-slate-400 md:block">{title}</span> : null}
+          {title ? <span className="hidden text-xs uppercase tracking-[0.2em] text-slate-400 xl:block">{title}</span> : null}
           {isAuthenticated ? (
             <>
               <RoleBadge role={role} ownerStatus={ownerStatus} />
               <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 md:flex">
-                <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
+                <span className="text-sm text-white">{user?.first_name || user?.email || 'T\u00e0i kho\u1ea3n'}</span>
               </div>
 
               {!isAdmin ? (
                 <button
                   type="button"
                   onClick={() => navigate('/app')}
-                  className="hidden rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 md:inline-flex"
+                  className="hidden rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 lg:inline-flex"
                 >
-                  Cổng người thuê
+                  Renter Portal
                 </button>
               ) : null}
 
-              {!isAdmin && isOwnerApproved ? (
+              {!isAdmin ? (
                 <button
                   type="button"
-                  onClick={() => navigate('/owner/dashboard')}
-                  className="hidden items-center gap-1 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-500/20 md:inline-flex"
+                  onClick={() => navigate(ownerAction.to)}
+                  className={`hidden rounded-full px-3 py-1.5 text-xs font-semibold transition lg:inline-flex ${ownerToneClass}`}
                 >
-                  <SwitchCamera className="h-3.5 w-3.5" /> Cổng chủ xe
-                </button>
-              ) : null}
-
-              {!isAdmin && !isOwnerApproved ? (
-                <button
-                  type="button"
-                  onClick={() => navigate(isOwnerPending ? '/app/owner-application-status' : '/app/become-owner')}
-                  className={`hidden rounded-full px-3 py-1.5 text-xs font-semibold transition md:inline-flex ${
-                    isOwnerPending
-                      ? 'border border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20'
-                      : 'border border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
-                  }`}
-                >
-                  {isOwnerPending ? 'Hồ sơ chủ xe đang duyệt' : 'Đăng ký làm chủ xe'}
+                  {ownerAction.tone === 'blue' ? <span className="inline-flex items-center gap-1"><SwitchCamera className="h-3.5 w-3.5" />{ownerAction.label}</span> : ownerAction.label}
                 </button>
               ) : null}
 
@@ -121,9 +112,9 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
                 <button
                   type="button"
                   onClick={() => navigate('/admin/dashboard')}
-                  className="hidden items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20 md:inline-flex"
+                  className="hidden items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20 lg:inline-flex"
                 >
-                  <ShieldCheck className="h-3.5 w-3.5" /> Quản trị
+                  <ShieldCheck className="h-3.5 w-3.5" /> Admin Portal
                 </button>
               ) : null}
 
@@ -134,7 +125,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
                   navigate('/login');
                 }}
                 className="rounded-full border border-white/15 p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
-                aria-label="Đăng xuất"
+                aria-label="\u0110\u0103ng xu\u1ea5t"
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -142,17 +133,17 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           ) : (
             <>
               <Link to="/login" className="rounded-full px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10">
-                Đăng nhập
+                \u0110\u0103ng nh\u1eadp
               </Link>
               <Link
                 to="/register"
                 className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-400"
               >
-                Đăng ký
+                \u0110\u0103ng k\u00fd
               </Link>
             </>
           )}
-          <button className="rounded-full border border-white/15 p-2 text-slate-300 lg:hidden" aria-label="Mở menu">
+          <button className="rounded-full border border-white/15 p-2 text-slate-300 lg:hidden" aria-label="M\u1edf menu">
             <Menu className="h-4 w-4" />
           </button>
         </div>

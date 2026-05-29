@@ -195,6 +195,20 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             />
           </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Đánh giá tối thiểu</span>
+            <select
+              value={filters.rating || ''}
+              onChange={(event) => setField('rating', event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+            >
+              <option value="">Tất cả</option>
+              <option value="4.5">Từ 4.5 sao</option>
+              <option value="4">Từ 4 sao</option>
+              <option value="3.5">Từ 3.5 sao</option>
+            </select>
+          </label>
         </div>
       </div>
 
