@@ -13,6 +13,14 @@
   PAID: 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/40',
   OUT_OF_BOUNDARY: 'bg-red-500/20 text-red-200 border border-red-400/40',
   IN_BOUNDARY: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
+  MAINTENANCE: 'bg-slate-500/20 text-slate-200 border border-slate-400/30',
+  RENTED: 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/40',
+  OWNER_PENDING: 'bg-amber-500/15 text-amber-300 border border-amber-400/40',
+  OWNER_APPROVED: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
+  OWNER_REJECTED: 'bg-rose-500/15 text-rose-300 border border-rose-400/40',
+  HEALTHY: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
+  WARNING: 'bg-amber-500/15 text-amber-300 border border-amber-400/40',
+  DOWN: 'bg-rose-500/15 text-rose-300 border border-rose-400/40',
   DEFAULT: 'bg-slate-500/20 text-slate-200 border border-slate-400/30'
 };
 
@@ -30,7 +38,15 @@ export const STATUS_LABELS = {
   REVIEWING: 'Đang xem xét',
   PAID: 'Đã thanh toán',
   OUT_OF_BOUNDARY: 'Vượt phạm vi',
-  IN_BOUNDARY: 'Trong phạm vi'
+  IN_BOUNDARY: 'Trong phạm vi',
+  MAINTENANCE: 'Bảo trì',
+  RENTED: 'Đang cho thuê',
+  OWNER_PENDING: 'Chờ duyệt chủ xe',
+  OWNER_APPROVED: 'Đã duyệt chủ xe',
+  OWNER_REJECTED: 'Từ chối chủ xe',
+  HEALTHY: 'Ổn định',
+  WARNING: 'Cảnh báo',
+  DOWN: 'Ngừng hoạt động'
 };
 
 export function normalizeStatus(status) {

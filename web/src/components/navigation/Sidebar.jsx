@@ -6,7 +6,7 @@ import RoleBadge from '../common/RoleBadge';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ menu = [], title = 'Cổng làm việc' }) {
-  const { user, role, logout } = useAuth();
+  const { user, role, ownerStatus, logout } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -15,7 +15,7 @@ export default function Sidebar({ menu = [], title = 'Cổng làm việc' }) {
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{title}</p>
         <p className="mt-1 text-base font-semibold text-white">{user?.first_name || user?.email || 'Người dùng'}</p>
         <div className="mt-2">
-          <RoleBadge role={role} />
+          <RoleBadge role={role} ownerStatus={ownerStatus} />
         </div>
       </div>
 

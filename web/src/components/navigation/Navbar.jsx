@@ -1,7 +1,8 @@
-﻿import React from 'react';
+﻿import React, { useMemo } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { CarFront, LogOut, Menu, ShieldCheck } from 'lucide-react';
+import { CarFront, LogOut, Menu, ShieldCheck, SwitchCamera } from 'lucide-react';
 import { PUBLIC_NAV } from '../../constants/menus';
+import { OWNER_STATUSES } from '../../constants/roles';
 import RoleBadge from '../common/RoleBadge';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,9 +22,38 @@ function NavItem({ to, label }) {
 }
 
 export default function Navbar({ menu = [], isPublic = false, title }) {
-  const { user, role, isAuthenticated, isAdmin, logout } = useAuth();
+  const {
+    user,
+    role,
+    ownerStatus,
+    isAuthenticated,
+    isAdmin,
+    isOwnerApproved,
+    isOwnerPending,
+    logout
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const publicNav = useMemo(() => {
+    if (!isAuthenticated) return PUBLIC_NAV;
+
+    return PUBLIC_NAV.map((item) => {
+      if (item.to === '/become-owner') {
+        if (ownerStatus === OWNER_STATUSES.APPROVED) {
+          return { ...item, label: 'Cổng chủ xe', to: '/owner/dashboard' };
+        }
+        if (ownerStatus === OWNER_STATUSES.PENDING) {
+          return { ...item, label: 'Hồ sơ chủ xe', to: '/app/owner-application-status' };
+        }
+        return { ...item, label: 'Đăng ký làm chủ xe', to: '/app/become-owner' };
+      }
+      if (item.to === '/how-it-works') {
+        return { ...item, to: '/how-it-works' };
+      }
+      return item;
+    });
+  }, [isAuthenticated, ownerStatus]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
@@ -34,12 +64,12 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-white">RentCar Premium</p>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Nền tảng thuê xe P2P</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Nền tảng thuê phương tiện P2P</p>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {(isPublic ? PUBLIC_NAV : menu).map((item) => (
+          {(isPublic ? publicNav : menu).map((item) => (
             <NavItem key={item.to} to={item.to} label={item.label} />
           ))}
         </nav>
@@ -48,19 +78,45 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           {title ? <span className="hidden text-xs uppercase tracking-[0.2em] text-slate-400 md:block">{title}</span> : null}
           {isAuthenticated ? (
             <>
-              <RoleBadge role={role} />
+              <RoleBadge role={role} ownerStatus={ownerStatus} />
               <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 md:flex">
                 <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
               </div>
-              {!isAdmin && !location.pathname.startsWith('/owner') ? (
+
+              {!isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/app')}
+                  className="hidden rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 md:inline-flex"
+                >
+                  Cổng người thuê
+                </button>
+              ) : null}
+
+              {!isAdmin && isOwnerApproved ? (
                 <button
                   type="button"
                   onClick={() => navigate('/owner/dashboard')}
-                  className="hidden rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-500/20 md:inline-flex"
+                  className="hidden items-center gap-1 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-500/20 md:inline-flex"
                 >
-                  Cổng chủ xe
+                  <SwitchCamera className="h-3.5 w-3.5" /> Cổng chủ xe
                 </button>
               ) : null}
+
+              {!isAdmin && !isOwnerApproved ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(isOwnerPending ? '/app/owner-application-status' : '/app/become-owner')}
+                  className={`hidden rounded-full px-3 py-1.5 text-xs font-semibold transition md:inline-flex ${
+                    isOwnerPending
+                      ? 'border border-amber-400/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20'
+                      : 'border border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
+                  }`}
+                >
+                  {isOwnerPending ? 'Hồ sơ chủ xe đang duyệt' : 'Đăng ký làm chủ xe'}
+                </button>
+              ) : null}
+
               {isAdmin ? (
                 <button
                   type="button"
@@ -70,6 +126,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
                   <ShieldCheck className="h-3.5 w-3.5" /> Quản trị
                 </button>
               ) : null}
+
               <button
                 type="button"
                 onClick={() => {

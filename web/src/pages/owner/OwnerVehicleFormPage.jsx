@@ -4,6 +4,7 @@ import { Save } from 'lucide-react';
 import { vehicleApi } from '../../api';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import SectionHeader from '../../components/common/SectionHeader';
+import { FUEL_TYPE_OPTIONS, TRANSMISSION_OPTIONS, VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
 import { useToast } from '../../context/ToastContext';
 import { resolveImage } from '../../utils/image';
 
@@ -141,7 +142,9 @@ export default function OwnerVehicleFormPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <label className="text-sm text-slate-300">Loại xe
             <select value={form.vehicle_type} onChange={(event) => setField('vehicle_type', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none">
-              {['CAR', 'SUV', 'PICKUP', 'VAN', 'MOTORBIKE'].map((item) => <option key={item} value={item}>{item}</option>)}
+              {VEHICLE_TYPE_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
             </select>
           </label>
 
@@ -163,13 +166,17 @@ export default function OwnerVehicleFormPage() {
 
           <label className="text-sm text-slate-300">Nhiên liệu
             <select value={form.fuel_type} onChange={(event) => setField('fuel_type', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none">
-              {['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID'].map((item) => <option key={item} value={item}>{item}</option>)}
+              {FUEL_TYPE_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
             </select>
           </label>
 
           <label className="text-sm text-slate-300">Hộp số
             <select value={form.transmission} onChange={(event) => setField('transmission', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none">
-              {['AUTOMATIC', 'MANUAL'].map((item) => <option key={item} value={item}>{item}</option>)}
+              {TRANSMISSION_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
             </select>
           </label>
 

@@ -108,7 +108,7 @@ export default function OwnerVehiclesPage() {
                     <h3 className="text-lg font-semibold text-white">{vehicle.brand} {vehicle.model}</h3>
                     <p className="text-xs text-slate-400">{vehicle.year} • {vehicle.license_plate}</p>
                   </div>
-                  <StatusBadge status={vehicle.is_available ? 'AVAILABLE' : 'PENDING'} />
+                  <StatusBadge status={vehicle.is_available ? 'AVAILABLE' : String(vehicle.status || 'PENDING').toUpperCase()} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">

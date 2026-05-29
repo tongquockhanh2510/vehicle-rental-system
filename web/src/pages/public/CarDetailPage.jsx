@@ -20,7 +20,7 @@ const initialForm = {
   notes: ''
 };
 
-export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest = '/app/rental-requests' }) {
+export default function CarDetailPage({ backTo = '/vehicles', navigateAfterRequest = '/app/requests' }) {
   const { id: routeId, vehicleId: routeVehicleId } = useParams();
   const vehicleId = routeId || routeVehicleId;
   const navigate = useNavigate();
@@ -64,7 +64,9 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
   }, [vehicleId]);
 
   const rentalDays = useMemo(() => calculateDays(form.rental_start_date, form.rental_end_date), [form]);
+  const vehicleStatus = String(vehicle?.status || '').toUpperCase() || 'PENDING';
   const isOwner = String(vehicle?.owner_id || '') === String(userId || '');
+  const isAvailable = vehicle?.is_available && !['RENTED', 'MAINTENANCE'].includes(vehicleStatus);
 
   const handleInput = (name, value) => setForm((prev) => ({ ...prev, [name]: value }));
 
@@ -157,7 +159,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-xl font-semibold text-white">Tổng quan xe</h3>
-              <StatusBadge status={vehicle.is_available ? 'AVAILABLE' : 'PENDING'} />
+              <StatusBadge status={vehicle.is_available ? 'AVAILABLE' : vehicleStatus} />
             </div>
             <div className="mt-4 grid gap-3 text-sm text-slate-200 md:grid-cols-2">
               <p>Nhiên liệu: <span className="font-semibold text-white">{vehicle.fuel_type || 'PETROL'}</span></p>
@@ -211,10 +213,10 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
               Bạn là chủ xe này. Hãy vào cổng chủ xe để quản lý giá, lịch khả dụng và yêu cầu thuê.
               <button
                 type="button"
-                onClick={() => navigate('/owner/vehicles')}
+                onClick={() => navigate(`/owner/vehicles/${vehicle._id}/edit`)}
                 className="mt-3 block rounded-xl bg-blue-500 px-4 py-2 font-semibold text-white"
               >
-                Đi tới xe của tôi
+                Chỉnh sửa xe
               </button>
             </div>
           ) : (
@@ -284,11 +286,12 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
 
               <button
                 type="submit"
-                disabled={submitting || !vehicle.is_available}
+                disabled={submitting || !isAvailable}
                 className="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:scale-[1.01] hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-600"
               >
                 {submitting ? 'Đang gửi...' : 'Gửi yêu cầu thuê'}
               </button>
+              {!isAvailable ? <p className="text-xs text-amber-200">Phương tiện hiện không ở trạng thái sẵn sàng để nhận yêu cầu mới.</p> : null}
             </form>
           )}
         </aside>

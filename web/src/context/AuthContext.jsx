@@ -1,9 +1,27 @@
 ﻿import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../api';
-import { isAdminRole, normalizeRole, ROLES } from '../constants/roles';
+import {
+  isAdminRole,
+  isOwnerApproved,
+  isOwnerPending,
+  isOwnerRejected,
+  normalizeOwnerStatus,
+  normalizeRole,
+  OWNER_STATUSES,
+  ROLES
+} from '../constants/roles';
 import { getUserId } from '../utils/formatters';
 
 const AuthContext = createContext(null);
+
+function normalizeUserPayload(user) {
+  if (!user) return null;
+  return {
+    ...user,
+    role: normalizeRole(user.role),
+    owner_status: normalizeOwnerStatus(user.owner_status)
+  };
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -20,7 +38,7 @@ export function AuthProvider({ children }) {
 
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        setUser(normalizeUserPayload(JSON.parse(savedUser)));
       } catch {
         localStorage.removeItem('user');
       }
@@ -30,15 +48,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const persistUser = (nextUser, nextToken = token) => {
-    if (nextUser) {
-      localStorage.setItem('user', JSON.stringify(nextUser));
-      setUser(nextUser);
+    const normalized = normalizeUserPayload(nextUser);
+
+    if (normalized) {
+      localStorage.setItem('user', JSON.stringify(normalized));
+      setUser(normalized);
     }
 
     if (nextToken) {
       localStorage.setItem('token', nextToken);
       setToken(nextToken);
     }
+  };
+
+  const updateUser = (patch) => {
+    const next = normalizeUserPayload({ ...(user || {}), ...(patch || {}) });
+    if (!next) return;
+    localStorage.setItem('user', JSON.stringify(next));
+    setUser(next);
   };
 
   const login = (userData, tokenData) => {
@@ -62,23 +89,33 @@ export function AuthProvider({ children }) {
   };
 
   const role = normalizeRole(user?.role);
+  const ownerStatus = normalizeOwnerStatus(user?.owner_status);
 
   const value = useMemo(
     () => ({
       user,
       token,
       role,
+      ownerStatus,
       isAuthenticated: Boolean(token),
       isAdmin: isAdminRole(role),
+      isOwnerApproved: isOwnerApproved(ownerStatus),
+      isOwnerPending: isOwnerPending(ownerStatus),
+      isOwnerRejected: isOwnerRejected(ownerStatus),
       userId: getUserId(user),
       loading,
       login,
       logout,
+      updateUser,
       refreshProfile,
       hasRole: (...roles) => roles.map(normalizeRole).includes(role),
-      getDefaultPortalRoute: () => (role === ROLES.ADMIN ? '/admin/dashboard' : '/app/explore')
+      getDefaultPortalRoute: () => {
+        if (role === ROLES.ADMIN) return '/admin/dashboard';
+        if (ownerStatus === OWNER_STATUSES.APPROVED) return '/app';
+        return '/app';
+      }
     }),
-    [user, token, role, loading]
+    [user, token, role, ownerStatus, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

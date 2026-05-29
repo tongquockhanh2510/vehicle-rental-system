@@ -18,11 +18,14 @@ const defaultFilters = {
   min_seats: '',
   min_price: '',
   max_price: '',
-  availability_date: '',
-  rating: ''
+  start_date: '',
+  end_date: '',
+  rating: '',
+  driver_mode: '',
+  status: ''
 };
 
-export default function CarsPage({ detailBase = '/cars' }) {
+export default function CarsPage({ detailBase = '/vehicles' }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState(defaultFilters);
   const [vehicles, setVehicles] = useState([]);
@@ -44,10 +47,11 @@ export default function CarsPage({ detailBase = '/cars' }) {
       const params = {
         ...nextFilters,
         page: 1,
-        limit: 24
+        limit: 24,
+        availability_date: nextFilters.start_date || undefined
       };
       Object.keys(params).forEach((key) => {
-        if (params[key] === '') delete params[key];
+        if (params[key] === '' || params[key] === undefined) delete params[key];
       });
 
       const response = params.q
@@ -93,17 +97,17 @@ export default function CarsPage({ detailBase = '/cars' }) {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Sàn xe cho thuê"
-        subtitle="Khám phá xe chất lượng cao cho mọi nhu cầu: công tác, gia đình, du lịch đường dài."
+        title="Marketplace phương tiện"
+        subtitle="Khám phá ô tô, xe máy, xe điện, xe đạp và nhiều loại phương tiện khác theo nhu cầu di chuyển của bạn."
       />
 
-      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+      <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
         <FilterPanel filters={filters} onChange={setFilters} onReset={handleReset} onSubmit={handleApply} />
 
         <section className="space-y-4">
           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3">
             <p className="text-sm text-slate-200">
-              {loading ? 'Đang tải danh sách xe...' : `${vehicles.length} xe phù hợp`}
+              {loading ? 'Đang tải danh sách xe...' : `${vehicles.length} phương tiện phù hợp`}
             </p>
             <p className="text-xs text-slate-400">Bộ lọc đang áp dụng: {activeFilterCount}</p>
           </div>
@@ -117,7 +121,7 @@ export default function CarsPage({ detailBase = '/cars' }) {
           ) : vehicles.length === 0 ? (
             <EmptyState
               icon={CarFront}
-              title="Không có xe phù hợp với bộ lọc"
+              title="Không có phương tiện phù hợp với bộ lọc"
               description="Thử thay đổi bộ lọc hoặc mở rộng phạm vi giá để xem thêm lựa chọn phù hợp."
             />
           ) : (

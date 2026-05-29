@@ -1,14 +1,20 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
-import { Fuel, Gauge, MapPin, Star } from 'lucide-react';
+import { Fuel, Gauge, MapPin, Star, BadgeCheck } from 'lucide-react';
 import StatusBadge from '../common/StatusBadge';
 import { formatCurrency } from '../../utils/formatters';
 import { resolveImage } from '../../utils/image';
+import VehicleTypeBadge from '../common/VehicleTypeBadge';
+import { getFuelTypeLabel, getTransmissionLabel } from '../../constants/vehicle';
 
 export default function CarCard({ vehicle, to }) {
   const image = resolveImage(vehicle?.images?.[0], Number(vehicle?.year) || 0);
-  const status = vehicle?.is_available ? 'AVAILABLE' : vehicle?.status || 'PENDING';
+  const rawStatus = String(vehicle?.status || '').toUpperCase();
+  const status = vehicle?.is_available ? 'AVAILABLE' : rawStatus || 'PENDING';
   const rating = Number(vehicle?.rating || 4.8).toFixed(1);
+  const completedTrips = Number(vehicle?.completed_trips || vehicle?.booking_count || 0);
+  const isPopular = completedTrips >= 12 || Number(rating) >= 4.9;
+  const isVerifiedOwner = Boolean(vehicle?.owner_verified ?? true);
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70 shadow-[0_20px_60px_rgba(2,6,23,0.45)] transition hover:-translate-y-1 hover:border-cyan-400/40">
@@ -21,11 +27,12 @@ export default function CarCard({ vehicle, to }) {
             event.currentTarget.src = resolveImage('', Number(vehicle?.seats) || 1);
           }}
         />
-        <div className="absolute left-3 top-3">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <StatusBadge status={status} />
+          {isPopular ? <span className="rounded-full border border-amber-300/40 bg-amber-500/20 px-2 py-1 text-[11px] font-semibold text-amber-100">Phổ biến</span> : null}
         </div>
-        <div className="absolute right-3 top-3 rounded-full bg-slate-950/70 px-2 py-1 text-xs text-white backdrop-blur">
-          {vehicle?.vehicle_type || 'Xe'}
+        <div className="absolute right-3 top-3">
+          <VehicleTypeBadge type={vehicle?.vehicle_type} />
         </div>
       </div>
 
@@ -48,15 +55,15 @@ export default function CarCard({ vehicle, to }) {
         <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
           <span className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             <Fuel className="h-3.5 w-3.5 text-cyan-300" />
-            {vehicle?.fuel_type || 'PETROL'}
+            {getFuelTypeLabel(vehicle?.fuel_type)}
           </span>
           <span className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             <Gauge className="h-3.5 w-3.5 text-cyan-300" />
-            {vehicle?.transmission || 'AUTO'}
+            {getTransmissionLabel(vehicle?.transmission)}
           </span>
           <span className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             <MapPin className="h-3.5 w-3.5 text-cyan-300" />
-            {vehicle?.allowed_region || 'Khu vực trung tâm'}
+            {vehicle?.allowed_region || 'Chưa cập nhật'}
           </span>
           <span className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             <Star className="h-3.5 w-3.5 text-amber-300" />
@@ -64,8 +71,13 @@ export default function CarCard({ vehicle, to }) {
           </span>
         </div>
 
-        <div className="flex items-center justify-between pt-1">
-          <p className="text-xs text-slate-300">Tiền cọc: {formatCurrency(vehicle?.deposit_amount || 0)}</p>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+          <p className="text-slate-300">Tiền cọc: {formatCurrency(vehicle?.deposit_amount || 0)}</p>
+          <p className="text-slate-300">{completedTrips.toLocaleString('vi-VN')} chuyến hoàn tất</p>
+          {isVerifiedOwner ? <p className="inline-flex items-center gap-1 text-emerald-200"><BadgeCheck className="h-3.5 w-3.5" /> Chủ xe xác thực</p> : null}
+        </div>
+
+        <div className="flex justify-end">
           <Link
             to={to}
             className="rounded-xl bg-cyan-500 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-400"

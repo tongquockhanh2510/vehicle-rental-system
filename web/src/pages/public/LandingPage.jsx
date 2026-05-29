@@ -107,7 +107,7 @@ export default function LandingPage() {
                 <Sparkles className="h-3.5 w-3.5" /> Nền tảng di chuyển P2P cao cấp
               </p>
               <h1 className="text-4xl font-black leading-tight text-white md:text-6xl">
-                Nền tảng thuê xe P2P cao cấp
+                Premium P2P Vehicle Rental Platform
               </h1>
               <p className="max-w-2xl text-base text-slate-200 md:text-lg">
                 Thuê xe, cho thuê xe và quản lý hợp đồng minh bạch trên một nền tảng duy nhất.
@@ -115,17 +115,17 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
-                  to="/cars"
+                  to="/vehicles"
                   className="inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-300"
                 >
-                  Khám phá xe
+                  Khám phá phương tiện
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  to="/owner/vehicles/new"
+                  to="/become-owner"
                   className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                 >
-                  Đăng xe cho thuê
+                  Đăng ký làm chủ xe
                 </Link>
               </div>
             </div>
@@ -150,10 +150,10 @@ export default function LandingPage() {
                 <option>Van</option>
               </select>
               <Link
-                to="/cars"
+                to="/vehicles"
                 className="flex items-center justify-center rounded-xl bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
               >
-                Tìm xe ngay
+                Tìm phương tiện
               </Link>
             </div>
           </div>
@@ -239,7 +239,7 @@ export default function LandingPage() {
           title="Xe nổi bật"
           subtitle="Danh sách xe nổi bật phù hợp cho chuyến công tác, gia đình hoặc roadtrip dài ngày."
           action={
-            <Link to="/cars" className="text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">
+            <Link to="/vehicles" className="text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">
               Xem tất cả xe
             </Link>
           }
@@ -248,12 +248,12 @@ export default function LandingPage() {
         {loadingCars ? (
           <LoadingSkeleton rows={3} />
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {featuredCars.map((vehicle) => (
-              <CarCard key={vehicle._id} vehicle={vehicle} to={`/cars/${vehicle._id}`} />
-            ))}
-          </div>
-        )}
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {featuredCars.map((vehicle) => (
+                <CarCard key={vehicle._id} vehicle={vehicle} to={`/vehicles/${vehicle._id}`} />
+              ))}
+            </div>
+          )}
       </section>
 
       <footer className="rounded-2xl border border-white/10 bg-slate-900/60 p-6">

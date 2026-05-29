@@ -1,9 +1,17 @@
 ﻿import React from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
+import {
+  FUEL_TYPE_OPTIONS,
+  TRANSMISSION_OPTIONS,
+  VEHICLE_STATUS_OPTIONS,
+  VEHICLE_TYPE_OPTIONS
+} from '../../constants/vehicle';
 
-const defaultTypes = ['CAR', 'SUV', 'PICKUP', 'VAN', 'MOTORBIKE'];
-const defaultFuel = ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID'];
-const defaultTransmission = ['AUTOMATIC', 'MANUAL'];
+const DRIVER_MODE_OPTIONS = [
+  { value: '', label: 'Tất cả' },
+  { value: 'SELF_DRIVE', label: 'Tự lái' },
+  { value: 'WITH_DRIVER', label: 'Có tài xế' }
+];
 
 export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
   const setField = (field, value) => onChange((prev) => ({ ...prev, [field]: value }));
@@ -19,7 +27,7 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-white">
           <SlidersHorizontal className="h-4 w-4 text-cyan-300" />
-          <p className="text-sm font-semibold">Bộ lọc xe</p>
+          <p className="text-sm font-semibold">Bộ lọc phương tiện</p>
         </div>
         <button
           type="button"
@@ -39,24 +47,51 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
               type="text"
               value={filters.q || ''}
               onChange={(event) => setField('q', event.target.value)}
-              placeholder="Hãng xe, mẫu xe, biển số"
+              placeholder="Hãng, mẫu, biển số"
               className="w-full bg-transparent px-2 py-2 text-sm text-white outline-none"
             />
           </div>
         </label>
 
+        <label className="block">
+          <span className="mb-1 block text-xs text-slate-300">Địa điểm</span>
+          <input
+            type="text"
+            value={filters.location || ''}
+            onChange={(event) => setField('location', event.target.value)}
+            placeholder="TP.HCM, Hà Nội..."
+            className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+          />
+        </label>
+
         <div className="grid grid-cols-2 gap-2">
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-300">Loại xe</span>
+            <span className="mb-1 block text-xs text-slate-300">Loại phương tiện</span>
             <select
               value={filters.vehicle_type || ''}
               onChange={(event) => setField('vehicle_type', event.target.value)}
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             >
               <option value="">Tất cả</option>
-              {defaultTypes.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {VEHICLE_TYPE_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Trạng thái</span>
+            <select
+              value={filters.status || ''}
+              onChange={(event) => setField('status', event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+            >
+              <option value="">Tất cả</option>
+              {VEHICLE_STATUS_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </select>
@@ -70,9 +105,9 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             >
               <option value="">Tất cả</option>
-              {defaultFuel.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {FUEL_TYPE_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </select>
@@ -86,28 +121,43 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             >
               <option value="">Tất cả</option>
-              {defaultTransmission.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {TRANSMISSION_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-300">Số chỗ ngồi</span>
+            <span className="mb-1 block text-xs text-slate-300">Số ghế tối thiểu</span>
             <input
               type="number"
               min="1"
               value={filters.min_seats || ''}
               onChange={(event) => setField('min_seats', event.target.value)}
-              placeholder="Tối thiểu"
+              placeholder="4"
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-300">Giá thấp nhất</span>
+            <span className="mb-1 block text-xs text-slate-300">Chế độ lái</span>
+            <select
+              value={filters.driver_mode || ''}
+              onChange={(event) => setField('driver_mode', event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+            >
+              {DRIVER_MODE_OPTIONS.map((item) => (
+                <option key={item.value || 'ALL'} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Giá từ</span>
             <input
               type="number"
               value={filters.min_price || ''}
@@ -117,11 +167,31 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-300">Giá cao nhất</span>
+            <span className="mb-1 block text-xs text-slate-300">Giá đến</span>
             <input
               type="number"
               value={filters.max_price || ''}
               onChange={(event) => setField('max_price', event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Ngày nhận</span>
+            <input
+              type="date"
+              value={filters.start_date || ''}
+              onChange={(event) => setField('start_date', event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Ngày trả</span>
+            <input
+              type="date"
+              value={filters.end_date || ''}
+              onChange={(event) => setField('end_date', event.target.value)}
               className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
             />
           </label>
