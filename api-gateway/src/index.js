@@ -124,6 +124,7 @@ app.use('/api/users/login', authLimiter, proxy('users'));
 
 // protected
 app.use('/api/users', authenticateToken, proxy('users'));
+app.use('/api/owner-applications', authenticateToken, proxy('users'));
 
 // ================= VEHICLE ROUTES =================
 

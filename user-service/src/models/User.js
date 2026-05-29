@@ -45,6 +45,19 @@ const user_schema = new mongoose.Schema(
     bank_name: {
       type: String
     },
+    owner_status: {
+      type: String,
+      enum: ['NONE', 'PENDING', 'APPROVED', 'REJECTED'],
+      default: 'NONE'
+    },
+    owner_application_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'OwnerApplication'
+    },
+    rejection_reason: {
+      type: String,
+      default: ''
+    },
     role: {
       type: String,
       enum: ['USER', 'ADMIN'],
@@ -62,7 +75,7 @@ const user_schema = new mongoose.Schema(
     },
     kyc_status: {
       type: String,
-      enum: ['UNVERIFIED', 'APPROVED', 'REJECTED'],
+      enum: ['UNVERIFIED', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED'],
       default: 'UNVERIFIED'
     },
     is_active: {

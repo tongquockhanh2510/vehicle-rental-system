@@ -9,6 +9,14 @@ import path from 'path';
 const userRepository = new UserRepository();
 
 export class UserService {
+  normalizeOwnerStatus(value) {
+    const status = String(value || '').toUpperCase();
+    if (status === 'APPROVED') return 'APPROVED';
+    if (status === 'PENDING') return 'PENDING';
+    if (status === 'REJECTED') return 'REJECTED';
+    return 'NONE';
+  }
+
   getJwtAlgorithm() {
     return process.env.JWT_ALGORITHM || 'RS256';
   }
@@ -31,6 +39,7 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const user = await userRepository.create({
       ...userData,
+      owner_status: 'NONE',
       password: hashedPassword
     });
 
@@ -38,7 +47,8 @@ export class UserService {
       id: user._id,
       email: user.email,
       first_name: user.first_name,
-      role: user.role
+      role: user.role,
+      owner_status: this.normalizeOwnerStatus(user.owner_status)
     };
   }
 
@@ -71,7 +81,10 @@ export class UserService {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: user.role
+        role: user.role,
+        owner_status: this.normalizeOwnerStatus(user.owner_status),
+        owner_application_id: user.owner_application_id || null,
+        rejection_reason: user.rejection_reason || ''
       }
     };
   }

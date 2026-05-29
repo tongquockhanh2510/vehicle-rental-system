@@ -1,7 +1,8 @@
-﻿import apiClient from '../client';
+import apiClient from '../client';
 import { normalizeOwnerStatus, OWNER_STATUSES } from '../../constants/roles';
 import {
   findOwnerApplicationByUser,
+  findUserRecord,
   isSameUser,
   patchOwnerApplicationRecord,
   patchUserRecord,
@@ -69,27 +70,43 @@ function createLocalApplication(payload, user, status = OWNER_STATUSES.PENDING, 
   };
 }
 
-function normalizeApiApplication(data, payload, user) {
-  const raw = data?.application && typeof data.application === 'object' ? data.application : data;
+function extractOwnerEnvelope(responseData) {
+  const payload = responseData?.data && typeof responseData.data === 'object' ? responseData.data : responseData;
 
-  if (!raw || typeof raw !== 'object') {
-    return createLocalApplication(payload || {}, user || {}, OWNER_STATUSES.PENDING);
-  }
+  const ownerStatus = normalizeOwnerStatus(
+    payload?.owner_status || payload?.ownerStatus || payload?.status || OWNER_STATUSES.NONE
+  );
 
-  const status = normalizeOwnerStatus(raw.status || raw.owner_status || raw.ownerStatus || OWNER_STATUSES.PENDING);
+  const application =
+    payload?.application && typeof payload.application === 'object'
+      ? payload.application
+      : payload?._id
+        ? payload
+        : null;
 
-  return createLocalApplication(payload || raw.owner_profile || {}, user || {}, status, {
-    _id: raw._id || raw.id || `OWN-${Date.now()}`,
-    user_id: raw.user_id || raw.userId,
-    applicant_name: raw.applicant_name,
-    email: raw.email,
-    phone: raw.phone,
-    owner_profile: raw.owner_profile,
-    review_note: raw.review_note || raw.reviewNote || '',
-    rejection_reason: raw.rejection_reason || raw.rejectionReason || '',
-    created_at: raw.created_at || raw.createdAt,
-    updated_at: raw.updated_at || raw.updatedAt,
-    timeline: Array.isArray(raw.timeline) ? raw.timeline : undefined
+  return {
+    owner_status: ownerStatus,
+    application
+  };
+}
+
+function normalizeApiApplication(rawApp, user) {
+  if (!rawApp || typeof rawApp !== 'object') return null;
+
+  const status = normalizeOwnerStatus(rawApp.status || rawApp.owner_status || rawApp.ownerStatus || OWNER_STATUSES.PENDING);
+
+  return createLocalApplication(rawApp.owner_profile || {}, user || {}, status, {
+    _id: rawApp._id || rawApp.id || `OWN-${Date.now()}`,
+    user_id: rawApp.user_id || rawApp.userId,
+    applicant_name: rawApp.applicant_name,
+    email: rawApp.email,
+    phone: rawApp.phone,
+    owner_profile: rawApp.owner_profile,
+    review_note: rawApp.review_note || rawApp.reviewNote || '',
+    rejection_reason: rawApp.rejection_reason || rawApp.rejectionReason || '',
+    created_at: rawApp.created_at || rawApp.createdAt,
+    updated_at: rawApp.updated_at || rawApp.updatedAt,
+    timeline: Array.isArray(rawApp.timeline) ? rawApp.timeline : undefined
   });
 }
 
@@ -145,49 +162,68 @@ export const ownerApplicationApi = {
 
     try {
       const response = await apiClient.post('/api/owner-applications', payload);
-      const app = normalizeApiApplication(response.data, payload, user);
+      const envelope = extractOwnerEnvelope(response.data);
+      const status = normalizeOwnerStatus(envelope.owner_status || OWNER_STATUSES.PENDING);
+      const app = normalizeApiApplication(envelope.application, user) || createLocalApplication(payload, user, status);
+
       upsertFallbackRowsWithCurrentApp(app);
       upsertOwnerApplicationRecord(app);
-      syncUserOwnerStatus({ _id: app.user_id, email: app.email }, OWNER_STATUSES.PENDING, app._id);
-      return { ...response, data: app };
+      syncUserOwnerStatus({ _id: app.user_id, email: app.email }, status, app._id);
+
+      return { ...response, data: app, owner_status: status };
     } catch {
       const app = createLocalApplication(payload, user, OWNER_STATUSES.PENDING);
       upsertFallbackRowsWithCurrentApp(app);
       upsertOwnerApplicationRecord(app);
       syncUserOwnerStatus({ _id: app.user_id, email: app.email }, OWNER_STATUSES.PENDING, app._id);
-      return { data: app };
+      return { data: app, owner_status: OWNER_STATUSES.PENDING };
     }
   },
 
   async getMyOwnerApplication() {
     const user = readCurrentUser();
     if (!user) {
-      return { data: null };
+      return { data: null, owner_status: OWNER_STATUSES.NONE };
     }
 
     try {
       const response = await apiClient.get('/api/owner-applications/me');
-      if (response.data) {
-        const app = normalizeApiApplication(response.data, response.data?.owner_profile, user);
+      const envelope = extractOwnerEnvelope(response.data);
+      const status = normalizeOwnerStatus(envelope.owner_status);
+      const app = normalizeApiApplication(envelope.application, user);
+
+      syncUserOwnerStatus(user, status, app?._id || user?.owner_application_id || '', {
+        rejection_reason: app?.rejection_reason || ''
+      });
+
+      if (app) {
         upsertOwnerApplicationRecord(app);
-        syncUserOwnerStatus({ _id: app.user_id, email: app.email }, app.status, app._id);
-        return { ...response, data: app };
       }
+
+      return { ...response, data: app, owner_status: status };
     } catch {
-      // Fallback below.
-    }
+      const localApp = findOwnerApplicationByUser(user);
+      if (localApp) {
+        return { data: localApp, owner_status: normalizeOwnerStatus(localApp.status) };
+      }
 
-    const localApp = findOwnerApplicationByUser(user);
-    if (localApp) {
-      return { data: localApp };
+      return { data: null, owner_status: normalizeOwnerStatus(user.owner_status) };
     }
-
-    return { data: null };
   },
 
   async getOwnerApplications(params = {}) {
     try {
-      return await apiClient.get('/api/owner-applications', { params });
+      const response = await apiClient.get('/api/owner-applications', { params });
+      const rows = Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+      return {
+        ...response,
+        data: rows.map((item) => normalizeApiApplication(item, readCurrentUser() || {}) || item)
+      };
     } catch {
       let rows = readOwnerApplications();
       if (params.status) {
@@ -201,21 +237,22 @@ export const ownerApplicationApi = {
   async approveOwnerApplication(applicationId, payload = {}) {
     try {
       const response = await apiClient.put(`/api/owner-applications/${applicationId}/approve`, payload);
-      const app = normalizeApiApplication(response.data, response.data?.owner_profile, readCurrentUser() || {});
+      const envelope = extractOwnerEnvelope(response.data);
+      const app = normalizeApiApplication(envelope.application, readCurrentUser() || {});
       const existing = findApplicationById(applicationId);
       const normalized = {
         ...(existing || {}),
-        ...app,
-        _id: existing?._id || app._id || applicationId,
-        user_id: existing?.user_id || app.user_id,
-        email: existing?.email || app.email,
+        ...(app || {}),
+        _id: existing?._id || app?._id || applicationId,
+        user_id: existing?.user_id || app?.user_id,
+        email: existing?.email || app?.email,
         status: OWNER_STATUSES.APPROVED,
         rejection_reason: ''
       };
       upsertOwnerApplicationRecord(normalized);
       patchOwnerApplicationRecord(applicationId, normalized);
       syncUserOwnerStatus({ _id: normalized.user_id, email: normalized.email }, OWNER_STATUSES.APPROVED, normalized._id);
-      return { ...response, data: normalized };
+      return { ...response, data: normalized, owner_status: OWNER_STATUSES.APPROVED };
     } catch {
       const rows = readOwnerApplications();
       const target = rows.find((item) => String(item._id) === String(applicationId));
@@ -235,7 +272,7 @@ export const ownerApplicationApi = {
 
       patchOwnerApplicationRecord(applicationId, normalized);
       syncUserOwnerStatus({ _id: normalized.user_id, email: normalized.email }, OWNER_STATUSES.APPROVED, normalized._id);
-      return { data: normalized };
+      return { data: normalized, owner_status: OWNER_STATUSES.APPROVED };
     }
   },
 
@@ -243,17 +280,18 @@ export const ownerApplicationApi = {
     try {
       const response = await apiClient.put(`/api/owner-applications/${applicationId}/reject`, payload);
       const reason = payload.reason || payload.review_note || 'Hồ sơ chưa hợp lệ';
-      const app = normalizeApiApplication(response.data, response.data?.owner_profile, readCurrentUser() || {});
+      const envelope = extractOwnerEnvelope(response.data);
+      const app = normalizeApiApplication(envelope.application, readCurrentUser() || {});
       const existing = findApplicationById(applicationId);
       const normalized = {
         ...(existing || {}),
-        ...app,
-        _id: existing?._id || app._id || applicationId,
-        user_id: existing?.user_id || app.user_id,
-        email: existing?.email || app.email,
+        ...(app || {}),
+        _id: existing?._id || app?._id || applicationId,
+        user_id: existing?.user_id || app?.user_id,
+        email: existing?.email || app?.email,
         status: OWNER_STATUSES.REJECTED,
-        rejection_reason: app.rejection_reason || reason,
-        review_note: app.review_note || reason
+        rejection_reason: app?.rejection_reason || reason,
+        review_note: app?.review_note || reason
       };
       upsertOwnerApplicationRecord(normalized);
       patchOwnerApplicationRecord(applicationId, normalized);
@@ -263,7 +301,7 @@ export const ownerApplicationApi = {
         normalized._id,
         { rejection_reason: normalized.rejection_reason }
       );
-      return { ...response, data: normalized };
+      return { ...response, data: normalized, owner_status: OWNER_STATUSES.REJECTED };
     } catch {
       const rows = readOwnerApplications();
       const target = rows.find((item) => String(item._id) === String(applicationId));
@@ -289,7 +327,8 @@ export const ownerApplicationApi = {
         normalized._id,
         { rejection_reason: reason }
       );
-      return { data: normalized };
+      return { data: normalized, owner_status: OWNER_STATUSES.REJECTED };
     }
   }
 };
+
