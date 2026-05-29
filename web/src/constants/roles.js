@@ -28,11 +28,27 @@ export function isAdminRole(role) {
   return normalizeRole(role) === ROLES.ADMIN;
 }
 
-export function normalizeOwnerStatus(status) {
-  if (!status) return OWNER_STATUSES.NONE;
-  const value = String(status).toUpperCase();
+export function extractOwnerStatus(source) {
+  if (!source) return '';
+  if (typeof source === 'string') return source;
+
+  return (
+    source.owner_status ||
+    source.ownerStatus ||
+    source.owner_application_status ||
+    source.ownerApplicationStatus ||
+    source.status ||
+    ''
+  );
+}
+
+export function normalizeOwnerStatus(source) {
+  const raw = extractOwnerStatus(source);
+  if (!raw) return OWNER_STATUSES.NONE;
+
+  const value = String(raw).toUpperCase();
   if (value.includes('APPROVED')) return OWNER_STATUSES.APPROVED;
-  if (value.includes('PENDING')) return OWNER_STATUSES.PENDING;
+  if (value.includes('PENDING') || value.includes('UNDER_REVIEW')) return OWNER_STATUSES.PENDING;
   if (value.includes('REJECTED')) return OWNER_STATUSES.REJECTED;
   return OWNER_STATUSES.NONE;
 }

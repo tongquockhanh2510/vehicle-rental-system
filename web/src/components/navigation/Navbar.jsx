@@ -67,6 +67,16 @@ export default function Navbar({
           ? 'border border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
           : 'border border-cyan-400/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20';
 
+  const ownerStatusHint = !isAdmin
+    ? ownerStatus === OWNER_STATUSES.PENDING
+      ? 'Hồ sơ chủ xe: Đang chờ duyệt'
+      : ownerStatus === OWNER_STATUSES.REJECTED
+        ? 'Hồ sơ chủ xe: Cần cập nhật'
+        : ownerStatus === OWNER_STATUSES.APPROVED
+          ? 'Hồ sơ chủ xe: Đã duyệt'
+          : ''
+    : '';
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 md:px-6">
@@ -92,7 +102,10 @@ export default function Navbar({
             <>
               {showRoleBadge ? <RoleBadge role={role} ownerStatus={ownerStatus} /> : null}
               <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 md:flex">
-                <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
+                <div className="flex flex-col">
+                  <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
+                  {ownerStatusHint ? <span className="text-[10px] text-slate-400">{ownerStatusHint}</span> : null}
+                </div>
               </div>
 
               {!isAdmin && showOwnerAction ? (

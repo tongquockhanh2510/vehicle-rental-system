@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ownerApplicationApi } from '../../api';
@@ -8,6 +8,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import PremiumButton from '../../components/common/PremiumButton';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { normalizeOwnerStatus, OWNER_STATUSES } from '../../constants/roles';
 
 const steps = [
   { key: 'intro', label: 'Bước 1: Giới thiệu' },
@@ -37,10 +38,10 @@ const initialForm = {
 
 export default function BecomeOwnerPage() {
   const navigate = useNavigate();
-  const { user, ownerStatus, updateUser } = useAuth();
+  const { user, ownerStatus, updateUser, refreshProfile } = useAuth();
   const { pushToast } = useToast();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState(() => ({ ...initialForm, email: user?.email || '' }));
+  const [form, setForm] = useState(() => ({ ...initialForm, email: user?.email || '', phone: user?.phone || '' }));
   const [submitting, setSubmitting] = useState(false);
   const [application, setApplication] = useState(null);
 
@@ -50,8 +51,22 @@ export default function BecomeOwnerPage() {
         const response = await ownerApplicationApi.getMyOwnerApplication();
         const app = response.data || null;
         setApplication(app);
-        if (app?.owner_profile && ownerStatus === 'REJECTED') {
-          setForm((prev) => ({ ...prev, ...app.owner_profile, email: app.owner_profile.email || user?.email || prev.email }));
+
+        const appStatus = normalizeOwnerStatus(app?.status);
+        if (appStatus !== OWNER_STATUSES.NONE && appStatus !== normalizeOwnerStatus(ownerStatus)) {
+          updateUser({
+            owner_status: appStatus,
+            owner_application_id: app?._id || user?.owner_application_id || ''
+          });
+        }
+
+        if (app?.owner_profile && normalizeOwnerStatus(ownerStatus) === OWNER_STATUSES.REJECTED) {
+          setForm((prev) => ({
+            ...prev,
+            ...app.owner_profile,
+            email: app.owner_profile.email || user?.email || prev.email,
+            phone: app.owner_profile.phone || user?.phone || prev.phone
+          }));
         }
       } catch {
         setApplication(null);
@@ -59,7 +74,7 @@ export default function BecomeOwnerPage() {
     };
 
     loadApplication();
-  }, [ownerStatus, user?.email]);
+  }, [ownerStatus, user?.email, user?.owner_application_id, user?.phone]);
 
   const canNext = useMemo(() => {
     if (step === 2) {
@@ -86,14 +101,24 @@ export default function BecomeOwnerPage() {
         driving_license_name: form.driving_license?.name || '',
         accepted_terms: form.accepted_accuracy && form.accepted_platform_fee && form.accepted_dispute_policy
       };
-      await ownerApplicationApi.submitOwnerApplication(payload);
-      updateUser({ owner_status: 'PENDING' });
+
+      const result = await ownerApplicationApi.submitOwnerApplication(payload);
+      const appId = result?.data?._id || result?.data?.id || '';
+
+      updateUser({
+        owner_status: OWNER_STATUSES.PENDING,
+        owner_application_id: appId || user?.owner_application_id || ''
+      });
+
+      await refreshProfile();
+
       pushToast({
         tone: 'success',
         title: 'Đã gửi hồ sơ',
         message: 'Hồ sơ chủ xe đã được gửi. Vui lòng chờ admin phê duyệt.'
       });
-      navigate('/app/owner-application-status');
+
+      navigate('/app/owner-application-status', { replace: true });
     } catch (error) {
       pushToast({
         tone: 'error',
@@ -105,7 +130,9 @@ export default function BecomeOwnerPage() {
     }
   };
 
-  if (ownerStatus === 'APPROVED') {
+  const normalizedOwnerStatus = normalizeOwnerStatus(ownerStatus);
+
+  if (normalizedOwnerStatus === OWNER_STATUSES.APPROVED) {
     return (
       <div className="space-y-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-6">
         <h2 className="text-2xl font-bold text-white">Hồ sơ đã được duyệt</h2>
@@ -115,7 +142,7 @@ export default function BecomeOwnerPage() {
     );
   }
 
-  if (ownerStatus === 'PENDING') {
+  if (normalizedOwnerStatus === OWNER_STATUSES.PENDING) {
     return (
       <div className="space-y-6">
         <SectionHeader
@@ -142,7 +169,7 @@ export default function BecomeOwnerPage() {
       />
       <OwnerOnboardingStepper steps={steps} currentStep={step} />
 
-      {ownerStatus === 'REJECTED' ? (
+      {normalizedOwnerStatus === OWNER_STATUSES.REJECTED ? (
         <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100">
           <p className="font-semibold">Hồ sơ trước đây bị từ chối</p>
           <p className="mt-1">{application?.rejection_reason || application?.review_note || 'Vui lòng cập nhật thông tin và gửi lại hồ sơ.'}</p>
@@ -227,7 +254,7 @@ export default function BecomeOwnerPage() {
         {step === 5 ? (
           <div className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
             <p className="font-semibold">Sẵn sàng gửi hồ sơ</p>
-            <p className="mt-1">Sau khi gửi, hệ thống sẽ chuyển trạng thái OWNER_PENDING và đưa bạn đến trang theo dõi hồ sơ.</p>
+            <p className="mt-1">Sau khi gửi, hệ thống sẽ chuyển trạng thái thành PENDING và đưa bạn đến trang theo dõi hồ sơ.</p>
           </div>
         ) : null}
 
@@ -239,7 +266,7 @@ export default function BecomeOwnerPage() {
           ) : null}
 
           {step === 5 ? (
-            <PremiumButton onClick={submit} disabled={submitting}>{submitting ? 'Đang gửi...' : ownerStatus === 'REJECTED' ? 'Cập nhật hồ sơ' : 'Gửi hồ sơ'}</PremiumButton>
+            <PremiumButton onClick={submit} disabled={submitting}>{submitting ? 'Đang gửi...' : normalizedOwnerStatus === OWNER_STATUSES.REJECTED ? 'Cập nhật hồ sơ' : 'Gửi hồ sơ'}</PremiumButton>
           ) : null}
         </div>
       </div>

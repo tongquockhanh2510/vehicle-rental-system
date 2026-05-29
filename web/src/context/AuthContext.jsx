@@ -9,15 +9,25 @@ import {
   normalizeRole
 } from '../constants/roles';
 import { getUserId } from '../utils/formatters';
+import {
+  clearCurrentUser,
+  readCurrentUser,
+  resolveOwnerStatusForUser,
+  syncCurrentUserRecord,
+  upsertUserRecord,
+  writeCurrentUser
+} from '../utils/authStorage';
 
 const AuthContext = createContext(null);
 
 function normalizeUserPayload(user) {
   if (!user) return null;
+
+  const ownerStatus = resolveOwnerStatusForUser(user);
   return {
     ...user,
-    role: normalizeRole(user.role),
-    owner_status: normalizeOwnerStatus(user.owner_status)
+    role: normalizeRole(user.role || user.user_role),
+    owner_status: normalizeOwnerStatus(ownerStatus)
   };
 }
 
@@ -28,18 +38,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    const syncedCurrentUser = syncCurrentUserRecord();
+    const savedUser = syncedCurrentUser || readCurrentUser();
 
     if (savedToken) {
       setToken(savedToken);
     }
 
     if (savedUser) {
-      try {
-        setUser(normalizeUserPayload(JSON.parse(savedUser)));
-      } catch {
-        localStorage.removeItem('user');
-      }
+      setUser(normalizeUserPayload(savedUser));
     }
 
     setLoading(false);
@@ -49,7 +56,8 @@ export function AuthProvider({ children }) {
     const normalized = normalizeUserPayload(nextUser);
 
     if (normalized) {
-      localStorage.setItem('user', JSON.stringify(normalized));
+      upsertUserRecord(normalized);
+      writeCurrentUser(normalized);
       setUser(normalized);
     }
 
@@ -62,7 +70,8 @@ export function AuthProvider({ children }) {
   const updateUser = (patch) => {
     const next = normalizeUserPayload({ ...(user || {}), ...(patch || {}) });
     if (!next) return;
-    localStorage.setItem('user', JSON.stringify(next));
+    upsertUserRecord(next);
+    writeCurrentUser(next);
     setUser(next);
   };
 
@@ -72,7 +81,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearCurrentUser();
     setToken('');
     setUser(null);
   };
@@ -87,7 +96,7 @@ export function AuthProvider({ children }) {
   };
 
   const role = normalizeRole(user?.role);
-  const ownerStatus = normalizeOwnerStatus(user?.owner_status);
+  const ownerStatus = normalizeOwnerStatus(user);
 
   const value = useMemo(
     () => ({
