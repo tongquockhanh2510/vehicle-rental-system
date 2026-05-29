@@ -43,8 +43,8 @@ export default function AppOverviewPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Tổng quan người thuê"
-        subtitle="Theo dõi nhanh yêu cầu thuê, hợp đồng, thanh toán và thông báo để quản lý toàn bộ hành trình thuê xe."
+        title="Tổng quan tài khoản thuê xe"
+        subtitle="Theo dõi nhanh yêu cầu thuê, hợp đồng, thanh toán và thông báo trong cổng người thuê."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

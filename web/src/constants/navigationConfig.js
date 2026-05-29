@@ -5,7 +5,7 @@ export const PUBLIC_NAV = [
 ];
 
 export const RENTER_MENU = [
-  { label: 'Tổng quan', to: '/app', icon: 'LayoutDashboard' },
+  { label: 'Tổng quan', to: '/app/overview', icon: 'LayoutDashboard' },
   { label: 'Khám phá', to: '/app/explore', icon: 'Compass' },
   { label: 'Yêu cầu thuê', to: '/app/requests', icon: 'ClipboardList' },
   { label: 'Hợp đồng', to: '/app/contracts', icon: 'FileCheck2' },

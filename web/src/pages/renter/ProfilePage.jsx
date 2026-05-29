@@ -13,7 +13,7 @@ export default function ProfilePage() {
     if (ownerStatus === 'APPROVED') return 'OWNER_APPROVED';
     if (ownerStatus === 'PENDING') return 'OWNER_PENDING';
     if (ownerStatus === 'REJECTED') return 'OWNER_REJECTED';
-    return 'PENDING';
+    return 'OWNER_NONE';
   }, [ownerStatus]);
 
   const ownerAction = useMemo(() => {

@@ -111,8 +111,8 @@ export function AuthProvider({ children }) {
       hasRole: (...roles) => roles.map(normalizeRole).includes(role),
       getDefaultPortalRoute: () => {
         if (role === ROLES.ADMIN) return '/admin/dashboard';
-        if (ownerStatus === OWNER_STATUSES.APPROVED) return '/app';
-        return '/app';
+        if (ownerStatus === OWNER_STATUSES.APPROVED) return '/app/explore';
+        return '/app/explore';
       }
     }),
     [user, token, role, ownerStatus, loading]

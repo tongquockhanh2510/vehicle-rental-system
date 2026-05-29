@@ -18,6 +18,7 @@
   OWNER_PENDING: 'bg-amber-500/15 text-amber-300 border border-amber-400/40',
   OWNER_APPROVED: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
   OWNER_REJECTED: 'bg-rose-500/15 text-rose-300 border border-rose-400/40',
+  OWNER_NONE: 'bg-slate-500/20 text-slate-200 border border-slate-400/30',
   HEALTHY: 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40',
   WARNING: 'bg-amber-500/15 text-amber-300 border border-amber-400/40',
   DOWN: 'bg-rose-500/15 text-rose-300 border border-rose-400/40',
@@ -44,6 +45,7 @@ export const STATUS_LABELS = {
   OWNER_PENDING: 'Chờ duyệt chủ xe',
   OWNER_APPROVED: 'Đã duyệt chủ xe',
   OWNER_REJECTED: 'Từ chối chủ xe',
+  OWNER_NONE: 'Chưa đăng ký chủ xe',
   HEALTHY: 'Ổn định',
   WARNING: 'Cảnh báo',
   DOWN: 'Ngừng hoạt động'
