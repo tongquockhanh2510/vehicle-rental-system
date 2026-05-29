@@ -105,7 +105,7 @@ export default function OwnerApplicationStatusPage() {
         {resolvedStatus === 'REJECTED' ? (
           <div className="mt-4 rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">
             <p className="font-semibold">Lý do từ chối</p>
-            <p className="mt-1">{application.review_note || 'Chưa cập nhật lý do cụ thể.'}</p>
+            <p className="mt-1">{application.rejection_reason || application.review_note || 'Chưa cập nhật lý do cụ thể.'}</p>
           </div>
         ) : null}
 

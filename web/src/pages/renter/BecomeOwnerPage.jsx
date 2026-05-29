@@ -145,7 +145,7 @@ export default function BecomeOwnerPage() {
       {ownerStatus === 'REJECTED' ? (
         <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100">
           <p className="font-semibold">Hồ sơ trước đây bị từ chối</p>
-          <p className="mt-1">{application?.review_note || 'Vui lòng cập nhật thông tin và gửi lại hồ sơ.'}</p>
+          <p className="mt-1">{application?.rejection_reason || application?.review_note || 'Vui lòng cập nhật thông tin và gửi lại hồ sơ.'}</p>
           <div className="mt-3"><StatusBadge status="OWNER_REJECTED" /></div>
         </div>
       ) : null}

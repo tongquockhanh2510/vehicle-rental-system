@@ -41,6 +41,7 @@ function createApp(payload, user) {
     owner_profile: payload,
     status: 'PENDING',
     review_note: '',
+    rejection_reason: '',
     created_at: now,
     updated_at: now,
     timeline: [
@@ -70,6 +71,7 @@ function ensureSeedData(rows) {
       },
       status: 'PENDING',
       review_note: '',
+      rejection_reason: '',
       created_at: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
       updated_at: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
       timeline: [
@@ -139,6 +141,7 @@ export const ownerApplicationApi = {
           ...item,
           status: 'APPROVED',
           review_note: payload.review_note || '',
+          rejection_reason: '',
           updated_at: now,
           timeline: [
             { key: 'SUBMITTED', label: 'Đã gửi hồ sơ', status: 'COMPLETED', timestamp: item.created_at },
@@ -171,6 +174,7 @@ export const ownerApplicationApi = {
           ...item,
           status: 'REJECTED',
           review_note: payload.reason || payload.review_note || 'Hồ sơ chưa hợp lệ',
+          rejection_reason: payload.reason || payload.review_note || 'Hồ sơ chưa hợp lệ',
           updated_at: now,
           timeline: [
             { key: 'SUBMITTED', label: 'Đã gửi hồ sơ', status: 'COMPLETED', timestamp: item.created_at },
