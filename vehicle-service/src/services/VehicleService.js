@@ -112,6 +112,10 @@ export class VehicleService {
       await this.invalidateVehicleCaches();
       return vehicle;
     } catch (error) {
+      const upstream = error.response
+        ? ` status=${error.response.status} body=${JSON.stringify(error.response.data)}`
+        : '';
+      console.log(`Create vehicle upload error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to create vehicle: ${error.message}`);
     }
   }
@@ -284,6 +288,10 @@ export class VehicleService {
 
       return updatedVehicle;
     } catch (error) {
+      const upstream = error.response
+        ? ` status=${error.response.status} body=${JSON.stringify(error.response.data)}`
+        : '';
+      console.log(`Add vehicle images error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to upload vehicle images: ${error.message}`);
     }
   }
@@ -311,6 +319,10 @@ export class VehicleService {
 
       return updatedVehicle;
     } catch (error) {
+      const upstream = error.response
+        ? ` status=${error.response.status} body=${JSON.stringify(error.response.data)}`
+        : '';
+      console.log(`Delete vehicle image error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to delete vehicle image: ${error.message}`);
     }
   }

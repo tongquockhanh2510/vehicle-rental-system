@@ -11,7 +11,15 @@ export class ImageService {
       this.bucketName === 'local-dev-bucket';
     this.uploadDir = path.resolve('./uploads');
 
-    if (this.useLocalStorage && !fs.existsSync(this.uploadDir)) {
+    this.ensureUploadDir();
+  }
+
+  ensureUploadDir() {
+    if (!this.useLocalStorage) {
+      return;
+    }
+
+    if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
     }
   }
@@ -32,6 +40,7 @@ export class ImageService {
     };
 
     if (this.useLocalStorage) {
+      this.ensureUploadDir();
       const targetFile = path.join(this.uploadDir, filePath);
       fs.writeFileSync(targetFile, file.buffer);
       return `http://localhost:${process.env.IMAGE_SERVICE_PORT}/uploads/${filePath}`;
@@ -58,6 +67,7 @@ export class ImageService {
     };
 
     if (this.useLocalStorage) {
+      this.ensureUploadDir();
       const targetFile = path.join(this.uploadDir, key);
       if (fs.existsSync(targetFile)) {
         fs.unlinkSync(targetFile);

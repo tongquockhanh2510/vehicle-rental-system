@@ -12,3 +12,5 @@ build/
 *~
 .git/
 *.key
+e2e-result.json
+image-service/uploads/
