@@ -7,6 +7,9 @@ export const rentalApi = {
   getOwnerRequests() {
     return apiClient.get('/api/rentals/owner/my-rentals');
   },
+  getAdminRentals(params = {}) {
+    return apiClient.get('/api/rentals/admin/list', { params });
+  },
   createRequest(payload) {
     return apiClient.post('/api/rentals/request', payload);
   },

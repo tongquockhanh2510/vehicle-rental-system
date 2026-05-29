@@ -4,13 +4,11 @@
   { value: 'ELECTRIC_BIKE', label: 'Xe điện', icon: 'Zap' },
   { value: 'BICYCLE', label: 'Xe đạp', icon: 'Bike' },
   { value: 'MOUNTAIN_BIKE', label: 'Xe đạp leo núi', icon: 'Mountain' },
-  { value: 'VAN', label: 'Xe van', icon: 'Truck' },
+  { value: 'SUV', label: 'SUV', icon: 'CarFront' },
+  { value: 'SEVEN_SEAT_CAR', label: 'Xe 7 chỗ', icon: 'Users' },
   { value: 'PICKUP_TRUCK', label: 'Xe bán tải', icon: 'Truck' },
   { value: 'MINI_TRUCK', label: 'Xe tải nhỏ', icon: 'Truck' },
   { value: 'LUXURY_CAR', label: 'Xe sang', icon: 'Gem' },
-  { value: 'SUV', label: 'SUV', icon: 'CarFront' },
-  { value: 'SEVEN_SEAT_CAR', label: 'Xe 7 chỗ', icon: 'Users' },
-  { value: '7_SEAT_CAR', label: 'Xe 7 chỗ', icon: 'Users' },
   { value: 'SELF_DRIVE_CAR', label: 'Xe tự lái', icon: 'Navigation' },
   { value: 'WITH_DRIVER_CAR', label: 'Xe có tài xế', icon: 'User' }
 ];

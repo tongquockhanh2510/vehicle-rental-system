@@ -8,12 +8,15 @@ import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import SectionHeader from '../../components/common/SectionHeader';
 import { VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
+import { normalizeLocationText } from '../../constants/locationOptions';
 import { mapMockVehicle, MOCK_VEHICLES } from '../../data/mockVehicles';
 import { pickArray } from '../../utils/formatters';
 
 const defaultFilters = {
   q: '',
-  location: '',
+  city: '',
+  district: '',
+  pickup_area: '',
   vehicle_type: '',
   fuel_type: '',
   transmission: '',
@@ -33,9 +36,24 @@ function normalizeVehicleType(value) {
   return key;
 }
 
+function toLocationBlob(vehicle) {
+  const raw = [
+    vehicle.allowed_region,
+    vehicle.location,
+    vehicle.pickup_location,
+    vehicle.pickup_area,
+    vehicle.address
+  ]
+    .filter(Boolean)
+    .join(' | ');
+  return normalizeLocationText(raw);
+}
+
 function applyClientFilters(items, filters) {
-  const q = String(filters.q || '').trim().toLowerCase();
-  const location = String(filters.location || '').trim().toLowerCase();
+  const q = normalizeLocationText(filters.q);
+  const city = normalizeLocationText(filters.city);
+  const district = normalizeLocationText(filters.district);
+  const pickupArea = normalizeLocationText(filters.pickup_area);
   const vehicleType = normalizeVehicleType(filters.vehicle_type);
   const minSeats = Number(filters.min_seats || 0);
   const minPrice = Number(filters.min_price || 0);
@@ -46,8 +64,10 @@ function applyClientFilters(items, filters) {
   const transmission = String(filters.transmission || '').toUpperCase();
 
   return items.filter((vehicle) => {
-    const haystack = `${vehicle.brand || ''} ${vehicle.model || ''} ${vehicle.license_plate || ''}`.toLowerCase();
-    const vehicleLocation = String(vehicle.allowed_region || '').toLowerCase();
+    const haystack = normalizeLocationText(
+      `${vehicle.brand || ''} ${vehicle.model || ''} ${vehicle.license_plate || ''}`
+    );
+    const locationBlob = toLocationBlob(vehicle);
     const type = normalizeVehicleType(vehicle.vehicle_type);
     const vehicleStatus = String(vehicle.status || (vehicle.is_available ? 'AVAILABLE' : 'PENDING')).toUpperCase();
     const rate = Number(vehicle.daily_rate || 0);
@@ -55,7 +75,9 @@ function applyClientFilters(items, filters) {
     const rating = Number(vehicle.rating || 0);
 
     if (q && !haystack.includes(q)) return false;
-    if (location && !vehicleLocation.includes(location)) return false;
+    if (city && !locationBlob.includes(city)) return false;
+    if (district && !locationBlob.includes(district)) return false;
+    if (pickupArea && !locationBlob.includes(pickupArea)) return false;
     if (vehicleType && type !== vehicleType) return false;
     if (fuel && String(vehicle.fuel_type || '').toUpperCase() !== fuel) return false;
     if (transmission && String(vehicle.transmission || '').toUpperCase() !== transmission) return false;
@@ -92,8 +114,13 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
     setLoading(true);
     setError('');
     try {
+      const location = [nextFilters.city, nextFilters.district, nextFilters.pickup_area]
+        .filter((item) => String(item || '').trim())
+        .join(', ');
+
       const params = {
         ...nextFilters,
+        location: location || undefined,
         page: 1,
         limit: 60,
         availability_date: nextFilters.start_date || undefined
@@ -113,13 +140,13 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
       setAllVehicles(baseRows);
       setVehicles(filtered);
       if (!apiRows.length) {
-        setError('Hệ thống đang dùng dữ liệu demo để bạn kiểm thử luồng marketplace.');
+        setError('API chưa trả dữ liệu đầy đủ, hệ thống đang dùng dữ liệu mô phỏng để bạn kiểm thử luồng marketplace.');
       }
     } catch (err) {
       const fallback = MOCK_VEHICLES.map(mapMockVehicle);
       setAllVehicles(fallback);
       setVehicles(applyClientFilters(fallback, nextFilters));
-      setError(err?.response?.data?.error || 'Không thể tải API, đã chuyển sang dữ liệu demo.');
+      setError(err?.response?.data?.error || 'Không thể tải API, đã chuyển sang dữ liệu mô phỏng.');
     } finally {
       setLoading(false);
     }
@@ -161,7 +188,7 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
     <div className="space-y-6">
       <SectionHeader
         title="Marketplace phương tiện"
-        subtitle="Khám phá ô tô, xe máy, xe điện, xe đạp và nhiều loại phương tiện khác theo nhu cầu di chuyển của bạn."
+        subtitle="Giai đoạn đầu triển khai tại TP.HCM và Hà Nội, mở rộng theo khu vực khi nền tảng tăng trưởng thêm nguồn xe."
       />
 
       <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
@@ -204,7 +231,7 @@ export default function CarsPage({ detailBase = '/vehicles' }) {
             <EmptyState
               icon={CarFront}
               title="Không có phương tiện phù hợp với bộ lọc"
-              description="Thử thay đổi bộ lọc hoặc mở rộng phạm vi giá để xem thêm lựa chọn phù hợp."
+              description="Thử đổi thành phố/quận hoặc mở rộng điều kiện giá để xem thêm gợi ý phù hợp."
             />
           ) : (
             <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">

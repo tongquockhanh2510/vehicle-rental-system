@@ -15,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import CarCard from '../../components/car/CarCard';
 import SectionHeader from '../../components/common/SectionHeader';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import { CITY_OPTIONS, getDistrictOptions } from '../../constants/locationOptions';
+import { VEHICLE_TYPE_OPTIONS } from '../../constants/vehicle';
 import { pickArray } from '../../utils/formatters';
 
 const howSteps = [
@@ -53,6 +55,13 @@ export default function LandingPage() {
   const [videoFailed, setVideoFailed] = useState(false);
   const [featuredCars, setFeaturedCars] = useState([]);
   const [loadingCars, setLoadingCars] = useState(true);
+  const [heroSearch, setHeroSearch] = useState({
+    city: 'TP.HCM',
+    district: '',
+    start_date: '',
+    end_date: '',
+    vehicle_type: ''
+  });
 
   useEffect(() => {
     const loadFeaturedCars = async () => {
@@ -80,6 +89,18 @@ export default function LandingPage() {
     ),
     []
   );
+  const districtOptions = useMemo(() => getDistrictOptions(heroSearch.city), [heroSearch.city]);
+
+  const searchHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (heroSearch.city) params.set('city', heroSearch.city);
+    if (heroSearch.district) params.set('district', heroSearch.district);
+    if (heroSearch.start_date) params.set('start_date', heroSearch.start_date);
+    if (heroSearch.end_date) params.set('end_date', heroSearch.end_date);
+    if (heroSearch.vehicle_type) params.set('vehicle_type', heroSearch.vehicle_type);
+    const query = params.toString();
+    return query ? `/vehicles?${query}` : '/vehicles';
+  }, [heroSearch]);
 
   if (isAuthenticated && isAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
@@ -136,27 +157,59 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-2xl border border-white/15 bg-slate-950/50 p-4 backdrop-blur md:grid-cols-5">
+            <div className="grid gap-3 rounded-2xl border border-white/15 bg-slate-950/50 p-4 backdrop-blur md:grid-cols-6">
+              <select
+                value={heroSearch.city}
+                onChange={(event) =>
+                  setHeroSearch((prev) => ({ ...prev, city: event.target.value, district: '' }))
+                }
+                className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
+              >
+                {CITY_OPTIONS.filter((item) => item.value).map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={heroSearch.district}
+                onChange={(event) => setHeroSearch((prev) => ({ ...prev, district: event.target.value }))}
+                className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
+              >
+                {districtOptions.map((item) => (
+                  <option key={item.value || 'ALL_DISTRICT'} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
               <input
-                placeholder="Địa điểm"
+                type="date"
+                value={heroSearch.start_date}
+                onChange={(event) => setHeroSearch((prev) => ({ ...prev, start_date: event.target.value }))}
                 className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
               />
               <input
                 type="date"
+                value={heroSearch.end_date}
+                onChange={(event) => setHeroSearch((prev) => ({ ...prev, end_date: event.target.value }))}
                 className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
               />
-              <input
-                type="date"
+              <select
+                value={heroSearch.vehicle_type}
+                onChange={(event) =>
+                  setHeroSearch((prev) => ({ ...prev, vehicle_type: event.target.value }))
+                }
                 className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none"
-              />
-              <select className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none">
-                <option>Loại xe</option>
-                <option>Sedan</option>
-                <option>SUV</option>
-                <option>Van</option>
+              >
+                <option value="">Tất cả loại phương tiện</option>
+                {VEHICLE_TYPE_OPTIONS.filter((item) => item.value !== '7_SEAT_CAR').map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
               </select>
               <Link
-                to="/vehicles"
+                to={searchHref}
                 className="flex items-center justify-center rounded-xl bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
               >
                 Tìm phương tiện
@@ -273,7 +326,7 @@ export default function LandingPage() {
             <ul className="mt-2 space-y-1 text-sm text-slate-300">
               <li className="flex items-center gap-2"><Users className="h-3.5 w-3.5" /> Hồ sơ người dùng đã xác thực</li>
               <li className="flex items-center gap-2"><Wallet className="h-3.5 w-3.5" /> Luồng thanh toán có kiểm soát</li>
-              <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /> Phạm vi hoạt động toàn quốc</li>
+              <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /> Giai đoạn đầu tại TP.HCM và Hà Nội, mở rộng theo khu vực</li>
             </ul>
           </div>
           <div>

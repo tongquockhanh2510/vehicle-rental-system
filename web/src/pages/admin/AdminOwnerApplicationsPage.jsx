@@ -8,7 +8,7 @@ import PremiumButton from '../../components/common/PremiumButton';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useToast } from '../../context/ToastContext';
-import { pickArray } from '../../utils/formatters';
+import { getAdminOwnerApplicationsData } from '../../services/adminDataService';
 
 const filters = [
   { key: 'ALL', label: 'Tất cả' },
@@ -24,19 +24,16 @@ export default function AdminOwnerApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [fallback, setFallback] = useState(false);
+  const [error, setError] = useState('');
 
   const loadRows = async () => {
     setLoading(true);
-    try {
-      const response = await ownerApplicationApi.getOwnerApplications(
-        statusFilter === 'ALL' ? {} : { status: statusFilter }
-      );
-      setRows(pickArray(response.data));
-    } catch {
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
+    const payload = await getAdminOwnerApplicationsData(statusFilter);
+    setRows(payload.rows);
+    setFallback(Boolean(payload.fallback));
+    setError(payload.error || '');
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -110,6 +107,18 @@ export default function AdminOwnerApplicationsPage() {
           </button>
         ))}
       </div>
+
+      {fallback ? (
+        <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          API hồ sơ chủ xe chưa phản hồi đầy đủ, đang hiển thị dữ liệu dự phòng.
+        </div>
+      ) : null}
+
+      {!loading && error ? (
+        <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+          {error}
+        </div>
+      ) : null}
 
       <DataTable loading={loading} rows={rows} columns={columns} emptyTitle="Chưa có đơn đăng ký" emptyDescription="Các hồ sơ mới sẽ xuất hiện ở đây để admin duyệt." />
 

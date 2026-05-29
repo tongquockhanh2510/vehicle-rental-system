@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useMemo } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import {
   FUEL_TYPE_OPTIONS,
@@ -6,6 +6,11 @@ import {
   VEHICLE_STATUS_OPTIONS,
   VEHICLE_TYPE_OPTIONS
 } from '../../constants/vehicle';
+import {
+  CITY_OPTIONS,
+  getDistrictOptions,
+  getPickupAreaOptions
+} from '../../constants/locationOptions';
 
 const DRIVER_MODE_OPTIONS = [
   { value: '', label: 'Tất cả' },
@@ -14,7 +19,19 @@ const DRIVER_MODE_OPTIONS = [
 ];
 
 export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
+  const districtOptions = useMemo(() => getDistrictOptions(filters.city), [filters.city]);
+  const pickupAreaOptions = useMemo(() => getPickupAreaOptions(filters.city), [filters.city]);
+
   const setField = (field, value) => onChange((prev) => ({ ...prev, [field]: value }));
+
+  const handleCityChange = (city) => {
+    onChange((prev) => ({
+      ...prev,
+      city,
+      district: '',
+      pickup_area: ''
+    }));
+  };
 
   return (
     <form
@@ -53,16 +70,54 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
           </div>
         </label>
 
-        <label className="block">
-          <span className="mb-1 block text-xs text-slate-300">Địa điểm</span>
-          <input
-            type="text"
-            value={filters.location || ''}
-            onChange={(event) => setField('location', event.target.value)}
-            placeholder="TP.HCM, Hà Nội..."
-            className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
-          />
-        </label>
+        <div className="grid grid-cols-1 gap-2">
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Thành phố</span>
+            <select
+              value={filters.city || ''}
+              onChange={(event) => handleCityChange(event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+            >
+              {CITY_OPTIONS.map((item) => (
+                <option key={item.value || 'ALL_CITY'} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Quận/Huyện</span>
+            <select
+              value={filters.district || ''}
+              onChange={(event) => setField('district', event.target.value)}
+              disabled={!filters.city}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {districtOptions.map((item) => (
+                <option key={item.value || 'ALL_DISTRICT'} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-300">Khu vực nhận xe</span>
+            <select
+              value={filters.pickup_area || ''}
+              onChange={(event) => setField('pickup_area', event.target.value)}
+              disabled={!filters.city}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pickupAreaOptions.map((item) => (
+                <option key={item.value || 'ALL_AREA'} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div className="grid grid-cols-2 gap-2">
           <label className="block">
@@ -177,7 +232,7 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-300">Ngày nhận</span>
+            <span className="mb-1 block text-xs text-slate-300">Ngày nhận xe</span>
             <input
               type="date"
               value={filters.start_date || ''}
@@ -187,7 +242,7 @@ export default function FilterPanel({ filters, onChange, onReset, onSubmit }) {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-300">Ngày trả</span>
+            <span className="mb-1 block text-xs text-slate-300">Ngày trả xe</span>
             <input
               type="date"
               value={filters.end_date || ''}

@@ -6,11 +6,19 @@ import IconResolver from '../navigation/IconResolver';
 import { ADMIN_MENU } from '../../constants/navigationConfig';
 import { useAuth } from '../../context/AuthContext';
 
+const HIDDEN_ADMIN_ROUTES = [
+  { to: '/admin/system-health', label: 'System Health' },
+  { to: '/admin/architecture', label: 'Architecture' },
+  { to: '/admin/ai-agent', label: 'AI Agent Center' },
+  { to: '/admin/system-logs', label: 'System Logs' }
+];
+
 function getRouteTitle(pathname) {
-  const exact = ADMIN_MENU.find((item) => item.to === pathname);
+  const allMenus = [...ADMIN_MENU, ...HIDDEN_ADMIN_ROUTES];
+  const exact = allMenus.find((item) => item.to === pathname);
   if (exact) return exact.label;
 
-  const partial = ADMIN_MENU.find((item) => pathname.startsWith(`${item.to}/`));
+  const partial = allMenus.find((item) => pathname.startsWith(`${item.to}/`));
   if (partial) return partial.label;
 
   return 'Admin Control Center';

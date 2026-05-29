@@ -7,6 +7,9 @@ export const paymentApi = {
   getOwnerPayments() {
     return apiClient.get('/api/payments/owner/my-payments');
   },
+  getAdminPayments(params = {}) {
+    return apiClient.get('/api/payments/admin/list', { params });
+  },
   create(payload) {
     return apiClient.post('/api/payments', payload);
   },

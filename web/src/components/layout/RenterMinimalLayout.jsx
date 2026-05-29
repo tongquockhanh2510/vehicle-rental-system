@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AppLayout from './AppLayout';
 import Navbar from '../navigation/Navbar';
@@ -15,4 +15,3 @@ export default function RenterMinimalLayout() {
     </AppLayout>
   );
 }
-

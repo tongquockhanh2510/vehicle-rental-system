@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { CarFront, LogOut, Menu, ShieldCheck, SwitchCamera } from 'lucide-react';
 import { PUBLIC_NAV } from '../../constants/navigationConfig';
@@ -101,7 +101,14 @@ export default function Navbar({
                   onClick={() => navigate(ownerAction.to)}
                   className={`hidden rounded-full px-3 py-1.5 text-xs font-semibold transition lg:inline-flex ${ownerToneClass}`}
                 >
-                  {ownerAction.tone === 'blue' ? <span className="inline-flex items-center gap-1"><SwitchCamera className="h-3.5 w-3.5" />{ownerAction.label}</span> : ownerAction.label}
+                  {ownerAction.tone === 'blue' ? (
+                    <span className="inline-flex items-center gap-1">
+                      <SwitchCamera className="h-3.5 w-3.5" />
+                      {ownerAction.label}
+                    </span>
+                  ) : (
+                    ownerAction.label
+                  )}
                 </button>
               ) : null}
 

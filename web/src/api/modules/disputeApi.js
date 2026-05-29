@@ -14,6 +14,9 @@ export const disputeApi = {
   getApproved() {
     return apiClient.get('/api/disputes/approved/list');
   },
+  getAdminDisputes(params = {}) {
+    return apiClient.get('/api/disputes/admin/list', { params });
+  },
   create(payload) {
     return apiClient.post('/api/disputes', payload);
   },

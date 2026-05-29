@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FileSearch } from 'lucide-react';
 import { ownerApplicationApi } from '../../api';
@@ -47,7 +47,7 @@ export default function OwnerApplicationStatusPage() {
       <EmptyState
         icon={FileSearch}
         title="Bạn chưa gửi hồ sơ chủ xe"
-        description="Hãy hoàn tất Owner Onboarding để mở quyền đăng phương tiện cho thuê."
+        description="Hãy hoàn tất onboarding để mở quyền đăng phương tiện cho thuê."
         action={<Link to="/app/become-owner" className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Bắt đầu onboarding</Link>}
       />
     );

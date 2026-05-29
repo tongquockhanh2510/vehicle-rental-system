@@ -7,6 +7,9 @@ export const contractApi = {
   getOwnerContracts() {
     return apiClient.get('/api/contracts/owner/my-contracts');
   },
+  getAdminContracts(params = {}) {
+    return apiClient.get('/api/contracts/admin/list', { params });
+  },
   getById(contractId) {
     return apiClient.get(`/api/contracts/${contractId}`);
   },
