@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
   ArrowRight,
   CheckCircle2,
@@ -11,6 +11,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { vehicleApi } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 import CarCard from '../../components/car/CarCard';
 import SectionHeader from '../../components/common/SectionHeader';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
@@ -48,6 +49,7 @@ const platformMetrics = [
 ];
 
 export default function LandingPage() {
+  const { isAuthenticated, isAdmin } = useAuth();
   const [videoFailed, setVideoFailed] = useState(false);
   const [featuredCars, setFeaturedCars] = useState([]);
   const [loadingCars, setLoadingCars] = useState(true);
@@ -78,6 +80,10 @@ export default function LandingPage() {
     ),
     []
   );
+
+  if (isAuthenticated && isAdmin) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   return (
     <div className="space-y-20 pb-8">

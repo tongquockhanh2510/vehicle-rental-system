@@ -24,7 +24,11 @@ export default function LoginPage() {
       login(user, token);
 
       pushToast({ tone: 'success', title: 'Đăng nhập thành công', message: 'Chào mừng bạn quay lại RentCar Premium.' });
-      navigate('/', { replace: true });
+      if (String(user?.role || '').toUpperCase() === 'ADMIN') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       pushToast({
         tone: 'error',

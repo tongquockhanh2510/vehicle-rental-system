@@ -71,6 +71,9 @@ export function RequireRole({ children, roles = [] }) {
 
   const normalized = roles.map(normalizeRole);
   if (!normalized.includes(normalizeRole(role))) {
+    if (normalizeRole(role) === ROLES.ADMIN) {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 

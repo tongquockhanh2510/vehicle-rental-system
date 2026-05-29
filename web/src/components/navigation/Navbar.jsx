@@ -47,6 +47,7 @@ export default function Navbar({
   const ownerAction = useMemo(() => getOwnerAction(ownerStatus), [ownerStatus]);
 
   const publicNav = useMemo(() => {
+    if (isAdmin) return [];
     if (!isAuthenticated) return PUBLIC_NAV;
 
     return PUBLIC_NAV.map((item) => {
@@ -55,7 +56,7 @@ export default function Navbar({
       }
       return item;
     });
-  }, [isAuthenticated, ownerAction]);
+  }, [isAuthenticated, ownerAction, isAdmin]);
 
   const ownerToneClass =
     ownerAction.tone === 'amber'
@@ -110,7 +111,7 @@ export default function Navbar({
                   onClick={() => navigate('/admin/dashboard')}
                   className="hidden items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20 lg:inline-flex"
                 >
-                  <ShieldCheck className="h-3.5 w-3.5" /> Admin Portal
+                  <ShieldCheck className="h-3.5 w-3.5" /> Admin Control Center
                 </button>
               ) : null}
 

@@ -75,8 +75,8 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Trung tâm điều hành quản trị"
-        subtitle="Giám sát toàn hệ thống: tăng trưởng người dùng, hiệu suất vận hành, doanh thu và rủi ro tranh chấp."
+        title="Admin Control Center"
+        subtitle="Giám sát người dùng, phương tiện, giao dịch, tranh chấp và tình trạng hệ thống."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

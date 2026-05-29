@@ -30,7 +30,7 @@ export const OWNER_MENU = [
 export const ADMIN_MENU = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: 'LayoutDashboard' },
   { label: 'Người dùng', to: '/admin/users', icon: 'Users' },
-  { label: 'Đơn chủ xe', to: '/admin/owner-applications', icon: 'ClipboardCheck' },
+  { label: 'Hồ sơ chủ xe', to: '/admin/owner-applications', icon: 'ClipboardCheck' },
   { label: 'Phương tiện', to: '/admin/vehicles', icon: 'CarFront' },
   { label: 'Yêu cầu thuê', to: '/admin/rentals', icon: 'ClipboardList' },
   { label: 'Hợp đồng', to: '/admin/contracts', icon: 'FileCheck2' },
@@ -39,5 +39,6 @@ export const ADMIN_MENU = [
   { label: 'Thống kê', to: '/admin/statistics', icon: 'BarChart3' },
   { label: 'System Health', to: '/admin/system-health', icon: 'Activity' },
   { label: 'Architecture', to: '/admin/architecture', icon: 'Network' },
-  { label: 'AI Agent', to: '/admin/ai-agent', icon: 'Bot' }
+  { label: 'AI Agent', to: '/admin/ai-agent', icon: 'Bot' },
+  { label: 'Logs', to: '/admin/system-logs', icon: 'FileText' }
 ];
