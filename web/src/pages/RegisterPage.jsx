@@ -9,7 +9,7 @@ export default function RegisterPage() {
     password: '',
     first_name: '',
     last_name: '',
-    phone: '',
+    phone: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export default function RegisterPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -26,11 +26,38 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await api.post('/api/users/register', formData);
-      alert('Đăng ký thành công! Vui lòng đăng nhập.');
+      const payload = {
+        ...formData,
+        email: formData.email.trim().toLowerCase(),
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        phone: formData.phone.trim()
+      };
+
+      await api.post('/api/users/register', payload);
+      alert('Dang ky thanh cong! Vui long dang nhap.');
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      let message = err.response?.data?.error || err.response?.data?.message;
+
+      if (!message && typeof err.response?.data === 'string') {
+        try {
+          const parsed = JSON.parse(err.response.data);
+          message = parsed.error || parsed.message;
+        } catch {
+          message = err.response.data;
+        }
+      }
+
+      if (!message && err.message === 'Network Error') {
+        message = 'Khong ket noi duoc server. Hay kiem tra backend.';
+      }
+
+      if (message === 'Email already exists') {
+        message = 'Email da ton tai. Hay dang nhap hoac dung email khac.';
+      }
+
+      setError(message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -39,7 +66,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Đăng Ký</h2>
+        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Dang Ky</h2>
 
         {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-start">
@@ -63,7 +90,7 @@ export default function RegisterPage() {
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-gray-700 font-semibold mb-1">Tên</label>
+              <label className="block text-gray-700 font-semibold mb-1">Ten</label>
               <input
                 type="text"
                 name="first_name"
@@ -74,7 +101,7 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-1">Họ</label>
+              <label className="block text-gray-700 font-semibold mb-1">Ho</label>
               <input
                 type="text"
                 name="last_name"
@@ -87,7 +114,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Điện thoại</label>
+            <label className="block text-gray-700 font-semibold mb-1">Dien thoai</label>
             <input
               type="tel"
               name="phone"
@@ -115,14 +142,14 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
           >
-            {loading ? 'Đang đăng ký...' : 'Đăng Ký'}
+            {loading ? 'Dang dang ky...' : 'Dang Ky'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-gray-600">
-          Đã có tài khoản?{' '}
+          Da co tai khoan?{' '}
           <Link to="/login" className="text-blue-600 font-bold hover:underline">
-            Đăng nhập
+            Dang nhap
           </Link>
         </p>
       </div>
