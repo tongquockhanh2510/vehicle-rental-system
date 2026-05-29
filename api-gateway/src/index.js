@@ -28,7 +28,7 @@ const services = {
   rentals: process.env.RENTAL_SERVICE_URL,
   contracts: process.env.CONTRACT_SERVICE_URL,
   payments: process.env.PAYMENT_SERVICE_URL,
-  tracking: process.env.TRACKING_SERVICE_URL,
+  tracking: process.env.TRACKING_SERVICE_URL || 'http://localhost:5005',
   disputes: process.env.DISPUTE_SERVICE_URL,
   reviews: process.env.REVIEW_SERVICE_URL,
   notifications: process.env.NOTIFICATION_SERVICE_URL,
