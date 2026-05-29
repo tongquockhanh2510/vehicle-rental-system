@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import StatusBadge from './StatusBadge';
 
 export default function ApplicationStatusTimeline({ application }) {
@@ -7,23 +7,23 @@ export default function ApplicationStatusTimeline({ application }) {
   const timeline = [
     {
       key: 'SUBMITTED',
-      label: '\u0110\u00e3 g\u1eedi h\u1ed3 s\u01a1',
+      label: 'Đã gửi hồ sơ',
       status: 'COMPLETED',
       timestamp: application?.created_at
     },
     {
       key: 'UNDER_REVIEW',
-      label: '\u0110ang ki\u1ec3m tra',
+      label: 'Đang kiểm tra',
       status: status === 'PENDING' ? 'ACTIVE' : 'COMPLETED'
     },
     {
       key: 'WAITING_ADMIN',
-      label: 'Ch\u1edd admin ph\u00ea duy\u1ec7t',
+      label: 'Chờ admin phê duyệt',
       status: status === 'PENDING' ? 'PENDING' : 'COMPLETED'
     },
     {
       key: 'RESULT',
-      label: 'K\u1ebft qu\u1ea3',
+      label: 'Kết quả',
       status: status === 'APPROVED' ? 'OWNER_APPROVED' : status === 'REJECTED' ? 'OWNER_REJECTED' : 'PENDING',
       timestamp: application?.updated_at
     }

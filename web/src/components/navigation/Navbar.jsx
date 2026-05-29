@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { CarFront, LogOut, Menu, ShieldCheck, SwitchCamera } from 'lucide-react';
 import { PUBLIC_NAV } from '../../constants/navigationConfig';
@@ -23,15 +23,15 @@ function NavItem({ to, label }) {
 
 function getOwnerAction(ownerStatus) {
   if (ownerStatus === OWNER_STATUSES.APPROVED) {
-    return { label: '\u0043\u1ed5\u006e\u0067 \u0063\u0068\u1ee7 \u0078\u0065', to: '/owner/dashboard', tone: 'blue' };
+    return { label: 'Cổng chủ xe', to: '/owner/dashboard', tone: 'blue' };
   }
   if (ownerStatus === OWNER_STATUSES.PENDING) {
-    return { label: '\u0048\u1ed3 \u0073\u01a1 \u0063\u0068\u1ee7 \u0078\u0065 \u0111\u0061\u006e\u0067 \u0064\u0075\u0079\u1ec7\u0074', to: '/app/owner-application-status', tone: 'amber' };
+    return { label: 'Hồ sơ đang chờ duyệt', to: '/app/owner-application-status', tone: 'amber' };
   }
   if (ownerStatus === OWNER_STATUSES.REJECTED) {
-    return { label: '\u0043\u1ead\u0070 \u006e\u0068\u1ead\u0074 \u0068\u1ed3 \u0073\u01a1 \u0063\u0068\u1ee7 \u0078\u0065', to: '/app/become-owner', tone: 'rose' };
+    return { label: 'Cập nhật hồ sơ chủ xe', to: '/app/become-owner', tone: 'rose' };
   }
-  return { label: '\u0110\u0103\u006e\u0067 \u006b\u00fd \u006c\u00e0\u006d \u0063\u0068\u1ee7 \u0078\u0065', to: '/app/become-owner', tone: 'cyan' };
+  return { label: 'Đăng ký làm chủ xe', to: '/app/become-owner', tone: 'cyan' };
 }
 
 export default function Navbar({ menu = [], isPublic = false, title }) {
@@ -69,7 +69,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-white">RentCar Premium</p>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">N\u1ec1n t\u1ea3ng thu\u00ea ph\u01b0\u01a1ng ti\u1ec7n P2P</p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Nền tảng thuê phương tiện P2P</p>
           </div>
         </Link>
 
@@ -85,7 +85,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
             <>
               <RoleBadge role={role} ownerStatus={ownerStatus} />
               <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 md:flex">
-                <span className="text-sm text-white">{user?.first_name || user?.email || 'T\u00e0i kho\u1ea3n'}</span>
+                <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
               </div>
 
               {!isAdmin ? (
@@ -125,7 +125,7 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
                   navigate('/login');
                 }}
                 className="rounded-full border border-white/15 p-2 text-slate-300 transition hover:bg-white/10 hover:text-white"
-                aria-label="\u0110\u0103ng xu\u1ea5t"
+                aria-label="Đăng xuất"
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -133,17 +133,17 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           ) : (
             <>
               <Link to="/login" className="rounded-full px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10">
-                \u0110\u0103ng nh\u1eadp
+                Đăng nhập
               </Link>
               <Link
                 to="/register"
                 className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-400"
               >
-                \u0110\u0103ng k\u00fd
+                Đăng ký
               </Link>
             </>
           )}
-          <button className="rounded-full border border-white/15 p-2 text-slate-300 lg:hidden" aria-label="M\u1edf menu">
+          <button className="rounded-full border border-white/15 p-2 text-slate-300 lg:hidden" aria-label="Mở menu">
             <Menu className="h-4 w-4" />
           </button>
         </div>

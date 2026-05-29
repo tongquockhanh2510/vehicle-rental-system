@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { contractApi, reviewApi } from '../../api';
@@ -133,11 +133,11 @@ export default function ReviewsPage() {
         comment: form.comment,
         reviewer_id: userId
       });
-      pushToast({ tone: 'success', title: '\u0110\u00e3 g\u1eedi \u0111\u00e1nh gi\u00e1', message: '\u0110\u00e1nh gi\u00e1 c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c ghi nh\u1eadn.' });
+      pushToast({ tone: 'success', title: 'Đã gửi đánh giá', message: 'Đánh giá của bạn đã được ghi nhận.' });
       setForm(defaultForm);
       await loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'G\u1eedi th\u1ea5t b\u1ea1i', message: error?.response?.data?.error || 'Kh\u00f4ng th\u1ec3 g\u1eedi \u0111\u00e1nh gi\u00e1.' });
+      pushToast({ tone: 'error', title: 'Gửi thất bại', message: error?.response?.data?.error || 'Không thể gửi đánh giá.' });
     } finally {
       setSubmitting(false);
     }
@@ -151,13 +151,13 @@ export default function ReviewsPage() {
     return (
       <div className="space-y-6">
         <SectionHeader
-          title="\u0110\u00e1nh gi\u00e1"
-          subtitle="\u0110\u00e1nh gi\u00e1 ch\u1ec9 \u0111\u01b0\u1ee3c m\u1edf sau khi h\u1ee3p \u0111\u1ed3ng thu\u00ea xe \u0111\u00e3 ho\u00e0n t\u1ea5t."
+          title="Đánh giá"
+          subtitle="Đánh giá chỉ được mở sau khi hợp đồng thuê xe đã hoàn tất."
         />
         <EmptyState
-          title="Ch\u01b0a c\u00f3 chuy\u1ebfn \u0111i ho\u00e0n t\u1ea5t"
-          description="B\u1ea1n ch\u1ec9 c\u00f3 th\u1ec3 \u0111\u00e1nh gi\u00e1 sau khi ho\u00e0n t\u1ea5t m\u1ed9t h\u1ee3p \u0111\u1ed3ng thu\u00ea xe."
-          action={<Link to="/app/explore" className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Kh\u00e1m ph\u00e1 ph\u01b0\u01a1ng ti\u1ec7n</Link>}
+          title="Chưa có chuyến đi hoàn tất"
+          description="Bạn chỉ có thể đánh giá sau khi hợp đồng thuê xe đã hoàn tất."
+          action={<Link to="/app/explore" className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Khám phá phương tiện</Link>}
         />
       </div>
     );
@@ -166,17 +166,17 @@ export default function ReviewsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="\u0110\u00e1nh gi\u00e1"
-        subtitle="Ch\u1ec9 c\u00f3 th\u1ec3 \u0111\u00e1nh gi\u00e1 c\u00e1c h\u1ee3p \u0111\u1ed3ng \u0111\u00e3 ho\u00e0n t\u1ea5t v\u00e0 ch\u01b0a \u0111\u01b0\u1ee3c review."
+        title="Đánh giá"
+        subtitle="Chỉ có thể đánh giá các hợp đồng đã hoàn tất và chưa được review."
       />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         {pendingReviewContracts.length ? (
           <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h3 className="text-lg font-semibold text-white">G\u1eedi \u0111\u00e1nh gi\u00e1</h3>
+            <h3 className="text-lg font-semibold text-white">Gửi đánh giá</h3>
 
             <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-              H\u1ee3p \u0111\u1ed3ng \u0111\u00e3 ho\u00e0n t\u1ea5t
+              Hợp đồng đã hoàn tất
               <select
                 value={form.contract_id}
                 onChange={(event) => setField('contract_id', event.target.value)}
@@ -192,20 +192,20 @@ export default function ReviewsPage() {
 
             {selectedContract ? (
               <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-300">
-                <p>Ph\u01b0\u01a1ng ti\u1ec7n: <span className="text-white">{String(selectedContract.vehicle_id || '').slice(-8) || 'Ch\u01b0a c\u1eadp nh\u1eadt'}</span></p>
-                <p>Ng\u01b0\u1eddi \u0111\u01b0\u1ee3c \u0111\u00e1nh gi\u00e1: <span className="text-white">{String(reviewedUserId || '').slice(-8) || 'Ch\u01b0a c\u1eadp nh\u1eadt'}</span></p>
+                <p>Phương tiện: <span className="text-white">{String(selectedContract.vehicle_id || '').slice(-8) || 'Chưa cập nhật'}</span></p>
+                <p>Người được đánh giá: <span className="text-white">{String(reviewedUserId || '').slice(-8) || 'Chưa cập nhật'}</span></p>
               </div>
             ) : null}
 
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-300">S\u1ed1 sao</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Số sao</p>
               <div className="mt-2">
                 <StarRating value={form.rating} onChange={(point) => setField('rating', point)} />
               </div>
             </div>
 
             <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-              Nh\u1eadn x\u00e9t
+              Nhận xét
               <textarea
                 rows={4}
                 value={form.comment}
@@ -220,22 +220,22 @@ export default function ReviewsPage() {
               disabled={submitting}
               className="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-slate-600"
             >
-              {submitting ? '\u0110ang g\u1eedi...' : 'G\u1eedi \u0111\u00e1nh gi\u00e1'}
+              {submitting ? 'Đang gửi...' : 'Gửi đánh giá'}
             </button>
           </form>
         ) : (
           <EmptyState
-            title="\u0110\u00e3 \u0111\u00e1nh gi\u00e1 h\u1ebft c\u00e1c h\u1ee3p \u0111\u1ed3ng \u0111\u00e3 ho\u00e0n t\u1ea5t"
-            description="Kh\u00f4ng c\u00f2n h\u1ee3p \u0111\u1ed3ng COMPLETED n\u00e0o ch\u1edd \u0111\u00e1nh gi\u00e1."
+            title="Đã đánh giá hết các hợp đồng đã hoàn tất"
+            description="Không còn hợp đồng COMPLETED nào chờ đánh giá."
           />
         )}
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="text-lg font-semibold text-white">L\u1ecbch s\u1eed \u0111\u00e1nh gi\u00e1</h3>
+          <h3 className="text-lg font-semibold text-white">Lịch sử đánh giá</h3>
           {!reviews.length ? (
             <EmptyState
-              title="Ch\u01b0a c\u00f3 l\u1ecbch s\u1eed \u0111\u00e1nh gi\u00e1"
-              description="C\u00e1c \u0111\u00e1nh gi\u00e1 b\u1ea1n \u0111\u00e3 g\u1eedi s\u1ebd hi\u1ec3n th\u1ecb t\u1ea1i \u0111\u00e2y."
+              title="Chưa có lịch sử đánh giá"
+              description="Các đánh giá bạn đã gửi sẽ hiển thị tại đây."
             />
           ) : (
             <div className="mt-4 space-y-3">

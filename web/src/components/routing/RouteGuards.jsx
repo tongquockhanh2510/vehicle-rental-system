@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { normalizeRole, OWNER_STATUSES, ROLES } from '../../constants/roles';
@@ -8,7 +8,7 @@ export function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-300">\u0110ang t\u1ea3i phi\u00ean \u0111\u0103ng nh\u1eadp...</div>;
+    return <div className="p-6 text-sm text-slate-300">Đang tải phiên đăng nhập...</div>;
   }
 
   if (!isAuthenticated) {
@@ -22,7 +22,7 @@ export function OwnerProtectedRoute({ children }) {
   const { isAuthenticated, loading, ownerStatus } = useAuth();
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-300">\u0110ang t\u1ea3i quy\u1ec1n truy c\u1eadp...</div>;
+    return <div className="p-6 text-sm text-slate-300">Đang tải quyền truy cập...</div>;
   }
 
   if (!isAuthenticated) {
@@ -40,7 +40,7 @@ export function AdminProtectedRoute({ children }) {
   const { isAuthenticated, loading, role } = useAuth();
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-300">\u0110ang t\u1ea3i quy\u1ec1n qu\u1ea3n tr\u1ecb...</div>;
+    return <div className="p-6 text-sm text-slate-300">Đang tải quyền quản trị...</div>;
   }
 
   if (!isAuthenticated) {
