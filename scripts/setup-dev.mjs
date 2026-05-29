@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { generateKeyPairSync } from 'crypto';
 import path from 'path';
 
@@ -22,14 +22,18 @@ const servicesWithPublicKey = [
 const { publicKey, privateKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,
   publicKeyEncoding: { type: 'spki', format: 'pem' },
-  privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+  privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
 });
 
 for (const dir of servicesWithPublicKey) {
-  writeFileSync(path.join(root, dir, 'public.key'), publicKey);
+  const keyDir = path.join(root, dir, 'keys');
+  mkdirSync(keyDir, { recursive: true });
+  writeFileSync(path.join(keyDir, 'public.key'), publicKey);
 }
 
-writeFileSync(path.join(root, 'user-service', 'private.key'), privateKey);
+const userKeyDir = path.join(root, 'user-service', 'keys');
+mkdirSync(userKeyDir, { recursive: true });
+writeFileSync(path.join(userKeyDir, 'private.key'), privateKey);
 
 const imageEnvPath = path.join(root, 'image-service', '.env');
 const imageEnvDefault = [

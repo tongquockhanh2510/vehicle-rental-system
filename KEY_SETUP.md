@@ -1,43 +1,88 @@
-# Cấu hình key và secret (local)
+# Cấu hình JWT key (local)
 
-## 1) JWT key pair
+## 1) Vị trí key bắt buộc
 
-- Tạo key pair local:
-  - `user-service/private.key` (dùng để ký JWT)
-  - `user-service/public.key` (dùng để verify JWT)
-- Copy `public.key` sang các service verify token:
-  - `vehicle-service/public.key`
-  - `rental-service/public.key`
-  - `image-service/public.key`
+### User service (ký JWT)
 
-Biến môi trường:
+```text
+user-service/
+  keys/
+    private.key
+    public.key
+```
 
-- `user-service/.env`
-  - `JWT_PRIVATE_KEY_PATH=./private.key`
-  - `JWT_PUBLIC_KEY_PATH=./public.key`
-- `vehicle-service/.env`
-  - `JWT_PUBLIC_KEY_PATH=./public.key`
-- `rental-service/.env`
-  - `JWT_PUBLIC_KEY_PATH=./public.key`
-- `image-service/.env`
-  - `JWT_PUBLIC_KEY_PATH=./public.key`
+### Các service verify JWT
 
-## 2) AWS S3 cho image-service
+```text
+api-gateway/keys/public.key
+contract-service/keys/public.key
+dispute-service/keys/public.key
+image-service/keys/public.key
+notification-service/keys/public.key
+payment-service/keys/public.key
+rental-service/keys/public.key
+review-service/keys/public.key
+statistic-service/keys/public.key
+tracking-service/keys/public.key
+vehicle-service/keys/public.key
+```
 
-File local: `image-service/.env`
+## 2) Biến môi trường chuẩn
 
-- `AWS_ACCESS_KEY_ID=...`
-- `AWS_SECRET_ACCESS_KEY=...`
-- `AWS_REGION=ap-southeast-2`
-- `AWS_BUCKET_NAME=s3-bucket-vehicle-rental-system`
-- `IMAGE_SERVICE_PORT=3007`
+### `user-service/.env`
 
-## 3) Lưu ý bảo mật
+```env
+JWT_PUBLIC_KEY_PATH=./keys/public.key
+JWT_PRIVATE_KEY_PATH=./keys/private.key
+JWT_ALGORITHM=RS256
+JWT_EXPIRES_IN=7d
+```
 
-- Không commit file `.env` thật.
+### Các service verify (gateway, vehicle, rental, contract, payment, ...)
+
+```env
+JWT_PUBLIC_KEY_PATH=./keys/public.key
+JWT_ALGORITHM=RS256
+```
+
+## 3) Format key hợp lệ
+
+### Private key
+
+```text
+-----BEGIN RSA PRIVATE KEY-----
+...
+-----END RSA PRIVATE KEY-----
+```
+
+### Public key
+
+```text
+-----BEGIN PUBLIC KEY-----
+...
+-----END PUBLIC KEY-----
+```
+
+Không thêm dấu nháy quanh key, không đổi thành một dòng duy nhất.
+
+## 4) Docker (nếu chạy container)
+
+Hiện `docker-compose.yml` trong repo chỉ chạy hạ tầng (MongoDB, RabbitMQ, Redis).
+Nếu sau này chạy service bằng container thì cần mount/copy thư mục `keys` vào container:
+
+```yaml
+volumes:
+  - ./user-service/keys:/app/keys
+```
+
+hoặc:
+
+```dockerfile
+COPY keys ./keys
+```
+
+## 5) Bảo mật
+
+- Không commit `.env` thật.
 - Không commit `private.key`, `keys/private.key`, `*.pem`.
-- Dùng các file mẫu đã thêm:
-  - `image-service/.env.example`
-  - `user-service/.env.example`
-  - `vehicle-service/.env.example`
-  - `rental-service/.env.example`
+- Chỉ commit `.env.example`.

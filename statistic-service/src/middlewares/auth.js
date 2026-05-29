@@ -2,7 +2,9 @@ import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 
-const publicKeyPath = path.resolve('./public.key');
+const jwtAlgorithm = process.env.JWT_ALGORITHM || 'RS256';
+
+const publicKeyPath = path.resolve(process.env.JWT_PUBLIC_KEY_PATH || './keys/public.key');
 const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 export const authenticateToken = (req, res, next) => {
@@ -18,7 +20,7 @@ export const authenticateToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, publicKey, {
-      algorithms: ['RS256']
+      algorithms: [jwtAlgorithm]
     });
 
     req.userId = decoded.id;

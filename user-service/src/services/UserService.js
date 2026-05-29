@@ -4,13 +4,22 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { UserRepository } from '../repositories/UserRepository.js';
 import fs from 'fs';
+import path from 'path';
 
 const userRepository = new UserRepository();
 
 export class UserService {
+  getJwtAlgorithm() {
+    return process.env.JWT_ALGORITHM || 'RS256';
+  }
+
   getPrivateKey() {
-    const privateKeyPath = process.env.JWT_PRIVATE_KEY_PATH || './private.key';
-    return fs.readFileSync(privateKeyPath, 'utf8');
+    const privateKeyPath = path.resolve(process.env.JWT_PRIVATE_KEY_PATH || './keys/private.key');
+    try {
+      return fs.readFileSync(privateKeyPath, 'utf8');
+    } catch (error) {
+      throw new Error(`Cannot read private key at ${privateKeyPath}`);
+    }
   }
 
   async register(userData) {
@@ -50,8 +59,8 @@ export class UserService {
       { id: user._id, email: user.email, role: user.role },
       privateKey,
       { 
-        algorithm: 'RS256',
-        expiresIn: process.env.JWT_EXPIRES_IN 
+        algorithm: this.getJwtAlgorithm(),
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
       }
     );
 
