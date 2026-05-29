@@ -83,8 +83,8 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="explore" replace />} />
-              <Route path="overview" element={<AppOverviewPage />} />
+              <Route index element={<AppOverviewPage />} />
+              <Route path="overview" element={<Navigate to="/app" replace />} />
               <Route path="explore" element={<ExplorePage />} />
               <Route path="vehicles/:id" element={<CarDetailPage backTo="/app/explore" navigateAfterRequest="/app/requests" />} />
               <Route path="requests" element={<RentalRequestsPage />} />
