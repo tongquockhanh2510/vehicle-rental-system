@@ -56,35 +56,35 @@ export default function OwnerDashboardPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Owner Dashboard"
+        title="Tổng quan chủ xe"
         subtitle="Theo dõi hiệu suất đội xe, yêu cầu thuê, hợp đồng và doanh thu theo thời gian thực."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="My vehicles" value={loading ? '...' : vehicles.length} subtitle={`${activeVehicles} available`} icon={CarFront} />
-        <StatCard title="Rental requests" value={loading ? '...' : rentals.length} subtitle={`${pendingRequests} pending`} icon={ClipboardList} />
-        <StatCard title="Revenue" value={loading ? '...' : formatCurrency(revenue)} subtitle="Completed payments" icon={WalletCards} />
-        <StatCard title="Disputes" value={loading ? '...' : disputes.length} subtitle="Claims in workflow" icon={Scale} />
+        <StatCard title="Xe của tôi" value={loading ? '...' : vehicles.length} subtitle={`${activeVehicles} xe khả dụng`} icon={CarFront} />
+        <StatCard title="Yêu cầu thuê" value={loading ? '...' : rentals.length} subtitle={`${pendingRequests} đang chờ`} icon={ClipboardList} />
+        <StatCard title="Doanh thu" value={loading ? '...' : formatCurrency(revenue)} subtitle="Thanh toán đã hoàn tất" icon={WalletCards} />
+        <StatCard title="Khiếu nại" value={loading ? '...' : disputes.length} subtitle="Yêu cầu bồi thường đang xử lý" icon={Scale} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="mb-3 text-lg font-semibold text-white">Recent requests</h3>
+          <h3 className="mb-3 text-lg font-semibold text-white">Yêu cầu gần đây</h3>
           <div className="space-y-2">
             {rentals.slice(0, 5).map((rental) => (
               <div key={rental._id} className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-200">
                 <div className="flex items-center justify-between gap-2">
-                  <p>Rental #{String(rental._id).slice(-6)}</p>
+                  <p>Yêu cầu #{String(rental._id).slice(-6)}</p>
                   <span className="text-xs text-cyan-300">{rental.status}</span>
                 </div>
-                <p className="text-xs text-slate-400">Vehicle {String(rental.vehicle_id).slice(-6)}</p>
+                <p className="text-xs text-slate-400">Xe {String(rental.vehicle_id).slice(-6)}</p>
               </div>
             ))}
           </div>
         </article>
 
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="mb-3 text-lg font-semibold text-white">Revenue performance</h3>
+          <h3 className="mb-3 text-lg font-semibold text-white">Hiệu suất doanh thu</h3>
           <div className="space-y-2">
             {[1, 2, 3, 4, 5, 6].map((month) => {
               const value = Math.max(8, Math.min(100, 20 + month * 12));
@@ -100,7 +100,7 @@ export default function OwnerDashboardPage() {
           </div>
           <p className="mt-4 inline-flex items-center gap-2 rounded-lg border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">
             <BarChart3 className="h-3.5 w-3.5" />
-            Profitability snapshot based on settlement records.
+            Ảnh chụp nhanh lợi nhuận dựa trên dữ liệu quyết toán.
           </p>
         </article>
       </div>

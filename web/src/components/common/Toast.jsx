@@ -23,7 +23,7 @@ export default function Toast({ toast, onClose }) {
       <div className="flex items-start gap-3">
         <Icon className="mt-0.5 h-5 w-5" />
         <div className="flex-1">
-          <p className="text-sm font-semibold">{toast.title || 'Notification'}</p>
+          <p className="text-sm font-semibold">{toast.title || 'Thông báo'}</p>
           {toast.message ? <p className="mt-1 text-xs opacity-90">{toast.message}</p> : null}
         </div>
         <button
@@ -37,3 +37,4 @@ export default function Toast({ toast, onClose }) {
     </div>
   );
 }
+

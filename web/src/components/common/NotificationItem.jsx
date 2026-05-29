@@ -31,7 +31,7 @@ export default function NotificationItem({ notification, onRead }) {
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-white">{notification.title || 'Notification'}</p>
+            <p className="text-sm font-semibold text-white">{notification.title || 'Thông báo'}</p>
             <span className="text-xs text-slate-400">{formatDateTime(notification.created_at)}</span>
           </div>
           <p className="mt-1 text-sm text-slate-300">{notification.message}</p>
@@ -40,3 +40,4 @@ export default function NotificationItem({ notification, onRead }) {
     </button>
   );
 }
+

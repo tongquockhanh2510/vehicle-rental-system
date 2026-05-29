@@ -15,7 +15,7 @@ export default function CarCard({ vehicle, to }) {
       <div className="relative h-52 overflow-hidden">
         <img
           src={image}
-          alt={`${vehicle?.brand || 'Vehicle'} ${vehicle?.model || ''}`}
+          alt={`${vehicle?.brand || 'Xe'} ${vehicle?.model || ''}`}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           onError={(event) => {
             event.currentTarget.src = resolveImage('', Number(vehicle?.seats) || 1);
@@ -25,7 +25,7 @@ export default function CarCard({ vehicle, to }) {
           <StatusBadge status={status} />
         </div>
         <div className="absolute right-3 top-3 rounded-full bg-slate-950/70 px-2 py-1 text-xs text-white backdrop-blur">
-          {vehicle?.vehicle_type || 'Vehicle'}
+          {vehicle?.vehicle_type || 'Xe'}
         </div>
       </div>
 
@@ -33,15 +33,15 @@ export default function CarCard({ vehicle, to }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-white">
-              {vehicle?.brand || 'Premium'} {vehicle?.model || 'Vehicle'}
+              {vehicle?.brand || 'Premium'} {vehicle?.model || 'Xe'}
             </h3>
             <p className="text-xs text-slate-400">
-              {vehicle?.year || '2024'} • {vehicle?.license_plate || 'Private listing'}
+              {vehicle?.year || '2024'} • {vehicle?.license_plate || 'Tin đăng cá nhân'}
             </p>
           </div>
           <div className="text-right">
             <p className="text-lg font-bold text-cyan-300">{formatCurrency(vehicle?.daily_rate || 0)}</p>
-            <p className="text-xs text-slate-400">per day</p>
+            <p className="text-xs text-slate-400">/ ngày</p>
           </div>
         </div>
 
@@ -56,7 +56,7 @@ export default function CarCard({ vehicle, to }) {
           </span>
           <span className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             <MapPin className="h-3.5 w-3.5 text-cyan-300" />
-            {vehicle?.allowed_region || 'City center'}
+            {vehicle?.allowed_region || 'Khu vực trung tâm'}
           </span>
           <span className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1">
             <Star className="h-3.5 w-3.5 text-amber-300" />
@@ -65,12 +65,12 @@ export default function CarCard({ vehicle, to }) {
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <p className="text-xs text-slate-300">Deposit: {formatCurrency(vehicle?.deposit_amount || 0)}</p>
+          <p className="text-xs text-slate-300">Tiền cọc: {formatCurrency(vehicle?.deposit_amount || 0)}</p>
           <Link
             to={to}
             className="rounded-xl bg-cyan-500 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-400"
           >
-            View details
+            Xem chi tiết
           </Link>
         </div>
       </div>

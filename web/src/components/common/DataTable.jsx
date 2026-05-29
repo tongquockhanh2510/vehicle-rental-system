@@ -8,7 +8,7 @@ export default function DataTable({ columns = [], rows = [], loading = false, em
   }
 
   if (!rows.length) {
-    return <EmptyState title={emptyTitle || 'No records found'} description={emptyDescription} />;
+    return <EmptyState title={emptyTitle || 'Không tìm thấy dữ liệu'} description={emptyDescription} />;
   }
 
   return (
@@ -38,3 +38,4 @@ export default function DataTable({ columns = [], rows = [], loading = false, em
     </div>
   );
 }
+

@@ -15,17 +15,17 @@ export default function AdminSystemLogsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Admin • System Logs"
+        title="Quản trị • Nhật ký hệ thống"
         subtitle="Theo dõi sự kiện cảnh báo, lỗi dịch vụ và hành vi bất thường để phản ứng vận hành nhanh hơn."
       />
 
       <DataTable
         rows={mockSystemLogs}
         columns={[
-          { key: 'id', title: 'Log ID' },
-          { key: 'level', title: 'Level', render: (row) => <span className="inline-flex items-center gap-2">{iconByLevel[row.level]} {row.level}</span> },
-          { key: 'message', title: 'Message' },
-          { key: 'timestamp', title: 'Timestamp', render: (row) => formatDateTime(row.timestamp) }
+          { key: 'id', title: 'Mã log' },
+          { key: 'level', title: 'Mức độ', render: (row) => <span className="inline-flex items-center gap-2">{iconByLevel[row.level]} {row.level}</span> },
+          { key: 'message', title: 'Nội dung' },
+          { key: 'timestamp', title: 'Thời gian', render: (row) => formatDateTime(row.timestamp) }
         ]}
       />
     </div>

@@ -18,33 +18,33 @@ import { pickArray } from '../../utils/formatters';
 
 const howSteps = [
   {
-    title: 'Find the right car',
-    description: 'Filter by price, transmission, fuel and location to match every trip purpose.'
+    title: 'Tìm xe phù hợp',
+    description: 'Lọc theo giá, hộp số, nhiên liệu và địa điểm cho từng nhu cầu di chuyển.'
   },
   {
-    title: 'Send rental request',
-    description: 'Transparent timelines, digital contracts and clear pricing with system fee visibility.'
+    title: 'Gửi yêu cầu thuê',
+    description: 'Dòng thời gian minh bạch, hợp đồng số và chi phí rõ ràng kèm phí hệ thống.'
   },
   {
-    title: 'Pickup and drive safely',
-    description: 'Inspection, tracking and dispute workflow protect both renter and vehicle owner.'
+    title: 'Nhận xe và di chuyển an toàn',
+    description: 'Quy trình kiểm tra xe, theo dõi và tranh chấp bảo vệ cả người thuê lẫn chủ xe.'
   }
 ];
 
 const trustFeatures = [
-  'Legally tracked contracts for every booking',
-  'Deposit handling and refund workflow',
-  'Pickup/return inspection with evidence photos',
-  'GPS tracking with boundary alerts',
-  'Admin-managed dispute and compensation process'
+  'Hợp đồng được theo dõi đầy đủ cho từng lượt thuê',
+  'Quy trình đặt cọc và hoàn cọc minh bạch',
+  'Kiểm tra nhận/trả xe kèm ảnh bằng chứng',
+  'Theo dõi GPS với cảnh báo vượt phạm vi',
+  'Khiếu nại và bồi thường do quản trị viên xử lý'
 ];
 
 const platformMetrics = [
-  { label: 'Active vehicles', value: '1,680+' },
-  { label: 'Completed rentals', value: '42,000+' },
-  { label: 'Platform GMV', value: '8.9B VND' },
-  { label: 'Average rating', value: '4.8/5' },
-  { label: 'Dispute rate', value: '< 1.5%' }
+  { label: 'Xe đang hoạt động', value: '1,680+' },
+  { label: 'Lượt thuê hoàn tất', value: '42,000+' },
+  { label: 'Tổng GMV nền tảng', value: '8.9B VND' },
+  { label: 'Đánh giá trung bình', value: '4.8/5' },
+  { label: 'Tỷ lệ tranh chấp', value: '< 1.5%' }
 ];
 
 export default function LandingPage() {
@@ -104,14 +104,14 @@ export default function LandingPage() {
           <div className="relative z-10 flex h-full flex-col justify-between p-6 md:p-10">
             <div className="max-w-3xl space-y-5">
               <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-500/10 px-4 py-1 text-xs uppercase tracking-[0.22em] text-cyan-100">
-                <Sparkles className="h-3.5 w-3.5" /> Premium P2P Mobility Platform
+                <Sparkles className="h-3.5 w-3.5" /> Nền tảng di chuyển P2P cao cấp
               </p>
               <h1 className="text-4xl font-black leading-tight text-white md:text-6xl">
-                Premium P2P Car Rental Platform
+                Nền tảng thuê xe P2P cao cấp
               </h1>
               <p className="max-w-2xl text-base text-slate-200 md:text-lg">
                 Thuê xe, cho thuê xe và quản lý hợp đồng minh bạch trên một nền tảng duy nhất.
-                Tối ưu vận hành bằng tracking, inspection và dispute workflow đạt chuẩn quốc tế.
+                Tối ưu vận hành bằng theo dõi hành trình, kiểm tra xe và xử lý tranh chấp đạt chuẩn quốc tế.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -145,7 +145,7 @@ export default function LandingPage() {
               />
               <select className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-white outline-none">
                 <option>Loại xe</option>
-                <option>Car</option>
+                <option>Sedan</option>
                 <option>SUV</option>
                 <option>Van</option>
               </select>
@@ -162,7 +162,7 @@ export default function LandingPage() {
 
       <section id="how-it-works">
         <SectionHeader
-          title="How it works"
+          title="Cách hoạt động"
           subtitle="Luồng đặt xe, hợp đồng và bảo vệ giao dịch được chuẩn hóa cho cả người thuê và chủ xe."
         />
         <div className="grid gap-4 md:grid-cols-3">
@@ -171,7 +171,7 @@ export default function LandingPage() {
               key={step.title}
               className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur"
             >
-              <p className="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">Step {index + 1}</p>
+              <p className="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">Bước {index + 1}</p>
               <h3 className="text-lg font-semibold text-white">{step.title}</h3>
               <p className="mt-2 text-sm text-slate-300">{step.description}</p>
             </div>
@@ -181,26 +181,26 @@ export default function LandingPage() {
 
       <section id="for-owners" className="grid gap-5 lg:grid-cols-2">
         <article className="rounded-2xl border border-blue-400/25 bg-blue-500/10 p-6">
-          <h3 className="text-2xl font-bold text-white">For Vehicle Owners</h3>
+          <h3 className="text-2xl font-bold text-white">Dành cho chủ xe</h3>
           <p className="mt-2 text-sm text-blue-100/90">
             Tối ưu doanh thu đội xe với lịch đặt, theo dõi hợp đồng, cảnh báo hành trình và thống kê lợi nhuận.
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Dynamic pricing + availability control</li>
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Automated rental request workflow</li>
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Tracking and dispute support</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Giá thuê linh hoạt + kiểm soát khả dụng</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Luồng xử lý yêu cầu thuê tự động</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Hỗ trợ theo dõi hành trình và tranh chấp</li>
           </ul>
         </article>
 
         <article className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-6">
-          <h3 className="text-2xl font-bold text-white">For Renters</h3>
+          <h3 className="text-2xl font-bold text-white">Dành cho người thuê</h3>
           <p className="mt-2 text-sm text-cyan-100/90">
-            Chọn xe phù hợp, đặt lịch linh hoạt, thanh toán minh bạch và quản lý hợp đồng ngay trong một dashboard.
+            Chọn xe phù hợp, đặt lịch linh hoạt, thanh toán minh bạch và quản lý hợp đồng ngay trong một bảng điều khiển.
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Fast booking with real-time availability</li>
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Digital contract and inspection timeline</li>
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Trusted refund and support workflow</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Đặt xe nhanh với lịch trống thời gian thực</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Hợp đồng số và dòng thời gian kiểm tra xe</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-300" /> Quy trình hoàn cọc và hỗ trợ minh bạch</li>
           </ul>
         </article>
       </section>
@@ -208,7 +208,7 @@ export default function LandingPage() {
       <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-6">
           <SectionHeader
-            title="Trust & Safety"
+            title="An toàn và tin cậy"
             subtitle="Kiến trúc nghiệp vụ đảm bảo tính minh bạch và an toàn cho toàn bộ vòng đời thuê xe."
           />
           <ul className="space-y-3 text-sm text-slate-200">
@@ -222,7 +222,7 @@ export default function LandingPage() {
         </article>
 
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-6">
-          <SectionHeader title="Platform Metrics" subtitle="Dữ liệu vận hành realtime ở quy mô marketplace." />
+          <SectionHeader title="Chỉ số nền tảng" subtitle="Dữ liệu vận hành theo thời gian thực ở quy mô sàn giao dịch." />
           <div className="space-y-3">
             {platformMetrics.map((metric) => (
               <div key={metric.label} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
@@ -236,11 +236,11 @@ export default function LandingPage() {
 
       <section>
         <SectionHeader
-          title="Featured Cars"
+          title="Xe nổi bật"
           subtitle="Danh sách xe nổi bật phù hợp cho chuyến công tác, gia đình hoặc roadtrip dài ngày."
           action={
             <Link to="/cars" className="text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">
-              View all cars
+              Xem tất cả xe
             </Link>
           }
         />
@@ -260,30 +260,30 @@ export default function LandingPage() {
         <div className="grid gap-6 md:grid-cols-4">
           <div>
             <h4 className="text-lg font-semibold text-white">RentCar Premium</h4>
-            <p className="mt-2 text-sm text-slate-300">Nền tảng P2P vehicle rental cho renter, owner và admin với full workflow.</p>
+            <p className="mt-2 text-sm text-slate-300">Nền tảng thuê xe P2P cho người thuê, chủ xe và quản trị viên với luồng nghiệp vụ đầy đủ.</p>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Marketplace</p>
+            <p className="text-sm font-semibold text-white">Thị trường</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-300">
-              <li className="flex items-center gap-2"><Users className="h-3.5 w-3.5" /> Verified profiles</li>
-              <li className="flex items-center gap-2"><Wallet className="h-3.5 w-3.5" /> Escrow-ready payment flow</li>
-              <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /> Nationwide coverage</li>
+              <li className="flex items-center gap-2"><Users className="h-3.5 w-3.5" /> Hồ sơ người dùng đã xác thực</li>
+              <li className="flex items-center gap-2"><Wallet className="h-3.5 w-3.5" /> Luồng thanh toán có kiểm soát</li>
+              <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /> Phạm vi hoạt động toàn quốc</li>
             </ul>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Operations</p>
+            <p className="text-sm font-semibold text-white">Vận hành</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-300">
-              <li>Contract service</li>
-              <li>Tracking & inspection</li>
-              <li>Dispute resolution</li>
+              <li>Dịch vụ hợp đồng</li>
+              <li>Theo dõi & kiểm tra xe</li>
+              <li>Xử lý tranh chấp</li>
             </ul>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Admin analytics</p>
+            <p className="text-sm font-semibold text-white">Phân tích quản trị</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-300">
-              <li className="flex items-center gap-2"><TrendingUp className="h-3.5 w-3.5" /> Revenue dashboard</li>
-              <li>System fee monitoring</li>
-              <li>Risk control & alerts</li>
+              <li className="flex items-center gap-2"><TrendingUp className="h-3.5 w-3.5" /> Bảng điều khiển doanh thu</li>
+              <li>Theo dõi phí hệ thống</li>
+              <li>Kiểm soát rủi ro & cảnh báo</li>
             </ul>
           </div>
         </div>

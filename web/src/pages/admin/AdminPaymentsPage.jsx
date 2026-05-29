@@ -32,17 +32,17 @@ export default function AdminPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Admin • Payments" subtitle="Giám sát transaction deposit/rental/refund/compensation theo trạng thái xử lý thực tế." />
+      <SectionHeader title="Quản trị • Thanh toán" subtitle="Giám sát giao dịch deposit/rental/refund/compensation theo trạng thái xử lý thực tế." />
       <DataTable
         loading={loading}
         rows={rows}
         columns={[
-          { key: '_id', title: 'Payment', render: (row) => `#${String(row._id).slice(-8)}` },
-          { key: 'payment_type', title: 'Type', render: (row) => row.payment_type || '--' },
-          { key: 'amount', title: 'Amount', render: (row) => formatCurrency(row.amount || 0) },
-          { key: 'payment_method', title: 'Method', render: (row) => row.payment_method || '--' },
-          { key: 'status', title: 'Status', render: (row) => <StatusBadge status={row.status || 'PENDING'} /> },
-          { key: 'created_at', title: 'Created', render: (row) => formatDateTime(row.created_at) }
+          { key: '_id', title: 'Thanh toán', render: (row) => `#${String(row._id).slice(-8)}` },
+          { key: 'payment_type', title: 'Loại', render: (row) => row.payment_type || '--' },
+          { key: 'amount', title: 'Số tiền', render: (row) => formatCurrency(row.amount || 0) },
+          { key: 'payment_method', title: 'Phương thức', render: (row) => row.payment_method || '--' },
+          { key: 'status', title: 'Trạng thái', render: (row) => <StatusBadge status={row.status || 'PENDING'} /> },
+          { key: 'created_at', title: 'Thời gian tạo', render: (row) => formatDateTime(row.created_at) }
         ]}
       />
     </div>

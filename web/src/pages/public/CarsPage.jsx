@@ -56,7 +56,7 @@ export default function CarsPage({ detailBase = '/cars' }) {
 
       setVehicles(pickArray(response.data));
     } catch (err) {
-      setError(err?.response?.data?.error || 'Unable to load vehicles.');
+      setError(err?.response?.data?.error || 'Không thể tải danh sách xe.');
       setVehicles([]);
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export default function CarsPage({ detailBase = '/cars' }) {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Vehicle Marketplace"
+        title="Sàn xe cho thuê"
         subtitle="Khám phá xe chất lượng cao cho mọi nhu cầu: công tác, gia đình, du lịch đường dài."
       />
 
@@ -103,9 +103,9 @@ export default function CarsPage({ detailBase = '/cars' }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3">
             <p className="text-sm text-slate-200">
-              {loading ? 'Loading vehicles...' : `${vehicles.length} vehicles found`}
+              {loading ? 'Đang tải danh sách xe...' : `${vehicles.length} xe phù hợp`}
             </p>
-            <p className="text-xs text-slate-400">Active filters: {activeFilterCount}</p>
+            <p className="text-xs text-slate-400">Bộ lọc đang áp dụng: {activeFilterCount}</p>
           </div>
 
           {error ? (
@@ -117,7 +117,7 @@ export default function CarsPage({ detailBase = '/cars' }) {
           ) : vehicles.length === 0 ? (
             <EmptyState
               icon={CarFront}
-              title="No vehicles match your filters"
+              title="Không có xe phù hợp với bộ lọc"
               description="Thử thay đổi bộ lọc hoặc mở rộng phạm vi giá để xem thêm lựa chọn phù hợp."
             />
           ) : (

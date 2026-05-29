@@ -95,11 +95,11 @@ export default function ReviewsPage() {
         rating: Number(form.rating),
         reviewer_id: userId
       });
-      pushToast({ tone: 'success', title: 'Review submitted', message: 'Đánh giá của bạn đã được ghi nhận.' });
+      pushToast({ tone: 'success', title: 'Đã gửi đánh giá', message: 'Đánh giá của bạn đã được ghi nhận.' });
       setForm((prev) => ({ ...defaultForm, rental_request_id: prev.rental_request_id }));
       loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Submit failed', message: error?.response?.data?.error || 'Không thể gửi đánh giá.' });
+      pushToast({ tone: 'error', title: 'Gửi thất bại', message: error?.response?.data?.error || 'Không thể gửi đánh giá.' });
     } finally {
       setSubmitting(false);
     }
@@ -112,16 +112,16 @@ export default function ReviewsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Reviews"
-        subtitle="Đánh giá minh bạch giúp marketplace giữ chất lượng dịch vụ và xây dựng niềm tin giữa renter và owner."
+        title="Đánh giá"
+        subtitle="Đánh giá minh bạch giúp nền tảng giữ chất lượng dịch vụ và xây dựng niềm tin giữa người thuê và chủ xe."
       />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="text-lg font-semibold text-white">Submit a review</h3>
+          <h3 className="text-lg font-semibold text-white">Gửi đánh giá</h3>
 
           <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-            Rental request
+            Yêu cầu thuê
             <select
               value={form.rental_request_id}
               onChange={(event) => setField('rental_request_id', event.target.value)}
@@ -140,7 +140,7 @@ export default function ReviewsPage() {
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-              Vehicle ID
+              Mã xe
               <input
                 value={form.vehicle_id}
                 onChange={(event) => setField('vehicle_id', event.target.value)}
@@ -149,7 +149,7 @@ export default function ReviewsPage() {
               />
             </label>
             <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-              Reviewed user ID
+              Mã người được đánh giá
               <input
                 value={form.reviewed_user_id}
                 onChange={(event) => setField('reviewed_user_id', event.target.value)}
@@ -160,14 +160,14 @@ export default function ReviewsPage() {
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Rating</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Số sao</p>
             <div className="mt-2">
               <StarRating value={form.rating} onChange={(point) => setField('rating', point)} />
             </div>
           </div>
 
           <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-            Comment
+            Nhận xét
             <textarea
               rows={4}
               value={form.comment}
@@ -182,15 +182,15 @@ export default function ReviewsPage() {
             disabled={submitting}
             className="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-slate-600"
           >
-            {submitting ? 'Submitting...' : 'Submit review'}
+            {submitting ? 'Đang gửi...' : 'Gửi đánh giá'}
           </button>
         </form>
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="text-lg font-semibold text-white">Review history</h3>
+          <h3 className="text-lg font-semibold text-white">Lịch sử đánh giá</h3>
           {!reviews.length ? (
             <EmptyState
-              title="No review history"
+              title="Chưa có lịch sử đánh giá"
               description="Các đánh giá bạn nhận được sẽ xuất hiện tại đây."
             />
           ) : (
@@ -198,7 +198,7 @@ export default function ReviewsPage() {
               {reviews.map((review) => (
                 <article key={review._id} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">Reviewer #{String(review.reviewer_id || '').slice(-6)}</p>
+                    <p className="text-sm font-semibold text-white">Người đánh giá #{String(review.reviewer_id || '').slice(-6)}</p>
                     <span className="text-sm text-amber-300">{Number(review.rating || 0).toFixed(1)} / 5</span>
                   </div>
                   <p className="mt-1 text-sm text-slate-300">{review.comment || '--'}</p>

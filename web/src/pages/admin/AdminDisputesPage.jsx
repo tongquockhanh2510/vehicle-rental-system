@@ -43,43 +43,43 @@ export default function AdminDisputesPage() {
         admin_decision_amount: Number(decisionAmount || 0),
         admin_notes: decisionNotes
       });
-      pushToast({ tone: 'success', title: 'Dispute approved', message: 'Compensation decision has been recorded.' });
+      pushToast({ tone: 'success', title: 'Đã duyệt khiếu nại', message: 'Quyết định bồi thường đã được ghi nhận.' });
       setSelected(null);
       setDecisionAmount('');
       setDecisionNotes('');
       loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Approve failed', message: error?.response?.data?.error || 'Cannot approve dispute.' });
+      pushToast({ tone: 'error', title: 'Duyệt thất bại', message: error?.response?.data?.error || 'Không thể duyệt khiếu nại.' });
     }
   };
 
   const reject = async (disputeId) => {
     try {
-      await disputeApi.reject(disputeId, { admin_notes: 'Rejected by admin.' });
-      pushToast({ tone: 'success', title: 'Dispute rejected', message: 'Dispute was rejected.' });
+      await disputeApi.reject(disputeId, { admin_notes: 'Quản trị viên đã từ chối.' });
+      pushToast({ tone: 'success', title: 'Đã từ chối khiếu nại', message: 'Khiếu nại đã bị từ chối.' });
       loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Reject failed', message: error?.response?.data?.error || 'Cannot reject dispute.' });
+      pushToast({ tone: 'error', title: 'Từ chối thất bại', message: error?.response?.data?.error || 'Không thể từ chối khiếu nại.' });
     }
   };
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Admin • Disputes" subtitle="So sánh bằng chứng trước/sau, quyết định mức bồi thường và ghi chú xử lý cho từng claim." />
+      <SectionHeader title="Quản trị • Khiếu nại" subtitle="So sánh bằng chứng trước/sau, quyết định mức bồi thường và ghi chú xử lý cho từng yêu cầu." />
 
       <DataTable
         loading={loading}
         rows={rows}
         columns={[
-          { key: '_id', title: 'Dispute', render: (row) => `#${String(row._id).slice(-8)}` },
-          { key: 'contract_id', title: 'Contract', render: (row) => String(row.contract_id || '').slice(-8) },
-          { key: 'claimed_amount', title: 'Claimed', render: (row) => formatCurrency(row.claimed_amount || 0) },
-          { key: 'decision', title: 'Decision', render: (row) => formatCurrency(row.admin_decision_amount || 0) },
-          { key: 'status', title: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-          { key: 'created_at', title: 'Created', render: (row) => formatDateTime(row.created_at) },
+          { key: '_id', title: 'Khiếu nại', render: (row) => `#${String(row._id).slice(-8)}` },
+          { key: 'contract_id', title: 'Hợp đồng', render: (row) => String(row.contract_id || '').slice(-8) },
+          { key: 'claimed_amount', title: 'Yêu cầu bồi thường', render: (row) => formatCurrency(row.claimed_amount || 0) },
+          { key: 'decision', title: 'Mức quyết định', render: (row) => formatCurrency(row.admin_decision_amount || 0) },
+          { key: 'status', title: 'Trạng thái', render: (row) => <StatusBadge status={row.status} /> },
+          { key: 'created_at', title: 'Thời gian tạo', render: (row) => formatDateTime(row.created_at) },
           {
             key: 'action',
-            title: 'Action',
+            title: 'Thao tác',
             render: (row) => (
               <div className="flex gap-1">
                 {String(row.status || '').toUpperCase() === 'PENDING' ? (
@@ -92,18 +92,18 @@ export default function AdminDisputesPage() {
                       }}
                       className="rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-slate-950"
                     >
-                      Review
+                      Xem xét
                     </button>
                     <button
                       type="button"
                       onClick={() => reject(row._id)}
                       className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-2 py-1 text-xs text-rose-200"
                     >
-                      Reject
+                      Từ chối
                     </button>
                   </>
                 ) : (
-                  <span className="text-xs text-slate-500">Closed</span>
+                  <span className="text-xs text-slate-500">Đã đóng</span>
                 )}
               </div>
             )
@@ -114,7 +114,7 @@ export default function AdminDisputesPage() {
       <Modal
         open={Boolean(selected)}
         onClose={() => setSelected(null)}
-        title={`Dispute review #${selected?._id?.slice(-6) || ''}`}
+        title={`Xử lý khiếu nại #${selected?._id?.slice(-6) || ''}`}
         width="max-w-xl"
         footer={
           <div className="flex justify-end gap-2">
@@ -123,14 +123,14 @@ export default function AdminDisputesPage() {
               onClick={() => setSelected(null)}
               className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
             >
-              Close
+              Đóng
             </button>
             <button
               type="button"
               onClick={approve}
               className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
             >
-              Approve dispute
+              Duyệt khiếu nại
             </button>
           </div>
         }
@@ -138,7 +138,7 @@ export default function AdminDisputesPage() {
         <div className="space-y-3 text-sm text-slate-200">
           <p className="rounded-lg border border-white/10 bg-slate-950/40 p-3">{selected?.description}</p>
           <label className="block">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-300">Compensation amount</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-slate-300">Mức bồi thường</span>
             <input
               type="number"
               value={decisionAmount}
@@ -147,7 +147,7 @@ export default function AdminDisputesPage() {
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-300">Admin notes</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-slate-300">Ghi chú quản trị</span>
             <textarea
               rows={4}
               value={decisionNotes}

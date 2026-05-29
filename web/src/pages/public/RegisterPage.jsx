@@ -32,14 +32,14 @@ export default function RegisterPage() {
         phone: form.phone.trim()
       });
 
-      pushToast({ tone: 'success', title: 'Registration complete', message: 'Tài khoản đã được tạo. Vui lòng đăng nhập.' });
+      pushToast({ tone: 'success', title: 'Đăng ký thành công', message: 'Tài khoản đã được tạo. Vui lòng đăng nhập.' });
       navigate('/login');
     } catch (error) {
-      let message = error?.response?.data?.error || 'Registration failed. Please try again.';
+      let message = error?.response?.data?.error || 'Đăng ký thất bại. Vui lòng thử lại.';
       if (String(message).toLowerCase().includes('already')) {
         message = 'Email đã tồn tại. Vui lòng dùng email khác hoặc đăng nhập.';
       }
-      pushToast({ tone: 'error', title: 'Registration failed', message });
+      pushToast({ tone: 'error', title: 'Đăng ký thất bại', message });
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function RegisterPage() {
         </label>
 
         <label>
-          <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-300">Password</span>
+          <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-300">Mật khẩu</span>
           <input
             type="password"
             required

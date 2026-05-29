@@ -57,27 +57,27 @@ export default function OwnerDisputesPage() {
         claimed_amount: Number(form.claimed_amount),
         description: form.description
       });
-      pushToast({ tone: 'success', title: 'Dispute created', message: 'Yêu cầu bồi thường đã được gửi.' });
+      pushToast({ tone: 'success', title: 'Đã tạo khiếu nại', message: 'Yêu cầu bồi thường đã được gửi.' });
       setForm(defaultForm);
       setOpenCreate(false);
       loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Creation failed', message: error?.response?.data?.error || 'Không thể tạo dispute.' });
+      pushToast({ tone: 'error', title: 'Tạo thất bại', message: error?.response?.data?.error || 'Không thể tạo khiếu nại.' });
     }
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Disputes & Compensation"
-        subtitle="Tạo yêu cầu bồi thường với bằng chứng hư hỏng và theo dõi quyết định xử lý từ admin."
+        title="Khiếu nại & Bồi thường"
+        subtitle="Tạo yêu cầu bồi thường với bằng chứng hư hỏng và theo dõi quyết định xử lý từ quản trị viên."
         action={
           <button
             type="button"
             onClick={() => setOpenCreate(true)}
             className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-400"
           >
-            Create dispute
+            Tạo khiếu nại
           </button>
         }
       />
@@ -87,8 +87,8 @@ export default function OwnerDisputesPage() {
       ) : disputes.length === 0 ? (
         <EmptyState
           icon={Scale}
-          title="No disputes yet"
-          description="Khi phát sinh hư hỏng, bạn có thể tạo dispute để admin review và quyết định mức bồi thường."
+          title="Chưa có khiếu nại"
+          description="Khi phát sinh hư hỏng, bạn có thể tạo khiếu nại để quản trị viên xem xét và quyết định mức bồi thường."
         />
       ) : (
         <div className="space-y-3">
@@ -101,7 +101,7 @@ export default function OwnerDisputesPage() {
       <Modal
         open={openCreate}
         onClose={() => setOpenCreate(false)}
-        title="Create compensation dispute"
+        title="Tạo khiếu nại bồi thường"
         width="max-w-xl"
         footer={
           <div className="flex justify-end gap-2">
@@ -110,21 +110,21 @@ export default function OwnerDisputesPage() {
               onClick={() => setOpenCreate(false)}
               className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
               form="create-dispute-form"
               className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-400"
             >
-              Submit dispute
+              Gửi khiếu nại
             </button>
           </div>
         }
       >
         <form id="create-dispute-form" onSubmit={createDispute} className="space-y-3">
           <label className="block text-sm text-slate-300">
-            Contract
+            Hợp đồng
             <select
               value={form.contract_id}
               onChange={(event) => setField('contract_id', event.target.value)}
@@ -140,7 +140,7 @@ export default function OwnerDisputesPage() {
           </label>
 
           <label className="block text-sm text-slate-300">
-            Estimated repair cost
+            Chi phí sửa chữa ước tính
             <input
               type="number"
               min="0"
@@ -152,7 +152,7 @@ export default function OwnerDisputesPage() {
           </label>
 
           <label className="block text-sm text-slate-300">
-            Damage description
+            Mô tả hư hỏng
             <textarea
               rows={4}
               required

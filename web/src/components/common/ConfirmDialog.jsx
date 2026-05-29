@@ -3,10 +3,10 @@ import Modal from './Modal';
 
 export default function ConfirmDialog({
   open,
-  title = 'Please confirm',
+  title = 'Vui lòng xác nhận',
   description,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText = 'Xác nhận',
+  cancelText = 'Hủy',
   danger = false,
   onConfirm,
   onCancel
@@ -42,3 +42,4 @@ export default function ConfirmDialog({
     </Modal>
   );
 }
+

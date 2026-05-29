@@ -33,18 +33,18 @@ export default function OwnerRentalRequestsPage() {
     try {
       if (type === 'approve') await rentalApi.confirm(rentalId);
       if (type === 'reject') await rentalApi.reject(rentalId);
-      pushToast({ tone: 'success', title: 'Request updated', message: `Rental request has been ${type}d.` });
+      pushToast({ tone: 'success', title: 'Đã cập nhật yêu cầu', message: `Yêu cầu thuê đã được ${type === 'approve' ? 'duyệt' : 'từ chối'}.` });
       loadRows();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Action failed', message: error?.response?.data?.error || 'Cannot process this request.' });
+      pushToast({ tone: 'error', title: 'Thao tác thất bại', message: error?.response?.data?.error || 'Không thể xử lý yêu cầu này.' });
     }
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Owner Rental Requests"
-        subtitle="Duyệt nhanh các yêu cầu thuê đến từ renter, đồng bộ trạng thái hợp đồng downstream."
+        title="Yêu cầu thuê nhận được"
+        subtitle="Duyệt nhanh các yêu cầu thuê từ người thuê và đồng bộ trạng thái hợp đồng ở các bước tiếp theo."
       />
 
       {loading ? (
@@ -52,8 +52,8 @@ export default function OwnerRentalRequestsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title="No incoming requests"
-          description="Khi renter gửi yêu cầu thuê xe, dữ liệu sẽ hiển thị tại đây để bạn phê duyệt."
+          title="Chưa có yêu cầu thuê mới"
+          description="Khi người thuê gửi yêu cầu thuê xe, dữ liệu sẽ hiển thị tại đây để bạn phê duyệt."
         />
       ) : (
         <div className="space-y-3">
@@ -63,8 +63,8 @@ export default function OwnerRentalRequestsPage() {
               <article key={rental._id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-white">Request #{compactId(rental._id)}</p>
-                    <p className="text-xs text-slate-400">Vehicle #{compactId(rental.vehicle_id)}</p>
+                    <p className="text-sm font-semibold text-white">Yêu cầu #{compactId(rental._id)}</p>
+                    <p className="text-xs text-slate-400">Xe #{compactId(rental.vehicle_id)}</p>
                     <p className="mt-1 text-xs text-slate-300">
                       {formatDate(rental.rental_start_date)} - {formatDate(rental.rental_end_date)}
                     </p>
@@ -79,14 +79,14 @@ export default function OwnerRentalRequestsPage() {
                       onClick={() => doAction('reject', rental._id)}
                       className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20"
                     >
-                      Reject
+                      Từ chối
                     </button>
                     <button
                       type="button"
                       onClick={() => doAction('approve', rental._id)}
                       className="rounded-xl bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400"
                     >
-                      Approve
+                      Duyệt
                     </button>
                   </div>
                 ) : null}

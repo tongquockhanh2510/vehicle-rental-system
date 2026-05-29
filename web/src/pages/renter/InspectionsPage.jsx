@@ -52,7 +52,7 @@ export default function InspectionsPage() {
       const key = type === 'pickup' ? 'pickup_images' : 'return_images';
 
       files.forEach((file) => formData.append(key, file));
-      formData.append('description', notes || `${type} inspection by renter`);
+      formData.append('description', notes || `Biên bản ${type === 'pickup' ? 'nhận' : 'trả'} xe từ người thuê`);
 
       if (type === 'pickup') {
         await contractApi.pickup(selectedContractId, formData);
@@ -60,15 +60,15 @@ export default function InspectionsPage() {
         await contractApi.returnVehicle(selectedContractId, formData);
       }
 
-      pushToast({ tone: 'success', title: 'Inspection submitted', message: `Đã gửi ${type} inspection thành công.` });
+      pushToast({ tone: 'success', title: 'Đã gửi biên bản', message: `Đã gửi biên bản ${type === 'pickup' ? 'nhận xe' : 'trả xe'} thành công.` });
       setNotes('');
       setPickupImages([]);
       setReturnImages([]);
     } catch (error) {
       pushToast({
         tone: 'error',
-        title: 'Inspection failed',
-        message: error?.response?.data?.error || 'Không thể gửi inspection ở thời điểm này.'
+        title: 'Gửi biên bản thất bại',
+        message: error?.response?.data?.error || 'Không thể gửi biên bản kiểm tra ở thời điểm này.'
       });
     } finally {
       setSubmitting(false);
@@ -83,8 +83,8 @@ export default function InspectionsPage() {
     return (
       <EmptyState
         icon={ClipboardCheck}
-        title="No contracts for inspection"
-        description="Inspection timeline sẽ xuất hiện khi bạn có hợp đồng đang hoạt động."
+        title="Chưa có hợp đồng để kiểm tra xe"
+        description="Dòng thời gian kiểm tra xe sẽ xuất hiện khi bạn có hợp đồng đang hoạt động."
       />
     );
   }
@@ -92,12 +92,12 @@ export default function InspectionsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Inspection Workflow"
-        subtitle="Upload ảnh nhận xe/trả xe, ghi nhận hiện trạng và bám timeline hợp đồng theo chuẩn vận hành."
+        title="Quy trình kiểm tra xe"
+        subtitle="Tải ảnh nhận xe/trả xe, ghi nhận hiện trạng và bám dòng thời gian hợp đồng theo chuẩn vận hành."
       />
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-        <label className="text-xs uppercase tracking-[0.18em] text-slate-300">Select contract</label>
+        <label className="text-xs uppercase tracking-[0.18em] text-slate-300">Chọn hợp đồng</label>
         <select
           value={selectedContractId}
           onChange={(event) => setSelectedContractId(event.target.value)}
@@ -105,7 +105,7 @@ export default function InspectionsPage() {
         >
           {contracts.map((contract) => (
             <option key={contract._id} value={contract._id}>
-              Contract #{compactId(contract._id)}
+              Hợp đồng #{compactId(contract._id)}
             </option>
           ))}
         </select>
@@ -113,10 +113,10 @@ export default function InspectionsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="text-lg font-semibold text-white">Inspection Evidence</h3>
+          <h3 className="text-lg font-semibold text-white">Bằng chứng kiểm tra xe</h3>
 
           <label className="block text-sm text-slate-300">
-            Pickup images
+            Ảnh nhận xe
             <input
               type="file"
               multiple
@@ -127,7 +127,7 @@ export default function InspectionsPage() {
           </label>
 
           <label className="block text-sm text-slate-300">
-            Return images
+            Ảnh trả xe
             <input
               type="file"
               multiple
@@ -152,7 +152,7 @@ export default function InspectionsPage() {
               onClick={() => submitInspection('pickup')}
               className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-slate-600"
             >
-              Submit pickup inspection
+              Gửi biên bản nhận xe
             </button>
             <button
               type="button"
@@ -160,7 +160,7 @@ export default function InspectionsPage() {
               onClick={() => submitInspection('return')}
               className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 disabled:bg-slate-600"
             >
-              Submit return inspection
+              Gửi biên bản trả xe
             </button>
           </div>
 
@@ -168,32 +168,32 @@ export default function InspectionsPage() {
             {[...(selectedContract?.pickup_images || []), ...(selectedContract?.return_images || [])]
               .slice(0, 8)
               .map((image, idx) => (
-                <img key={`${image}-${idx}`} src={resolveImage(image, idx)} alt="inspection" className="h-16 w-full rounded-lg object-cover" />
+                <img key={`${image}-${idx}`} src={resolveImage(image, idx)} alt="kiem-tra-xe" className="h-16 w-full rounded-lg object-cover" />
               ))}
           </div>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="mb-4 text-lg font-semibold text-white">Inspection Timeline</h3>
+          <h3 className="mb-4 text-lg font-semibold text-white">Dòng thời gian kiểm tra xe</h3>
           <Timeline
             items={[
-              { title: 'Contract created', status: 'APPROVED', timestamp: selectedContract?.created_at },
-              { title: 'Deposit paid', status: 'PENDING', description: 'Payment verification by platform' },
+              { title: 'Hợp đồng được tạo', status: 'APPROVED', timestamp: selectedContract?.created_at },
+              { title: 'Đã thanh toán cọc', status: 'PENDING', description: 'Nền tảng xác nhận thanh toán' },
               {
-                title: 'Pickup inspection',
+                title: 'Kiểm tra khi nhận xe',
                 status: selectedContract?.pickup_time ? 'COMPLETED' : 'PENDING',
                 timestamp: selectedContract?.pickup_time,
-                description: 'Upload vehicle condition at pickup'
+                description: 'Tải ảnh tình trạng xe khi nhận'
               },
-              { title: 'Vehicle in use', status: selectedContract?.pickup_time ? 'ACTIVE' : 'PENDING' },
+              { title: 'Xe đang được sử dụng', status: selectedContract?.pickup_time ? 'ACTIVE' : 'PENDING' },
               {
-                title: 'Return inspection',
+                title: 'Kiểm tra khi trả xe',
                 status: selectedContract?.return_time ? 'COMPLETED' : 'PENDING',
                 timestamp: selectedContract?.return_time,
-                description: 'Upload condition at return'
+                description: 'Tải ảnh tình trạng xe khi trả'
               },
               {
-                title: selectedContract?.status === 'DISPUTED' ? 'Dispute created' : 'Deposit refunded',
+                title: selectedContract?.status === 'DISPUTED' ? 'Đã tạo tranh chấp' : 'Đã hoàn tiền cọc',
                 status: selectedContract?.status === 'DISPUTED' ? 'DISPUTED' : 'REFUNDED'
               }
             ]}

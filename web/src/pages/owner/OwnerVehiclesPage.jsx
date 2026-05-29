@@ -41,10 +41,10 @@ export default function OwnerVehiclesPage() {
   const toggleAvailability = async (vehicle) => {
     try {
       await vehicleApi.updateAvailability(vehicle._id, !vehicle.is_available);
-      pushToast({ tone: 'success', title: 'Availability updated', message: 'Vehicle status has been updated.' });
+      pushToast({ tone: 'success', title: 'Đã cập nhật khả dụng', message: 'Trạng thái xe đã được cập nhật.' });
       loadVehicles();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Update failed', message: error?.response?.data?.error || 'Cannot update vehicle availability.' });
+      pushToast({ tone: 'error', title: 'Cập nhật thất bại', message: error?.response?.data?.error || 'Không thể cập nhật trạng thái xe.' });
     }
   };
 
@@ -52,19 +52,19 @@ export default function OwnerVehiclesPage() {
     if (!targetDelete) return;
     try {
       await vehicleApi.delete(targetDelete._id);
-      pushToast({ tone: 'success', title: 'Vehicle removed', message: 'Vehicle listing has been deleted.' });
+      pushToast({ tone: 'success', title: 'Đã gỡ xe', message: 'Tin đăng xe đã được xóa.' });
       setTargetDelete(null);
       loadVehicles();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Delete failed', message: error?.response?.data?.error || 'Cannot delete this vehicle.' });
+      pushToast({ tone: 'error', title: 'Xóa thất bại', message: error?.response?.data?.error || 'Không thể xóa xe này.' });
     }
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="My Vehicles"
-        subtitle="Quản lý danh sách xe cho thuê, trạng thái sẵn sàng, giá thuê và hiệu suất booking."
+        title="Xe của tôi"
+        subtitle="Quản lý danh sách xe cho thuê, trạng thái sẵn sàng, giá thuê và hiệu suất đặt xe."
         action={
           <Link
             to="/owner/vehicles/new"
@@ -82,7 +82,7 @@ export default function OwnerVehiclesPage() {
         <EmptyState
           icon={CarFront}
           title="Bạn chưa có xe nào"
-          description="Đăng xe đầu tiên để bắt đầu nhận booking và tạo doanh thu từ tài sản nhàn rỗi."
+          description="Đăng xe đầu tiên để bắt đầu nhận lượt đặt và tạo doanh thu từ tài sản nhàn rỗi."
           action={
             <button
               type="button"
@@ -112,10 +112,10 @@ export default function OwnerVehiclesPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
-                  <p>Price/day: <span className="font-semibold text-cyan-300">{formatCurrency(vehicle.daily_rate)}</span></p>
-                  <p>Deposit: <span className="font-semibold text-white">{formatCurrency(vehicle.deposit_amount)}</span></p>
-                  <p>Bookings: <span className="font-semibold text-white">{vehicle.booking_count || 0}</span></p>
-                  <p>Revenue: <span className="font-semibold text-white">{formatCurrency(vehicle.revenue || 0)}</span></p>
+                  <p>Giá/ngày: <span className="font-semibold text-cyan-300">{formatCurrency(vehicle.daily_rate)}</span></p>
+                  <p>Tiền cọc: <span className="font-semibold text-white">{formatCurrency(vehicle.deposit_amount)}</span></p>
+                  <p>Lượt đặt: <span className="font-semibold text-white">{vehicle.booking_count || 0}</span></p>
+                  <p>Doanh thu: <span className="font-semibold text-white">{formatCurrency(vehicle.revenue || 0)}</span></p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -124,21 +124,21 @@ export default function OwnerVehiclesPage() {
                     onClick={() => navigate(`/owner/vehicles/${vehicle._id}/edit`)}
                     className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
                   >
-                    Edit
+                    Chỉnh sửa
                   </button>
                   <button
                     type="button"
                     onClick={() => toggleAvailability(vehicle)}
                     className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs text-blue-200 transition hover:bg-blue-500/20"
                   >
-                    {vehicle.is_available ? 'Pause listing' : 'Resume listing'}
+                    {vehicle.is_available ? 'Tạm dừng hiển thị' : 'Mở lại hiển thị'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setTargetDelete(vehicle)}
                     className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 transition hover:bg-rose-500/20"
                   >
-                    Delete
+                    Xóa
                   </button>
                 </div>
               </div>
@@ -151,9 +151,9 @@ export default function OwnerVehiclesPage() {
         open={Boolean(targetDelete)}
         onCancel={() => setTargetDelete(null)}
         onConfirm={deleteVehicle}
-        title="Delete vehicle listing"
+        title="Xóa tin đăng xe"
         description={`Bạn có chắc muốn xóa xe ${targetDelete?.brand || ''} ${targetDelete?.model || ''}? Hành động này không thể hoàn tác.`}
-        confirmText="Delete"
+        confirmText="Xóa"
         danger
       />
     </div>

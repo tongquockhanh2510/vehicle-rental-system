@@ -17,20 +17,20 @@
 };
 
 export const STATUS_LABELS = {
-  AVAILABLE: 'Available',
-  PENDING: 'Pending',
-  APPROVED: 'Approved',
-  CONFIRMED: 'Approved',
-  REJECTED: 'Rejected',
-  ACTIVE: 'Active',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
-  DISPUTED: 'Disputed',
-  REFUNDED: 'Refunded',
-  REVIEWING: 'Reviewing',
-  PAID: 'Paid',
-  OUT_OF_BOUNDARY: 'Out of boundary',
-  IN_BOUNDARY: 'In boundary'
+  AVAILABLE: 'Sẵn sàng',
+  PENDING: 'Chờ xử lý',
+  APPROVED: 'Đã duyệt',
+  CONFIRMED: 'Đã duyệt',
+  REJECTED: 'Từ chối',
+  ACTIVE: 'Đang hoạt động',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+  DISPUTED: 'Tranh chấp',
+  REFUNDED: 'Đã hoàn cọc',
+  REVIEWING: 'Đang xem xét',
+  PAID: 'Đã thanh toán',
+  OUT_OF_BOUNDARY: 'Vượt phạm vi',
+  IN_BOUNDARY: 'Trong phạm vi'
 };
 
 export function normalizeStatus(status) {

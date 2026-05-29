@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { resolveImage } from '../../utils/image';
 
-export default function CarGallery({ images = [], title = 'Vehicle images' }) {
+export default function CarGallery({ images = [], title = 'Ảnh xe' }) {
   const safeImages = images.length ? images : [resolveImage('', 0)];
   const [activeIndex, setActiveIndex] = useState(0);
 

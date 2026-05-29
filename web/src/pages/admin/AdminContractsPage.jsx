@@ -34,17 +34,17 @@ export default function AdminContractsPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Admin • Contracts" subtitle="Kiểm soát vòng đời hợp đồng, trạng thái inspection và settlement toàn hệ thống." />
+      <SectionHeader title="Quản trị • Hợp đồng" subtitle="Kiểm soát vòng đời hợp đồng, trạng thái kiểm tra xe và quyết toán toàn hệ thống." />
       <DataTable
         loading={loading}
         rows={rows}
         columns={[
-          { key: '_id', title: 'Contract code', render: (row) => String(row._id).slice(-8) },
-          { key: 'vehicle', title: 'Vehicle', render: (row) => String(row.vehicle_id || '').slice(-8) },
-          { key: 'dateRange', title: 'Date range', render: (row) => `${formatDate(row.rental_start_date)} - ${formatDate(row.rental_end_date)}` },
-          { key: 'deposit', title: 'Deposit', render: (row) => formatCurrency(row.deposit_amount || row.deposit || 0) },
-          { key: 'amount', title: 'Rental amount', render: (row) => formatCurrency(row.rental_amount || 0) },
-          { key: 'status', title: 'Status', render: (row) => <StatusBadge status={row.status} /> }
+          { key: '_id', title: 'Mã hợp đồng', render: (row) => String(row._id).slice(-8) },
+          { key: 'vehicle', title: 'Xe', render: (row) => String(row.vehicle_id || '').slice(-8) },
+          { key: 'dateRange', title: 'Khoảng thời gian', render: (row) => `${formatDate(row.rental_start_date)} - ${formatDate(row.rental_end_date)}` },
+          { key: 'deposit', title: 'Tiền cọc', render: (row) => formatCurrency(row.deposit_amount || row.deposit || 0) },
+          { key: 'amount', title: 'Tiền thuê', render: (row) => formatCurrency(row.rental_amount || 0) },
+          { key: 'status', title: 'Trạng thái', render: (row) => <StatusBadge status={row.status} /> }
         ]}
       />
     </div>

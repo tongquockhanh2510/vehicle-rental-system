@@ -46,8 +46,8 @@ export default function OwnerRevenuePage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Owner Revenue"
-        subtitle="Theo dõi doanh thu thuê xe, khoản cọc và tình trạng settlement cho từng hợp đồng."
+        title="Doanh thu chủ xe"
+        subtitle="Theo dõi doanh thu thuê xe, khoản cọc và tình trạng quyết toán cho từng hợp đồng."
       />
 
       {loading ? (
@@ -55,20 +55,20 @@ export default function OwnerRevenuePage() {
       ) : payments.length === 0 ? (
         <EmptyState
           icon={Wallet2}
-          title="No revenue data"
+          title="Chưa có dữ liệu doanh thu"
           description="Doanh thu sẽ cập nhật khi có giao dịch hoàn tất trên các hợp đồng đang hoạt động."
         />
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard title="Gross payment" value={formatCurrency(stats.total)} subtitle="All owner transactions" />
-            <StatCard title="Settled revenue" value={formatCurrency(stats.completedAmount)} subtitle={`${stats.completedCount} completed`} />
-            <StatCard title="Pending settlement" value={formatCurrency(stats.pendingAmount)} subtitle={`${stats.pendingCount} pending`} />
-            <StatCard title="System fee estimate" value={formatCurrency(stats.completedAmount * 0.04)} subtitle="4% platform fee" />
+            <StatCard title="Tổng thanh toán" value={formatCurrency(stats.total)} subtitle="Toàn bộ giao dịch của chủ xe" />
+            <StatCard title="Doanh thu đã quyết toán" value={formatCurrency(stats.completedAmount)} subtitle={`${stats.completedCount} đã hoàn tất`} />
+            <StatCard title="Khoản chờ quyết toán" value={formatCurrency(stats.pendingAmount)} subtitle={`${stats.pendingCount} đang chờ`} />
+            <StatCard title="Ước tính phí hệ thống" value={formatCurrency(stats.completedAmount * 0.04)} subtitle="Phí nền tảng 4%" />
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <h3 className="mb-4 text-lg font-semibold text-white">Recent transactions</h3>
+            <h3 className="mb-4 text-lg font-semibold text-white">Giao dịch gần đây</h3>
             <div className="space-y-2">
               {payments.slice(0, 12).map((payment) => (
                 <div key={payment._id} className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-200">

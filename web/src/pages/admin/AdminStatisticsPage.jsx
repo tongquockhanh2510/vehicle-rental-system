@@ -35,18 +35,18 @@ export default function AdminStatisticsPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Admin • Statistics" subtitle="Khai thác KPI tài chính và hiệu suất vận hành ở mức hệ thống." />
+      <SectionHeader title="Quản trị • Thống kê" subtitle="Khai thác KPI tài chính và hiệu suất vận hành ở mức hệ thống." />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total revenue (6m)" value={formatCurrency(totalRevenue)} />
-        <StatCard title="System fee (4%)" value={formatCurrency(totalRevenue * 0.04)} />
-        <StatCard title="Total rentals" value={(dashboard?.total_rentals || 0).toLocaleString('vi-VN')} />
-        <StatCard title="Pending disputes" value={(dashboard?.pending_disputes || 0).toLocaleString('vi-VN')} />
+        <StatCard title="Tổng doanh thu (6 tháng)" value={formatCurrency(totalRevenue)} />
+        <StatCard title="Phí hệ thống (4%)" value={formatCurrency(totalRevenue * 0.04)} />
+        <StatCard title="Tổng lượt thuê" value={(dashboard?.total_rentals || 0).toLocaleString('vi-VN')} />
+        <StatCard title="Khiếu nại chờ xử lý" value={(dashboard?.pending_disputes || 0).toLocaleString('vi-VN')} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="text-lg font-semibold text-white">Revenue trend</h3>
+          <h3 className="text-lg font-semibold text-white">Xu hướng doanh thu</h3>
           <div className="mt-4 space-y-3">
             {revenue.map((item) => (
               <div key={item.month}>
@@ -63,12 +63,12 @@ export default function AdminStatisticsPage() {
         </article>
 
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="text-lg font-semibold text-white">Top rented vehicles</h3>
+          <h3 className="text-lg font-semibold text-white">Xe được thuê nhiều nhất</h3>
           <div className="mt-4 space-y-2">
             {topVehicles.map((item, idx) => (
               <div key={`${item.vehicle_id || idx}`} className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-sm text-slate-200">
-                <p className="font-semibold text-white">#{idx + 1} {item.brand || 'Vehicle'} {item.model || ''}</p>
-                <p className="text-xs text-slate-400">Rentals: {item.rental_count || item.total_rentals || 0}</p>
+                <p className="font-semibold text-white">#{idx + 1} {item.brand || 'Xe'} {item.model || ''}</p>
+                <p className="text-xs text-slate-400">Lượt thuê: {item.rental_count || item.total_rentals || 0}</p>
               </div>
             ))}
           </div>

@@ -34,25 +34,25 @@ export default function NotificationsPage() {
       await notificationApi.markRead(notificationId);
       loadData();
     } catch {
-      pushToast({ tone: 'error', title: 'Update failed', message: 'Không thể cập nhật trạng thái thông báo.' });
+      pushToast({ tone: 'error', title: 'Cập nhật thất bại', message: 'Không thể cập nhật trạng thái thông báo.' });
     }
   };
 
   const markAll = async () => {
     try {
       await notificationApi.markAllRead();
-      pushToast({ tone: 'success', title: 'All read', message: 'Đã đánh dấu tất cả thông báo là đã đọc.' });
+      pushToast({ tone: 'success', title: 'Đã đọc tất cả', message: 'Đã đánh dấu tất cả thông báo là đã đọc.' });
       loadData();
     } catch {
-      pushToast({ tone: 'error', title: 'Action failed', message: 'Không thể đánh dấu tất cả thông báo.' });
+      pushToast({ tone: 'error', title: 'Thao tác thất bại', message: 'Không thể đánh dấu tất cả thông báo.' });
     }
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Notification Center"
-        subtitle="Theo dõi rental, contract, payment, tracking và dispute updates theo thời gian thực."
+        title="Trung tâm thông báo"
+        subtitle="Theo dõi cập nhật về yêu cầu thuê, hợp đồng, thanh toán, theo dõi hành trình và tranh chấp theo thời gian thực."
         action={
           notifications.length ? (
             <button
@@ -60,7 +60,7 @@ export default function NotificationsPage() {
               onClick={markAll}
               className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              Mark all as read
+              Đánh dấu đã đọc tất cả
             </button>
           ) : null
         }
@@ -71,7 +71,7 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="No notifications yet"
+          title="Chưa có thông báo"
           description="Khi có thay đổi từ hợp đồng, thanh toán hoặc tranh chấp, bạn sẽ thấy tại đây."
         />
       ) : (

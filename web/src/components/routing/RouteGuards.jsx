@@ -8,7 +8,7 @@ export function RequireAuth({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-300">Loading session...</div>;
+    return <div className="p-6 text-sm text-slate-300">Đang tải phiên đăng nhập...</div>;
   }
 
   if (!isAuthenticated) {
@@ -36,3 +36,4 @@ export function RequireRole({ children, roles = [] }) {
 
   return children;
 }
+

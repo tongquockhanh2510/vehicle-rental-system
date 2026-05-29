@@ -61,7 +61,7 @@ export default function OwnerVehicleFormPage() {
         });
         setExistingImages(Array.isArray(vehicle.images) ? vehicle.images : []);
       } catch (error) {
-        pushToast({ tone: 'error', title: 'Load failed', message: error?.response?.data?.error || 'Cannot load vehicle.' });
+        pushToast({ tone: 'error', title: 'Tải thất bại', message: error?.response?.data?.error || 'Không thể tải thông tin xe.' });
       } finally {
         setLoading(false);
       }
@@ -92,15 +92,15 @@ export default function OwnerVehicleFormPage() {
         if (files.length) {
           pushToast({
             tone: 'info',
-            title: 'Vehicle updated',
-            message: 'Thông tin xe đã cập nhật. Upload ảnh bổ sung hiện được quản lý ở endpoint riêng.'
+            title: 'Đã cập nhật xe',
+            message: 'Thông tin xe đã cập nhật. Việc tải thêm ảnh hiện được quản lý ở API riêng.'
           });
         } else {
-          pushToast({ tone: 'success', title: 'Vehicle updated', message: 'Thông tin xe đã được lưu.' });
+          pushToast({ tone: 'success', title: 'Đã cập nhật xe', message: 'Thông tin xe đã được lưu.' });
         }
       } else {
         if (!files.length) {
-          pushToast({ tone: 'warning', title: 'Missing images', message: 'Vui lòng thêm ít nhất một ảnh xe.' });
+          pushToast({ tone: 'warning', title: 'Thiếu ảnh', message: 'Vui lòng thêm ít nhất một ảnh xe.' });
           setSubmitting(false);
           return;
         }
@@ -115,12 +115,12 @@ export default function OwnerVehicleFormPage() {
         files.forEach((file) => formData.append('images', file));
 
         await vehicleApi.create(formData);
-        pushToast({ tone: 'success', title: 'Vehicle created', message: 'Xe đã được đăng thành công.' });
+        pushToast({ tone: 'success', title: 'Đăng xe thành công', message: 'Xe đã được đăng thành công.' });
       }
 
       navigate('/owner/vehicles');
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Save failed', message: error?.response?.data?.error || 'Không thể lưu thông tin xe.' });
+      pushToast({ tone: 'error', title: 'Lưu thất bại', message: error?.response?.data?.error || 'Không thể lưu thông tin xe.' });
     } finally {
       setSubmitting(false);
     }
@@ -133,75 +133,75 @@ export default function OwnerVehicleFormPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={editing ? 'Edit Vehicle' : 'Add New Vehicle'}
-        subtitle="Thiết lập đầy đủ thông tin listing để tăng tỉ lệ booking và tối ưu trải nghiệm renter."
+        title={editing ? 'Chỉnh sửa xe' : 'Đăng xe mới'}
+        subtitle="Thiết lập đầy đủ thông tin hiển thị để tăng tỉ lệ đặt xe và tối ưu trải nghiệm người thuê."
       />
 
       <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="text-sm text-slate-300">Vehicle type
+          <label className="text-sm text-slate-300">Loại xe
             <select value={form.vehicle_type} onChange={(event) => setField('vehicle_type', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none">
               {['CAR', 'SUV', 'PICKUP', 'VAN', 'MOTORBIKE'].map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
 
-          <label className="text-sm text-slate-300">Brand
+          <label className="text-sm text-slate-300">Hãng xe
             <input required value={form.brand} onChange={(event) => setField('brand', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Model
+          <label className="text-sm text-slate-300">Mẫu xe
             <input required value={form.model} onChange={(event) => setField('model', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Year
+          <label className="text-sm text-slate-300">Năm sản xuất
             <input required type="number" value={form.year} onChange={(event) => setField('year', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">License plate
+          <label className="text-sm text-slate-300">Biển số
             <input required value={form.license_plate} onChange={(event) => setField('license_plate', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Fuel type
+          <label className="text-sm text-slate-300">Nhiên liệu
             <select value={form.fuel_type} onChange={(event) => setField('fuel_type', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none">
               {['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID'].map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
 
-          <label className="text-sm text-slate-300">Transmission
+          <label className="text-sm text-slate-300">Hộp số
             <select value={form.transmission} onChange={(event) => setField('transmission', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none">
               {['AUTOMATIC', 'MANUAL'].map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
 
-          <label className="text-sm text-slate-300">Seats
+          <label className="text-sm text-slate-300">Số ghế
             <input required type="number" min="1" value={form.seats} onChange={(event) => setField('seats', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Rent price per day
+          <label className="text-sm text-slate-300">Giá thuê mỗi ngày
             <input required type="number" min="0" value={form.daily_rate} onChange={(event) => setField('daily_rate', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Deposit amount
+          <label className="text-sm text-slate-300">Tiền cọc
             <input required type="number" min="0" value={form.deposit_amount} onChange={(event) => setField('deposit_amount', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Allowed region
+          <label className="text-sm text-slate-300">Phạm vi cho phép
             <input value={form.allowed_region} onChange={(event) => setField('allowed_region', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Available from
+          <label className="text-sm text-slate-300">Sẵn sàng từ ngày
             <input type="date" value={form.available_from} onChange={(event) => setField('available_from', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="text-sm text-slate-300">Available to
+          <label className="text-sm text-slate-300">Sẵn sàng đến ngày
             <input type="date" value={form.available_to} onChange={(event) => setField('available_to', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="md:col-span-2 text-sm text-slate-300">Description
+          <label className="md:col-span-2 text-sm text-slate-300">Mô tả
             <textarea rows={4} value={form.description} onChange={(event) => setField('description', event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-white outline-none" />
           </label>
 
-          <label className="md:col-span-2 text-sm text-slate-300">Image upload
+          <label className="md:col-span-2 text-sm text-slate-300">Tải ảnh xe
             <input type="file" accept="image/*" multiple onChange={(event) => setFiles(Array.from(event.target.files || []))} className="mt-1 block w-full text-sm text-slate-200" />
           </label>
 
@@ -210,17 +210,17 @@ export default function OwnerVehicleFormPage() {
               <img key={`existing-${idx}`} src={resolveImage(image, idx)} alt="existing vehicle" className="h-24 w-full rounded-lg object-cover" />
             ))}
             {previews.slice(0, 6).map((image, idx) => (
-              <img key={`preview-${idx}`} src={image} alt="preview" className="h-24 w-full rounded-lg object-cover" />
+              <img key={`preview-${idx}`} src={image} alt="xem-truoc" className="h-24 w-full rounded-lg object-cover" />
             ))}
           </div>
         </div>
 
         <div className="mt-6 flex flex-wrap justify-end gap-2">
           <button type="button" onClick={() => navigate('/owner/vehicles')} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10">
-            Cancel
+            Hủy
           </button>
           <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-slate-600">
-            <Save className="h-4 w-4" /> {submitting ? 'Saving...' : 'Save vehicle'}
+            <Save className="h-4 w-4" /> {submitting ? 'Đang lưu...' : 'Lưu xe'}
           </button>
         </div>
       </form>

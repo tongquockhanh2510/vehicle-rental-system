@@ -45,7 +45,7 @@ export default function ContractsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Contracts"
+        title="Hợp đồng"
         subtitle="Quản lý toàn bộ vòng đời hợp đồng: thuê xe, kiểm tra nhận/trả xe, thanh toán và tranh chấp."
       />
 
@@ -85,7 +85,7 @@ export default function ContractsPage() {
                     onClick={() => setSelectedContract(contract)}
                     className="rounded-xl border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
                   >
-                    View details
+                    Xem chi tiết
                   </button>
                 </div>
               }
@@ -97,47 +97,47 @@ export default function ContractsPage() {
       <Modal
         open={Boolean(selectedContract)}
         onClose={() => setSelectedContract(null)}
-        title={`Contract #${selectedContract?._id?.slice(-6) || ''}`}
+        title={`Hợp đồng #${selectedContract?._id?.slice(-6) || ''}`}
       >
         {selectedContract ? (
           <div className="space-y-4">
             <div className="grid gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-200 md:grid-cols-2">
-              <p>Contract code: <span className="font-semibold text-white">{selectedContract._id}</span></p>
-              <p>Status: <span className="font-semibold text-white">{selectedContract.status}</span></p>
-              <p>Rental amount: <span className="font-semibold text-cyan-300">{formatCurrency(selectedContract.rental_amount || 0)}</span></p>
-              <p>Deposit: <span className="font-semibold text-white">{formatCurrency(selectedContract.deposit_amount || selectedContract.deposit || 0)}</span></p>
-              <p>System fee 4%: <span className="font-semibold text-white">{formatCurrency((selectedContract.rental_amount || 0) * 0.04)}</span></p>
-              <p>Duration: <span className="font-semibold text-white">{calculateDays(selectedContract.rental_start_date, selectedContract.rental_end_date)} day(s)</span></p>
+              <p>Mã hợp đồng: <span className="font-semibold text-white">{selectedContract._id}</span></p>
+              <p>Trạng thái: <span className="font-semibold text-white">{selectedContract.status}</span></p>
+              <p>Tiền thuê: <span className="font-semibold text-cyan-300">{formatCurrency(selectedContract.rental_amount || 0)}</span></p>
+              <p>Tiền cọc: <span className="font-semibold text-white">{formatCurrency(selectedContract.deposit_amount || selectedContract.deposit || 0)}</span></p>
+              <p>Phí hệ thống 4%: <span className="font-semibold text-white">{formatCurrency((selectedContract.rental_amount || 0) * 0.04)}</span></p>
+              <p>Thời gian thuê: <span className="font-semibold text-white">{calculateDays(selectedContract.rental_start_date, selectedContract.rental_end_date)} ngày</span></p>
             </div>
 
             <Timeline
               items={[
                 {
-                  title: 'Contract created',
-                  description: 'Hợp đồng phát sinh sau khi owner xác nhận yêu cầu thuê.',
+                  title: 'Hợp đồng được tạo',
+                  description: 'Hợp đồng phát sinh sau khi chủ xe xác nhận yêu cầu thuê.',
                   status: 'APPROVED',
                   timestamp: selectedContract.created_at
                 },
                 {
-                  title: 'Deposit payment',
+                  title: 'Thanh toán tiền cọc',
                   description: 'Đặt cọc được ghi nhận trước khi nhận xe.',
                   status: 'PENDING'
                 },
                 {
-                  title: 'Pickup inspection',
+                  title: 'Kiểm tra khi nhận xe',
                   description: 'Upload ảnh nhận xe và ghi chú hiện trạng.',
                   status: selectedContract.pickup_time ? 'COMPLETED' : 'PENDING',
                   timestamp: selectedContract.pickup_time
                 },
                 {
-                  title: 'Return inspection',
+                  title: 'Kiểm tra khi trả xe',
                   description: 'Đối soát ảnh trả xe, xác định hoàn cọc hoặc tranh chấp.',
                   status: selectedContract.return_time ? 'COMPLETED' : 'PENDING',
                   timestamp: selectedContract.return_time
                 },
                 {
-                  title: 'Contract settlement',
-                  description: 'Hoàn cọc hoặc bồi thường theo quyết định dispute.',
+                  title: 'Quyết toán hợp đồng',
+                  description: 'Hoàn cọc hoặc bồi thường theo quyết định tranh chấp.',
                   status: selectedContract.status
                 }
               ]}

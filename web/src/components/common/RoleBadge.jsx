@@ -8,16 +8,16 @@ const roleStyleMap = {
 };
 
 const roleLabelMap = {
-  [ROLES.ADMIN]: 'Admin',
-  [ROLES.OWNER]: 'Vehicle Owner',
-  [ROLES.USER]: 'Renter'
+  [ROLES.ADMIN]: 'Quản trị viên',
+  [ROLES.OWNER]: 'Chủ xe',
+  [ROLES.USER]: 'Người thuê'
 };
 
 export default function RoleBadge({ role }) {
   const key = normalizeRole(role);
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${roleStyleMap[key] || roleStyleMap[ROLES.USER]}`}>
-      {roleLabelMap[key] || 'Renter'}
+      {roleLabelMap[key] || 'Người thuê'}
     </span>
   );
 }

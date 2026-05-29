@@ -7,15 +7,15 @@ export default function PaymentSummary({ rentalDays = 0, dailyRate = 0, deposit 
   const total = rentalAmount + Number(deposit || 0) + systemFee;
 
   const rows = [
-    { label: 'Rental days', value: `${rentalDays} day(s)` },
-    { label: 'Rental amount', value: formatCurrency(rentalAmount) },
-    { label: `System fee (${Math.round(systemFeeRate * 100)}%)`, value: formatCurrency(systemFee) },
-    { label: 'Deposit', value: formatCurrency(deposit) }
+    { label: 'Số ngày thuê', value: `${rentalDays} ngày` },
+    { label: 'Tiền thuê xe', value: formatCurrency(rentalAmount) },
+    { label: `Phí hệ thống (${Math.round(systemFeeRate * 100)}%)`, value: formatCurrency(systemFee) },
+    { label: 'Tiền cọc', value: formatCurrency(deposit) }
   ];
 
   return (
     <div className="rounded-2xl border border-cyan-400/30 bg-cyan-500/5 p-4">
-      <p className="text-sm font-semibold text-cyan-200">Payment estimate</p>
+      <p className="text-sm font-semibold text-cyan-200">Ước tính thanh toán</p>
       <div className="mt-3 space-y-2 text-sm text-slate-200">
         {rows.map((item) => (
           <div key={item.label} className="flex items-center justify-between">
@@ -26,7 +26,7 @@ export default function PaymentSummary({ rentalDays = 0, dailyRate = 0, deposit 
       </div>
       <div className="mt-4 border-t border-cyan-400/20 pt-3">
         <div className="flex items-center justify-between text-sm font-semibold text-white">
-          <span>Total payment</span>
+          <span>Tổng thanh toán</span>
           <span>{formatCurrency(total)}</span>
         </div>
       </div>

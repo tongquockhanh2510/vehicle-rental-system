@@ -5,7 +5,7 @@ import IconResolver from './IconResolver';
 import RoleBadge from '../common/RoleBadge';
 import { useAuth } from '../../context/AuthContext';
 
-export default function Sidebar({ menu = [], title = 'Portal' }) {
+export default function Sidebar({ menu = [], title = 'Cổng làm việc' }) {
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -13,7 +13,7 @@ export default function Sidebar({ menu = [], title = 'Portal' }) {
     <aside className="hidden min-h-[calc(100vh-64px)] w-72 border-r border-white/10 bg-slate-950/70 px-4 py-5 lg:block">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{title}</p>
-        <p className="mt-1 text-base font-semibold text-white">{user?.first_name || user?.email || 'User'}</p>
+        <p className="mt-1 text-base font-semibold text-white">{user?.first_name || user?.email || 'Người dùng'}</p>
         <div className="mt-2">
           <RoleBadge role={role} />
         </div>
@@ -47,7 +47,7 @@ export default function Sidebar({ menu = [], title = 'Portal' }) {
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
       >
         <LogOut className="h-4 w-4" />
-        Logout
+        Đăng xuất
       </button>
     </aside>
   );

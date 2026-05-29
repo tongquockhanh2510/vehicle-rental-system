@@ -27,16 +27,16 @@ export default function AdminVehiclesPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Admin • Vehicles" subtitle="Giám sát inventory xe hoạt động trên hệ thống và trạng thái listing." />
+      <SectionHeader title="Quản trị • Xe" subtitle="Giám sát tồn kho xe hoạt động trên hệ thống và trạng thái hiển thị." />
       <DataTable
         loading={loading}
         rows={rows}
         columns={[
-          { key: '_id', title: 'Vehicle ID', render: (row) => String(row._id).slice(-8) },
-          { key: 'name', title: 'Model', render: (row) => `${row.brand || ''} ${row.model || ''}`.trim() },
-          { key: 'owner', title: 'Owner', render: (row) => String(row.owner_id || '').slice(-8) },
-          { key: 'price', title: 'Price/day', render: (row) => formatCurrency(row.daily_rate || 0) },
-          { key: 'status', title: 'Status', render: (row) => <StatusBadge status={row.is_available ? 'AVAILABLE' : 'PENDING'} /> }
+          { key: '_id', title: 'Mã xe', render: (row) => String(row._id).slice(-8) },
+          { key: 'name', title: 'Mẫu xe', render: (row) => `${row.brand || ''} ${row.model || ''}`.trim() },
+          { key: 'owner', title: 'Chủ xe', render: (row) => String(row.owner_id || '').slice(-8) },
+          { key: 'price', title: 'Giá/ngày', render: (row) => formatCurrency(row.daily_rate || 0) },
+          { key: 'status', title: 'Trạng thái', render: (row) => <StatusBadge status={row.is_available ? 'AVAILABLE' : 'PENDING'} /> }
         ]}
       />
     </div>

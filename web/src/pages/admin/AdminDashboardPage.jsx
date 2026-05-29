@@ -75,24 +75,24 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Admin Control Center"
+        title="Trung tâm điều hành quản trị"
         subtitle="Giám sát toàn hệ thống: tăng trưởng người dùng, hiệu suất vận hành, doanh thu và rủi ro tranh chấp."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total users" value={metrics.totalUsers.toLocaleString('vi-VN')} icon={Users} />
-        <StatCard title="Total vehicles" value={metrics.totalVehicles.toLocaleString('vi-VN')} icon={CarFront} />
-        <StatCard title="Active rentals" value={metrics.activeRentals.toLocaleString('vi-VN')} icon={ClipboardList} />
-        <StatCard title="Total revenue" value={formatCurrency(metrics.totalRevenue)} icon={DollarSign} />
-        <StatCard title="System fee 4%" value={formatCurrency(metrics.systemFeeRevenue)} icon={Wallet} />
-        <StatCard title="Pending disputes" value={metrics.pendingDisputes} icon={ShieldAlert} />
-        <StatCard title="Confirmation rate" value={toPercent(metrics.confirmationRate)} icon={Activity} />
-        <StatCard title="Refund pending" value={metrics.refundPending} icon={AlertTriangle} />
+        <StatCard title="Tổng người dùng" value={metrics.totalUsers.toLocaleString('vi-VN')} icon={Users} />
+        <StatCard title="Tổng số xe" value={metrics.totalVehicles.toLocaleString('vi-VN')} icon={CarFront} />
+        <StatCard title="Lượt thuê đang hoạt động" value={metrics.activeRentals.toLocaleString('vi-VN')} icon={ClipboardList} />
+        <StatCard title="Tổng doanh thu" value={formatCurrency(metrics.totalRevenue)} icon={DollarSign} />
+        <StatCard title="Phí hệ thống 4%" value={formatCurrency(metrics.systemFeeRevenue)} icon={Wallet} />
+        <StatCard title="Khiếu nại chờ xử lý" value={metrics.pendingDisputes} icon={ShieldAlert} />
+        <StatCard title="Tỷ lệ xác nhận" value={toPercent(metrics.confirmationRate)} icon={Activity} />
+        <StatCard title="Hoàn cọc chờ xử lý" value={metrics.refundPending} icon={AlertTriangle} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 className="text-lg font-semibold text-white">Revenue chart (6 months)</h3>
+          <h3 className="text-lg font-semibold text-white">Biểu đồ doanh thu (6 tháng)</h3>
           <div className="mt-4 space-y-3">
             {revenueByMonth.map((item) => {
               const value = Number(item.value || 0);
@@ -111,7 +111,7 @@ export default function AdminDashboardPage() {
             })}
           </div>
 
-          <h3 className="mt-8 text-lg font-semibold text-white">User growth</h3>
+          <h3 className="mt-8 text-lg font-semibold text-white">Tăng trưởng người dùng</h3>
           <div className="mt-3 grid grid-cols-6 gap-2">
             {mockUserGrowth.map((item) => (
               <div key={item.month} className="flex flex-col items-center gap-2">
@@ -129,14 +129,14 @@ export default function AdminDashboardPage() {
 
         <article className="space-y-5">
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Top rented vehicles</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Xe được thuê nhiều nhất</h3>
             <div className="mt-3 space-y-2">
               {topVehicles.slice(0, 5).map((item, idx) => (
                 <div key={`${item.vehicle_id || idx}`} className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-2">
-                  <img src={resolveImage(item.image_url, idx)} alt="vehicle" className="h-12 w-16 rounded-lg object-cover" />
+                  <img src={resolveImage(item.image_url, idx)} alt="xe" className="h-12 w-16 rounded-lg object-cover" />
                   <div className="flex-1 text-sm">
-                    <p className="font-semibold text-white">{item.brand || 'Vehicle'} {item.model || item.vehicle_id?.slice(-4) || ''}</p>
-                    <p className="text-xs text-slate-400">Rentals: {item.rental_count || item.total_rentals || 0}</p>
+                    <p className="font-semibold text-white">{item.brand || 'Xe'} {item.model || item.vehicle_id?.slice(-4) || ''}</p>
+                    <p className="text-xs text-slate-400">Lượt thuê: {item.rental_count || item.total_rentals || 0}</p>
                   </div>
                 </div>
               ))}
@@ -144,7 +144,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Pending disputes</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Khiếu nại chờ xử lý</h3>
             <div className="mt-3 space-y-2">
               {pendingDisputes.slice(0, 4).map((item) => (
                 <div key={item._id} className="rounded-xl border border-white/10 bg-slate-950/40 p-2 text-xs text-slate-200">
@@ -159,11 +159,11 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Recent rentals</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Lượt thuê gần đây</h3>
             <div className="mt-3 space-y-2">
               {recentRentals.slice(0, 4).map((item) => (
                 <div key={item._id} className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/40 p-2 text-xs text-slate-200">
-                  <span>Rental #{item._id?.slice(-6)}</span>
+                  <span>Yêu cầu #{item._id?.slice(-6)}</span>
                   <StatusBadge status={item.status} />
                 </div>
               ))}

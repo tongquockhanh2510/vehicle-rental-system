@@ -52,7 +52,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
           }
         }
       } catch (err) {
-        setError(err?.response?.data?.error || 'Vehicle detail is unavailable.');
+        setError(err?.response?.data?.error || 'Không thể tải chi tiết xe.');
       } finally {
         setLoading(false);
       }
@@ -72,18 +72,18 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
     event.preventDefault();
 
     if (!isAuthenticated) {
-      pushToast({ tone: 'warning', title: 'Login required', message: 'Vui lòng đăng nhập để gửi yêu cầu thuê.' });
+      pushToast({ tone: 'warning', title: 'Cần đăng nhập', message: 'Vui lòng đăng nhập để gửi yêu cầu thuê.' });
       navigate('/login');
       return;
     }
 
     if (isOwner) {
-      pushToast({ tone: 'warning', title: 'Owner restriction', message: 'Bạn không thể thuê xe của chính mình.' });
+      pushToast({ tone: 'warning', title: 'Giới hạn chủ xe', message: 'Bạn không thể thuê xe của chính mình.' });
       return;
     }
 
     if (rentalDays <= 0) {
-      pushToast({ tone: 'warning', title: 'Invalid dates', message: 'Ngày trả xe phải sau ngày nhận xe.' });
+      pushToast({ tone: 'warning', title: 'Ngày không hợp lệ', message: 'Ngày trả xe phải sau ngày nhận xe.' });
       return;
     }
 
@@ -100,13 +100,13 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
 
       pushToast({
         tone: 'success',
-        title: 'Request submitted',
+        title: 'Đã gửi yêu cầu',
         message: 'Yêu cầu thuê xe đã được gửi đến chủ xe.'
       });
       setForm(initialForm);
       navigate(navigateAfterRequest);
     } catch (err) {
-      pushToast({ tone: 'error', title: 'Submit failed', message: err?.response?.data?.error || 'Failed to submit request.' });
+      pushToast({ tone: 'error', title: 'Gửi thất bại', message: err?.response?.data?.error || 'Không thể gửi yêu cầu thuê.' });
     } finally {
       setSubmitting(false);
     }
@@ -119,7 +119,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
   if (!vehicle) {
     return (
       <EmptyState
-        title="Vehicle not found"
+        title="Không tìm thấy xe"
         description={error || 'Xe bạn tìm không còn hiển thị hoặc đã được gỡ khỏi hệ thống.'}
         action={
           <button
@@ -127,7 +127,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
             onClick={() => navigate(backTo)}
             className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
           >
-            Back to cars
+            Quay lại danh sách xe
           </button>
         }
       />
@@ -137,15 +137,15 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={`${vehicle.brand || 'Vehicle'} ${vehicle.model || ''}`}
-        subtitle={`${vehicle.year || '2024'} • ${vehicle.vehicle_type || 'CAR'} • ${vehicle.allowed_region || 'Vietnam'}`}
+        title={`${vehicle.brand || 'Xe'} ${vehicle.model || ''}`}
+        subtitle={`${vehicle.year || '2024'} • ${vehicle.vehicle_type || 'CAR'} • ${vehicle.allowed_region || 'Việt Nam'}`}
         action={
           <button
             type="button"
             onClick={() => navigate(backTo)}
             className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
           >
-            Back
+            Quay lại
           </button>
         }
       />
@@ -156,34 +156,34 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-xl font-semibold text-white">Vehicle overview</h3>
+              <h3 className="text-xl font-semibold text-white">Tổng quan xe</h3>
               <StatusBadge status={vehicle.is_available ? 'AVAILABLE' : 'PENDING'} />
             </div>
             <div className="mt-4 grid gap-3 text-sm text-slate-200 md:grid-cols-2">
-              <p>Fuel: <span className="font-semibold text-white">{vehicle.fuel_type || 'PETROL'}</span></p>
-              <p>Transmission: <span className="font-semibold text-white">{vehicle.transmission || 'AUTOMATIC'}</span></p>
-              <p>Seats: <span className="font-semibold text-white">{vehicle.seats || 4}</span></p>
-              <p>License plate: <span className="font-semibold text-white">{vehicle.license_plate || '--'}</span></p>
-              <p>Deposit: <span className="font-semibold text-white">{formatCurrency(vehicle.deposit_amount || 0)}</span></p>
-              <p>Daily rate: <span className="font-semibold text-cyan-300">{formatCurrency(vehicle.daily_rate || 0)}</span></p>
+              <p>Nhiên liệu: <span className="font-semibold text-white">{vehicle.fuel_type || 'PETROL'}</span></p>
+              <p>Hộp số: <span className="font-semibold text-white">{vehicle.transmission || 'AUTOMATIC'}</span></p>
+              <p>Số ghế: <span className="font-semibold text-white">{vehicle.seats || 4}</span></p>
+              <p>Biển số: <span className="font-semibold text-white">{vehicle.license_plate || '--'}</span></p>
+              <p>Tiền cọc: <span className="font-semibold text-white">{formatCurrency(vehicle.deposit_amount || 0)}</span></p>
+              <p>Giá thuê/ngày: <span className="font-semibold text-cyan-300">{formatCurrency(vehicle.daily_rate || 0)}</span></p>
             </div>
 
             <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/40 p-4">
-              <p className="text-sm text-slate-300">{vehicle.description || 'No description from owner.'}</p>
+              <p className="text-sm text-slate-300">{vehicle.description || 'Chủ xe chưa cung cấp mô tả.'}</p>
             </div>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <h3 className="text-lg font-semibold text-white">Ratings & reviews</h3>
+            <h3 className="text-lg font-semibold text-white">Đánh giá & nhận xét</h3>
             {reviews.length ? (
               <div className="mt-4 space-y-3">
                 {reviews.slice(0, 4).map((review) => (
                   <div key={review._id} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">{review.reviewer_name || 'Verified user'}</p>
+                      <p className="text-sm font-semibold text-white">{review.reviewer_name || 'Người dùng đã xác thực'}</p>
                       <span className="inline-flex items-center gap-1 text-amber-300"><Star className="h-3.5 w-3.5" /> {review.rating || 5}</span>
                     </div>
-                    <p className="mt-1 text-sm text-slate-300">{review.comment || 'Great rental experience.'}</p>
+                    <p className="mt-1 text-sm text-slate-300">{review.comment || 'Trải nghiệm thuê xe rất tốt.'}</p>
                   </div>
                 ))}
               </div>
@@ -195,35 +195,35 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
 
         <aside className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-slate-900/65 p-5">
-            <h3 className="text-xl font-semibold text-white">{formatCurrency(vehicle.daily_rate || 0)} <span className="text-sm text-slate-300">/ day</span></h3>
-            <p className="mt-1 text-sm text-slate-300">Deposit: {formatCurrency(vehicle.deposit_amount || 0)}</p>
+            <h3 className="text-xl font-semibold text-white">{formatCurrency(vehicle.daily_rate || 0)} <span className="text-sm text-slate-300">/ ngày</span></h3>
+            <p className="mt-1 text-sm text-slate-300">Tiền cọc: {formatCurrency(vehicle.deposit_amount || 0)}</p>
 
             <div className="mt-4 grid gap-2 text-xs text-slate-300">
-              <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-cyan-300" />Flexible schedule with contract timeline</p>
-              <p className="flex items-center gap-2"><MapPinned className="h-4 w-4 text-cyan-300" />Allowed region: {vehicle.allowed_region || 'Vietnam'}</p>
-              <p className="flex items-center gap-2"><Shield className="h-4 w-4 text-cyan-300" />Tracking + dispute protection included</p>
-              <p className="flex items-center gap-2"><UserCircle2 className="h-4 w-4 text-cyan-300" />Owner ID: {String(vehicle.owner_id || '').slice(-8) || '--'}</p>
+              <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-cyan-300" />Lịch thuê linh hoạt kèm dòng thời gian hợp đồng</p>
+              <p className="flex items-center gap-2"><MapPinned className="h-4 w-4 text-cyan-300" />Phạm vi cho phép: {vehicle.allowed_region || 'Việt Nam'}</p>
+              <p className="flex items-center gap-2"><Shield className="h-4 w-4 text-cyan-300" />Bao gồm theo dõi và bảo vệ tranh chấp</p>
+              <p className="flex items-center gap-2"><UserCircle2 className="h-4 w-4 text-cyan-300" />Mã chủ xe: {String(vehicle.owner_id || '').slice(-8) || '--'}</p>
             </div>
           </div>
 
           {isOwner ? (
             <div className="rounded-2xl border border-blue-400/30 bg-blue-500/10 p-4 text-sm text-blue-100">
-              Bạn là chủ xe này. Hãy vào Owner Portal để quản lý giá, availability và yêu cầu thuê.
+              Bạn là chủ xe này. Hãy vào cổng chủ xe để quản lý giá, lịch khả dụng và yêu cầu thuê.
               <button
                 type="button"
                 onClick={() => navigate('/owner/vehicles')}
                 className="mt-3 block rounded-xl bg-blue-500 px-4 py-2 font-semibold text-white"
               >
-                Go to owner vehicles
+                Đi tới xe của tôi
               </button>
             </div>
           ) : (
             <form onSubmit={submitRequest} className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/65 p-4">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Send rental request</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Gửi yêu cầu thuê</h4>
 
               <div className="grid grid-cols-2 gap-2">
                 <label className="text-xs text-slate-300">
-                  Start date
+                  Ngày nhận xe
                   <input
                     type="date"
                     required
@@ -233,7 +233,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
                   />
                 </label>
                 <label className="text-xs text-slate-300">
-                  End date
+                  Ngày trả xe
                   <input
                     type="date"
                     required
@@ -245,7 +245,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
               </div>
 
               <label className="block text-xs text-slate-300">
-                Pickup location
+                Điểm nhận xe
                 <input
                   type="text"
                   required
@@ -256,7 +256,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
               </label>
 
               <label className="block text-xs text-slate-300">
-                Return location
+                Điểm trả xe
                 <input
                   type="text"
                   required
@@ -267,7 +267,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
               </label>
 
               <label className="block text-xs text-slate-300">
-                Notes
+                Ghi chú
                 <textarea
                   value={form.notes}
                   onChange={(event) => handleInput('notes', event.target.value)}
@@ -287,7 +287,7 @@ export default function CarDetailPage({ backTo = '/cars', navigateAfterRequest =
                 disabled={submitting || !vehicle.is_available}
                 className="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:scale-[1.01] hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-600"
               >
-                {submitting ? 'Submitting...' : 'Gửi yêu cầu thuê'}
+                {submitting ? 'Đang gửi...' : 'Gửi yêu cầu thuê'}
               </button>
             </form>
           )}

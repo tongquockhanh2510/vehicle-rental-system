@@ -33,8 +33,8 @@ export default function OwnerContractsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Owner Contracts"
-        subtitle="Theo dõi trạng thái giao xe, trả xe và settlement cho toàn bộ hợp đồng phía chủ xe."
+        title="Hợp đồng cho thuê"
+        subtitle="Theo dõi trạng thái giao xe, trả xe và quyết toán cho toàn bộ hợp đồng phía chủ xe."
       />
 
       {loading ? (
@@ -42,7 +42,7 @@ export default function OwnerContractsPage() {
       ) : contracts.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No owner contracts"
+          title="Chưa có hợp đồng cho thuê"
           description="Hợp đồng sẽ xuất hiện sau khi bạn phê duyệt yêu cầu thuê xe."
         />
       ) : (
@@ -57,7 +57,7 @@ export default function OwnerContractsPage() {
                   onClick={() => setSelected(contract)}
                   className="rounded-xl border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
                 >
-                  View timeline
+                  Xem dòng thời gian
                 </button>
               }
             />
@@ -65,15 +65,15 @@ export default function OwnerContractsPage() {
         </div>
       )}
 
-      <Modal open={Boolean(selected)} onClose={() => setSelected(null)} title="Contract Timeline" width="max-w-xl">
+      <Modal open={Boolean(selected)} onClose={() => setSelected(null)} title="Dòng thời gian hợp đồng" width="max-w-xl">
         {selected ? (
           <Timeline
             items={[
-              { title: 'Contract created', status: 'APPROVED', timestamp: selected.created_at },
-              { title: 'Pickup inspection', status: selected.pickup_time ? 'COMPLETED' : 'PENDING', timestamp: selected.pickup_time },
-              { title: 'Vehicle in use', status: selected.pickup_time && !selected.return_time ? 'ACTIVE' : 'PENDING' },
-              { title: 'Return inspection', status: selected.return_time ? 'COMPLETED' : 'PENDING', timestamp: selected.return_time },
-              { title: 'Settlement', status: selected.status }
+              { title: 'Hợp đồng được tạo', status: 'APPROVED', timestamp: selected.created_at },
+              { title: 'Kiểm tra khi nhận xe', status: selected.pickup_time ? 'COMPLETED' : 'PENDING', timestamp: selected.pickup_time },
+              { title: 'Xe đang được sử dụng', status: selected.pickup_time && !selected.return_time ? 'ACTIVE' : 'PENDING' },
+              { title: 'Kiểm tra khi trả xe', status: selected.return_time ? 'COMPLETED' : 'PENDING', timestamp: selected.return_time },
+              { title: 'Quyết toán', status: selected.status }
             ]}
           />
         ) : null}
@@ -81,3 +81,4 @@ export default function OwnerContractsPage() {
     </div>
   );
 }
+

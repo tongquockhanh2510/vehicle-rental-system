@@ -8,9 +8,9 @@ import { ADMIN_MENU } from '../../constants/menus';
 export default function AdminLayout() {
   return (
     <AppLayout>
-      <Navbar menu={ADMIN_MENU} title="Admin Control Center" />
+      <Navbar menu={ADMIN_MENU} title="Trung tâm điều hành quản trị" />
       <div className="mx-auto flex w-full max-w-[1600px]">
-        <Sidebar menu={ADMIN_MENU} title="Admin Control Center" />
+        <Sidebar menu={ADMIN_MENU} title="Trung tâm điều hành quản trị" />
         <main className="min-h-[calc(100vh-64px)] flex-1 px-4 pb-16 pt-6 md:px-6 md:pt-8">
           <Outlet />
         </main>
@@ -18,3 +18,4 @@ export default function AdminLayout() {
     </AppLayout>
   );
 }
+

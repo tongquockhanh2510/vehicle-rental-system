@@ -47,17 +47,17 @@ export default function RentalRequestsPage() {
       if (action === 'confirm') await rentalApi.confirm(rentalId);
       if (action === 'reject') await rentalApi.reject(rentalId);
       if (action === 'cancel') await rentalApi.cancel(rentalId);
-      pushToast({ tone: 'success', title: 'Updated', message: 'Rental request status updated.' });
+      pushToast({ tone: 'success', title: 'Đã cập nhật', message: 'Trạng thái yêu cầu thuê đã được cập nhật.' });
       loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Action failed', message: error?.response?.data?.error || 'Cannot update request.' });
+      pushToast({ tone: 'error', title: 'Thao tác thất bại', message: error?.response?.data?.error || 'Không thể cập nhật yêu cầu.' });
     }
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Rental Requests"
+        title="Yêu cầu thuê xe"
         subtitle="Theo dõi toàn bộ yêu cầu thuê xe và xử lý nhanh từng trạng thái PENDING/APPROVED/REJECTED."
       />
 
@@ -96,12 +96,12 @@ export default function RentalRequestsPage() {
                   <div className="flex items-start gap-3">
                     <img
                       src={resolveImage(rental.images?.[0], 1)}
-                      alt="Vehicle"
+                      alt="Xe"
                       className="h-20 w-28 rounded-xl object-cover"
                     />
                     <div>
-                      <p className="text-sm font-semibold text-white">Request #{compactId(rental._id)}</p>
-                      <p className="text-xs text-slate-400">Vehicle: {compactId(rental.vehicle_id)}</p>
+                      <p className="text-sm font-semibold text-white">Yêu cầu #{compactId(rental._id)}</p>
+                      <p className="text-xs text-slate-400">Xe: {compactId(rental.vehicle_id)}</p>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-300">
                         <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1">
                           <CalendarRange className="h-3.5 w-3.5 text-cyan-300" />
@@ -109,7 +109,7 @@ export default function RentalRequestsPage() {
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1">
                           <MapPin className="h-3.5 w-3.5 text-cyan-300" />
-                          {rental.pickup_location || 'Pickup TBD'}
+                          {rental.pickup_location || 'Chưa xác định điểm nhận'}
                         </span>
                       </div>
                     </div>
@@ -117,7 +117,7 @@ export default function RentalRequestsPage() {
 
                   <div className="space-y-2 text-right">
                     <StatusBadge status={rental.status} />
-                    <p className="text-xs text-slate-400">Return: {rental.return_location || 'TBD'}</p>
+                    <p className="text-xs text-slate-400">Trả xe: {rental.return_location || 'Chưa xác định'}</p>
                   </div>
                 </div>
 
@@ -130,14 +130,14 @@ export default function RentalRequestsPage() {
                           onClick={() => doAction('reject', rental._id)}
                           className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20"
                         >
-                          Reject
+                          Từ chối
                         </button>
                         <button
                           type="button"
                           onClick={() => doAction('confirm', rental._id)}
                           className="rounded-xl bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400"
                         >
-                          Approve
+                          Duyệt
                         </button>
                       </>
                     ) : null}
@@ -148,7 +148,7 @@ export default function RentalRequestsPage() {
                         onClick={() => doAction('cancel', rental._id)}
                         className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
                       >
-                        Cancel request
+                        Hủy yêu cầu
                       </button>
                     ) : null}
                   </div>

@@ -2,8 +2,8 @@
 import { Sparkles } from 'lucide-react';
 
 export default function EmptyState({
-  title = 'No data yet',
-  description = 'Data will appear here when available.',
+  title = 'Chưa có dữ liệu',
+  description = 'Dữ liệu sẽ hiển thị tại đây khi sẵn sàng.',
   action,
   icon: Icon = Sparkles
 }) {
@@ -18,3 +18,4 @@ export default function EmptyState({
     </div>
   );
 }
+

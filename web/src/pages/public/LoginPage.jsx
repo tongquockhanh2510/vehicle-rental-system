@@ -24,14 +24,14 @@ export default function LoginPage() {
       const { token, user } = response.data;
       login(user, token);
 
-      pushToast({ tone: 'success', title: 'Login successful', message: 'Welcome back to RentCar Premium.' });
+      pushToast({ tone: 'success', title: 'Đăng nhập thành công', message: 'Chào mừng bạn quay lại RentCar Premium.' });
       const redirectTo = location.state?.from?.pathname || getDefaultPortalRoute();
       navigate(redirectTo, { replace: true });
     } catch (error) {
       pushToast({
         tone: 'error',
-        title: 'Login failed',
-        message: error?.response?.data?.error || 'Invalid credentials. Please try again.'
+        title: 'Đăng nhập thất bại',
+        message: error?.response?.data?.error || 'Thông tin đăng nhập không đúng. Vui lòng thử lại.'
       });
     } finally {
       setLoading(false);
@@ -41,7 +41,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl backdrop-blur md:p-8">
       <h1 className="text-3xl font-bold text-white">Đăng nhập tài khoản</h1>
-      <p className="mt-2 text-sm text-slate-300">Truy cập portal người thuê, chủ xe hoặc admin trên cùng nền tảng.</p>
+      <p className="mt-2 text-sm text-slate-300">Truy cập cổng người thuê, chủ xe hoặc quản trị viên trên cùng nền tảng.</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <label className="block">
@@ -60,7 +60,7 @@ export default function LoginPage() {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-300">Password</span>
+          <span className="mb-1 block text-xs uppercase tracking-[0.18em] text-slate-300">Mật khẩu</span>
           <div className="flex items-center rounded-2xl border border-white/10 bg-slate-950/60 px-3">
             <LockKeyhole className="h-4 w-4 text-slate-400" />
             <input
