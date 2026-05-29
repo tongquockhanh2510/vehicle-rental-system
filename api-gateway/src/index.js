@@ -16,16 +16,31 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || 8000;
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  'http://localhost:5173,http://127.0.0.1:5173'
+)
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow server-to-server requests and approved browser origins.
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+  credentials: true
+};
 
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(compression());
-app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-  credentials: true
-}));
+app.use(cors(corsOptions));
 
 app.use((req, res, next) => {
   req.requestId = req.headers['x-request-id'] || randomUUID();
@@ -161,7 +176,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.options('*', cors());
+app.options('*', cors(corsOptions));
 
 app.listen(PORT, () => {
   console.log(`API Gateway running on port ${PORT}`);
