@@ -91,16 +91,6 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
               {!isAdmin ? (
                 <button
                   type="button"
-                  onClick={() => navigate('/app')}
-                  className="hidden rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 lg:inline-flex"
-                >
-                  Renter Portal
-                </button>
-              ) : null}
-
-              {!isAdmin ? (
-                <button
-                  type="button"
                   onClick={() => navigate(ownerAction.to)}
                   className={`hidden rounded-full px-3 py-1.5 text-xs font-semibold transition lg:inline-flex ${ownerToneClass}`}
                 >

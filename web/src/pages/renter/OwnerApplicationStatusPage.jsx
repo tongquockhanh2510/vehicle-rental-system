@@ -88,7 +88,7 @@ export default function OwnerApplicationStatusPage() {
         subtitle={
           resolvedStatus === 'REJECTED'
             ? 'Bạn có thể cập nhật hồ sơ theo lý do từ chối và gửi lại.'
-            : 'Hồ sơ đã được gửi. Hệ thống đang thực hiện kiểm tra và chờ admin phê duyệt.'
+            : 'Admin sẽ kiểm tra thông tin xác minh của bạn. Bạn chỉ có thể đăng phương tiện sau khi hồ sơ được phê duyệt.'
         }
       />
 
