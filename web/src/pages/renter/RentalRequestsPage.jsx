@@ -5,32 +5,20 @@ import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
-import { useToast } from '../../context/ToastContext';
 import { compactId, formatDate, pickArray } from '../../utils/formatters';
 import { resolveImage } from '../../utils/image';
 
-const tabs = [
-  { key: 'mine', label: 'Yêu cầu của tôi' },
-  { key: 'incoming', label: 'Yêu cầu từ người khác' }
-];
-
 export default function RentalRequestsPage() {
-  const { pushToast } = useToast();
-  const [activeTab, setActiveTab] = useState('mine');
   const [mine, setMine] = useState([]);
-  const [incoming, setIncoming] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [mineRes, incomingRes] = await Promise.allSettled([
-        rentalApi.getRenterRequests(),
-        rentalApi.getOwnerRequests()
-      ]);
-
-      setMine(mineRes.status === 'fulfilled' ? pickArray(mineRes.value.data) : []);
-      setIncoming(incomingRes.status === 'fulfilled' ? pickArray(incomingRes.value.data) : []);
+      const response = await rentalApi.getRenterRequests();
+      setMine(pickArray(response.data));
+    } catch {
+      setMine([]);
     } finally {
       setLoading(false);
     }
@@ -40,41 +28,23 @@ export default function RentalRequestsPage() {
     loadData();
   }, []);
 
-  const rows = useMemo(() => (activeTab === 'mine' ? mine : incoming), [activeTab, mine, incoming]);
+  const rows = useMemo(() => mine, [mine]);
 
-  const doAction = async (action, rentalId) => {
+  const handleCancel = async (rentalId) => {
     try {
-      if (action === 'confirm') await rentalApi.confirm(rentalId);
-      if (action === 'reject') await rentalApi.reject(rentalId);
-      if (action === 'cancel') await rentalApi.cancel(rentalId);
-      pushToast({ tone: 'success', title: 'Đã cập nhật', message: 'Trạng thái yêu cầu thuê đã được cập nhật.' });
-      loadData();
-    } catch (error) {
-      pushToast({ tone: 'error', title: 'Thao tác thất bại', message: error?.response?.data?.error || 'Không thể cập nhật yêu cầu.' });
+      await rentalApi.cancel(rentalId);
+      await loadData();
+    } catch {
+      // Silent fallback to keep UI stable.
     }
   };
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Yêu cầu thuê xe"
-        subtitle="Theo dõi toàn bộ yêu cầu thuê xe và xử lý nhanh từng trạng thái PENDING/APPROVED/REJECTED."
+        title="Yêu cầu thuê của tôi"
+        subtitle="Theo dõi trạng thái các yêu cầu thuê phương tiện bạn đã gửi."
       />
-
-      <div className="inline-flex rounded-xl border border-white/10 bg-slate-900/50 p-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={`rounded-lg px-4 py-2 text-sm transition ${
-              activeTab === tab.key ? 'bg-cyan-500 text-slate-950 font-semibold' : 'text-slate-300 hover:bg-white/10'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {loading ? (
         <LoadingSkeleton rows={4} />
@@ -82,13 +52,12 @@ export default function RentalRequestsPage() {
         <EmptyState
           icon={ClipboardList}
           title="Không có yêu cầu thuê"
-          description="Bạn chưa có yêu cầu phù hợp trong tab hiện tại. Hãy khám phá xe hoặc chờ yêu cầu mới."
+          description="Bạn chưa gửi yêu cầu thuê nào. Hãy khám phá xe và tạo yêu cầu đầu tiên."
         />
       ) : (
         <div className="space-y-3">
           {rows.map((rental) => {
-            const canCancel = activeTab === 'mine' && ['PENDING', 'CONFIRMED', 'APPROVED'].includes(String(rental.status || '').toUpperCase());
-            const canReview = activeTab === 'incoming' && String(rental.status || '').toUpperCase() === 'PENDING';
+            const canCancel = ['PENDING', 'CONFIRMED', 'APPROVED'].includes(String(rental.status || '').toUpperCase());
 
             return (
               <article key={rental._id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -121,36 +90,15 @@ export default function RentalRequestsPage() {
                   </div>
                 </div>
 
-                {(canCancel || canReview) ? (
-                  <div className="mt-4 flex flex-wrap justify-end gap-2">
-                    {canReview ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => doAction('reject', rental._id)}
-                          className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20"
-                        >
-                          Từ chối
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => doAction('confirm', rental._id)}
-                          className="rounded-xl bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400"
-                        >
-                          Duyệt
-                        </button>
-                      </>
-                    ) : null}
-
-                    {canCancel ? (
-                      <button
-                        type="button"
-                        onClick={() => doAction('cancel', rental._id)}
-                        className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
-                      >
-                        Hủy yêu cầu
-                      </button>
-                    ) : null}
+                {canCancel ? (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleCancel(rental._id)}
+                      className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                    >
+                      Hủy yêu cầu
+                    </button>
                   </div>
                 ) : null}
               </article>

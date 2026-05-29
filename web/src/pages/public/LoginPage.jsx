@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LockKeyhole, Mail } from 'lucide-react';
 import { authApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -7,8 +7,7 @@ import { useToast } from '../../context/ToastContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login, getDefaultPortalRoute } = useAuth();
+  const { login } = useAuth();
   const { pushToast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -25,8 +24,7 @@ export default function LoginPage() {
       login(user, token);
 
       pushToast({ tone: 'success', title: 'Đăng nhập thành công', message: 'Chào mừng bạn quay lại RentCar Premium.' });
-      const redirectTo = location.state?.from?.pathname || getDefaultPortalRoute();
-      navigate(redirectTo, { replace: true });
+      navigate('/', { replace: true });
     } catch (error) {
       pushToast({
         tone: 'error',

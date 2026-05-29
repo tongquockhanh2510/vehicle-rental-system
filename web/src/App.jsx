@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AdminProtectedRoute, OwnerProtectedRoute, ProtectedRoute, RequireRole } from './components/routing/RouteGuards';
-import { AdminLayout, OwnerLayout, PublicLayout, UserLayout } from './components/layout';
+import { AdminLayout, OwnerLayout, PublicLayout, RenterMinimalLayout, UserLayout } from './components/layout';
 
 import LandingPage from './pages/public/LandingPage';
 import CarsPage from './pages/public/CarsPage';
@@ -14,7 +14,6 @@ import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import NotFoundPage from './pages/public/NotFoundPage';
 
-import AppOverviewPage from './pages/renter/AppOverviewPage';
 import ExplorePage from './pages/renter/ExplorePage';
 import RentalRequestsPage from './pages/renter/RentalRequestsPage';
 import ContractsPage from './pages/renter/ContractsPage';
@@ -33,6 +32,7 @@ import OwnerRentalRequestsPage from './pages/owner/OwnerRentalRequestsPage';
 import OwnerContractsPage from './pages/owner/OwnerContractsPage';
 import OwnerTrackingPage from './pages/owner/OwnerTrackingPage';
 import OwnerDisputesPage from './pages/owner/OwnerDisputesPage';
+import OwnerPaymentsPage from './pages/owner/OwnerPaymentsPage';
 import OwnerRevenuePage from './pages/owner/OwnerRevenuePage';
 import OwnerProfilePage from './pages/owner/OwnerProfilePage';
 
@@ -83,8 +83,8 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<AppOverviewPage />} />
-              <Route path="overview" element={<Navigate to="/app" replace />} />
+              <Route index element={<Navigate to="explore" replace />} />
+              <Route path="overview" element={<Navigate to="/app/explore" replace />} />
               <Route path="explore" element={<ExplorePage />} />
               <Route path="vehicles/:id" element={<CarDetailPage backTo="/app/explore" navigateAfterRequest="/app/requests" />} />
               <Route path="requests" element={<RentalRequestsPage />} />
@@ -94,11 +94,35 @@ function App() {
               <Route path="reviews" element={<ReviewsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="become-owner" element={<BecomeOwnerPage />} />
-              <Route path="owner-application-status" element={<OwnerApplicationStatusPage />} />
 
               <Route path="cars/:id" element={<Navigate to="/app/explore" replace />} />
               <Route path="rental-requests" element={<Navigate to="/app/requests" replace />} />
+            </Route>
+
+            <Route
+              path="/app/become-owner"
+              element={
+                <ProtectedRoute>
+                  <RequireRole roles={[ROLES.USER]}>
+                    <RenterMinimalLayout />
+                  </RequireRole>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<BecomeOwnerPage />} />
+            </Route>
+
+            <Route
+              path="/app/owner-application-status"
+              element={
+                <ProtectedRoute>
+                  <RequireRole roles={[ROLES.USER]}>
+                    <RenterMinimalLayout />
+                  </RequireRole>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<OwnerApplicationStatusPage />} />
             </Route>
 
             <Route
@@ -120,6 +144,7 @@ function App() {
               <Route path="vehicles/:id/edit" element={<OwnerVehicleFormPage />} />
               <Route path="requests" element={<OwnerRentalRequestsPage />} />
               <Route path="contracts" element={<OwnerContractsPage />} />
+              <Route path="payments" element={<OwnerPaymentsPage />} />
               <Route path="tracking" element={<OwnerTrackingPage />} />
               <Route path="disputes" element={<OwnerDisputesPage />} />
               <Route path="revenue" element={<OwnerRevenuePage />} />

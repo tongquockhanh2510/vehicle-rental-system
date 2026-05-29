@@ -34,7 +34,8 @@ export default function OwnerApplicationStatusPage() {
 
   const resolvedStatus = useMemo(() => {
     if (application?.status) return String(application.status).toUpperCase();
-    return String(ownerStatus || '').toUpperCase();
+    const normalized = String(ownerStatus || '').toUpperCase();
+    return normalized === 'NONE' ? '' : normalized;
   }, [application?.status, ownerStatus]);
 
   if (loading) {
@@ -57,11 +58,11 @@ export default function OwnerApplicationStatusPage() {
       <div className="space-y-6">
         <SectionHeader
           title="Hồ sơ đã được duyệt"
-          subtitle="Chúc mừng! Bạn đã đủ điều kiện truy cập Cổng chủ xe."
+          subtitle="Bạn đã có thể sử dụng Cổng chủ xe để đăng và quản lý phương tiện."
         />
         <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-5 text-sm text-emerald-100">
           <div className="mb-3"><StatusBadge status="OWNER_APPROVED" /></div>
-          <p>Giờ bạn có thể đăng xe mới, duyệt yêu cầu thuê và theo dõi doanh thu.</p>
+          <p>Bạn đã có quyền truy cập không gian chủ xe với đầy đủ tính năng vận hành.</p>
           <div className="mt-4">
             <PremiumButton onClick={() => navigate('/owner/dashboard')}>Đi tới Cổng chủ xe</PremiumButton>
           </div>
@@ -88,7 +89,7 @@ export default function OwnerApplicationStatusPage() {
         subtitle={
           resolvedStatus === 'REJECTED'
             ? 'Bạn có thể cập nhật hồ sơ theo lý do từ chối và gửi lại.'
-            : 'Admin sẽ kiểm tra thông tin xác minh của bạn. Bạn chỉ có thể đăng phương tiện sau khi hồ sơ được phê duyệt.'
+            : 'Admin sẽ kiểm tra hồ sơ xác minh của bạn. Bạn chỉ có thể đăng phương tiện sau khi hồ sơ được phê duyệt.'
         }
       />
 
@@ -114,9 +115,9 @@ export default function OwnerApplicationStatusPage() {
 
         <div className="mt-5 flex flex-wrap gap-2">
           {resolvedStatus === 'REJECTED' ? (
-            <PremiumButton onClick={() => navigate('/app/become-owner')}>Cập nhật và gửi lại hồ sơ</PremiumButton>
+            <PremiumButton onClick={() => navigate('/app/become-owner')}>Cập nhật hồ sơ</PremiumButton>
           ) : (
-            <PremiumButton variant="secondary" onClick={() => navigate('/app/explore')}>Khám phá phương tiện</PremiumButton>
+            <PremiumButton variant="secondary" onClick={() => navigate('/')}>Về trang chủ</PremiumButton>
           )}
         </div>
       </article>

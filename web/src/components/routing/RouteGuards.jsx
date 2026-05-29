@@ -48,7 +48,7 @@ export function AdminProtectedRoute({ children }) {
   }
 
   if (normalizeRole(role) !== ROLES.ADMIN) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -71,7 +71,7 @@ export function RequireRole({ children, roles = [] }) {
 
   const normalized = roles.map(normalizeRole);
   if (!normalized.includes(normalizeRole(role))) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

@@ -6,9 +6,7 @@ import {
   isOwnerPending,
   isOwnerRejected,
   normalizeOwnerStatus,
-  normalizeRole,
-  OWNER_STATUSES,
-  ROLES
+  normalizeRole
 } from '../constants/roles';
 import { getUserId } from '../utils/formatters';
 
@@ -109,11 +107,7 @@ export function AuthProvider({ children }) {
       updateUser,
       refreshProfile,
       hasRole: (...roles) => roles.map(normalizeRole).includes(role),
-      getDefaultPortalRoute: () => {
-        if (role === ROLES.ADMIN) return '/admin/dashboard';
-        if (ownerStatus === OWNER_STATUSES.APPROVED) return '/app';
-        return '/app';
-      }
+      getDefaultPortalRoute: () => '/'
     }),
     [user, token, role, ownerStatus, loading]
   );

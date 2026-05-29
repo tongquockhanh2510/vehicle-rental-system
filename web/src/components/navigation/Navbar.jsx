@@ -34,7 +34,13 @@ function getOwnerAction(ownerStatus) {
   return { label: 'Đăng ký làm chủ xe', to: '/app/become-owner', tone: 'cyan' };
 }
 
-export default function Navbar({ menu = [], isPublic = false, title }) {
+export default function Navbar({
+  menu = [],
+  isPublic = false,
+  title,
+  showOwnerAction = true,
+  showRoleBadge = true
+}) {
   const { user, role, ownerStatus, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -83,12 +89,12 @@ export default function Navbar({ menu = [], isPublic = false, title }) {
           {title ? <span className="hidden text-xs uppercase tracking-[0.2em] text-slate-400 xl:block">{title}</span> : null}
           {isAuthenticated ? (
             <>
-              <RoleBadge role={role} ownerStatus={ownerStatus} />
+              {showRoleBadge ? <RoleBadge role={role} ownerStatus={ownerStatus} /> : null}
               <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 md:flex">
                 <span className="text-sm text-white">{user?.first_name || user?.email || 'Tài khoản'}</span>
               </div>
 
-              {!isAdmin && ownerStatus !== OWNER_STATUSES.NONE ? (
+              {!isAdmin && showOwnerAction ? (
                 <button
                   type="button"
                   onClick={() => navigate(ownerAction.to)}
