@@ -1,7 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, LocateFixed, MapPinned, Route } from 'lucide-react';
 import { trackingApi, vehicleApi } from '../../api';
 import EmptyState from '../../components/common/EmptyState';
+import GoogleMapView from '../../components/common/GoogleMapView';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -42,12 +43,12 @@ export default function OwnerTrackingPage() {
           trackingApi.latest(selectedVehicleId),
           trackingApi.history(selectedVehicleId, {
             start_date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
-            end_date: new Date().toISOString()
+            end_date: new Date().toISOString(),
           }),
           trackingApi.movementHistory(selectedVehicleId, {
             start_date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
-            end_date: new Date().toISOString()
-          })
+            end_date: new Date().toISOString(),
+          }),
         ]);
 
         setLatest(latestRes.status === 'fulfilled' ? latestRes.value.data : null);
@@ -67,9 +68,15 @@ export default function OwnerTrackingPage() {
     return latest ? 'IN_BOUNDARY' : 'PENDING';
   }, [latest]);
 
-  if (loading) {
-    return <LoadingSkeleton rows={4} />;
-  }
+  const mapLat = useMemo(() => latest?.latitude ?? latest?.lat ?? 10.8231, [latest]);
+  const mapLng = useMemo(() => latest?.longitude ?? latest?.lng ?? 106.6297, [latest]);
+  const mapTitle = useMemo(() => {
+    const selected = vehicles.find((item) => item._id === selectedVehicleId);
+    if (!selected) return 'Vị trí hiện tại của phương tiện';
+    return `${selected.brand || 'Xe'} ${selected.model || ''}`.trim();
+  }, [selectedVehicleId, vehicles]);
+
+  if (loading) return <LoadingSkeleton rows={4} />;
 
   if (!vehicles.length) {
     return (
@@ -106,16 +113,16 @@ export default function OwnerTrackingPage() {
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Bản đồ mô phỏng</h3>
+            <h3 className="text-lg font-semibold text-white">Google Maps theo dõi vị trí</h3>
             <StatusBadge status={boundaryStatus} />
           </div>
-          <div className="relative mt-4 h-80 overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900 via-sky-950 to-blue-950">
-            <div className="absolute inset-0 opacity-35 [background-image:radial-gradient(circle_at_1px_1px,rgba(56,189,248,0.4)_1px,transparent_0)] [background-size:30px_30px]" />
-            <div className="absolute left-1/3 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border border-cyan-300/40 bg-cyan-500/15 px-3 py-1 text-xs text-cyan-100">
+          <div className="relative mt-4">
+            <GoogleMapView lat={mapLat} lng={mapLng} zoom={13} title={mapTitle} />
+            <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 rounded-full border border-cyan-300/40 bg-cyan-500/15 px-3 py-1 text-xs text-cyan-100">
               <LocateFixed className="h-3.5 w-3.5" />
               Điểm vị trí hiện tại
             </div>
-            <div className="absolute right-6 top-6 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-slate-200">
+            <div className="pointer-events-none absolute right-4 top-4 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-slate-200">
               Cập nhật gần nhất: {formatDateTime(latest?.timestamp || latest?.updated_at)}
             </div>
           </div>
@@ -147,7 +154,10 @@ export default function OwnerTrackingPage() {
             <div className="mt-2 space-y-2">
               {(movement.length ? movement : history).slice(0, 4).map((item, idx) => (
                 <div key={idx} className="rounded-lg border border-white/10 bg-slate-950/40 px-2 py-2 text-xs text-slate-200">
-                  <p className="flex items-center gap-1"><Route className="h-3.5 w-3.5 text-cyan-300" /> {item.start_location || item.address || 'Điểm vị trí'}</p>
+                  <p className="flex items-center gap-1">
+                    <Route className="h-3.5 w-3.5 text-cyan-300" />
+                    {item.start_location || item.address || 'Điểm vị trí'}
+                  </p>
                   <p className="mt-1 text-slate-400">{formatDateTime(item.created_at || item.timestamp)}</p>
                 </div>
               ))}

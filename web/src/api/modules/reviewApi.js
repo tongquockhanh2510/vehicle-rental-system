@@ -13,6 +13,9 @@ export const reviewApi = {
   getByUser(userId) {
     return apiClient.get(`/api/reviews/user/${userId}/reviews`);
   },
+  getByReviewer(userId) {
+    return apiClient.get(`/api/reviews/reviewer/${userId}/reviews`);
+  },
   getRating(userId) {
     return apiClient.get(`/api/reviews/user/${userId}/rating`);
   },

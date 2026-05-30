@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Eye, Users } from 'lucide-react';
+import { AlertTriangle, Eye, Lock, Trash2, Unlock, Users } from 'lucide-react';
+import { userApi } from '../../api';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
 import SectionHeader from '../../components/common/SectionHeader';
 import RoleBadge from '../../components/common/RoleBadge';
 import StatusBadge from '../../components/common/StatusBadge';
+import { useToast } from '../../context/ToastContext';
 import { getAdminUsersData } from '../../services/adminDataService';
 
 function resolveOwnerImageUrl(application, side = 'front') {
@@ -13,27 +15,42 @@ function resolveOwnerImageUrl(application, side = 'front') {
     side === 'front'
       ? [application?.id_card_front_url, profile?.id_card_front_url, profile?.id_image_front, profile?.id_front_url]
       : [application?.id_card_back_url, profile?.id_card_back_url, profile?.id_image_back, profile?.id_back_url];
-
   return candidates.find((value) => typeof value === 'string' && value.trim()) || '';
 }
 
+function resolveAccountStatus(row) {
+  if (row?.deleted_at) return 'DELETED';
+  if (row?.is_active === false) return 'BLOCKED';
+  return String(row?.account_status || row?.status || 'ACTIVE').toUpperCase();
+}
+
+const initialActionState = {
+  open: false,
+  type: '',
+  row: null,
+  reason: ''
+};
+
 export default function AdminUsersPage() {
+  const { pushToast } = useToast();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [fallback, setFallback] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [actionState, setActionState] = useState(initialActionState);
+  const [submittingAction, setSubmittingAction] = useState(false);
+
+  const loadRows = async () => {
+    setLoading(true);
+    const payload = await getAdminUsersData();
+    setRows(payload.rows);
+    setError(payload.error || '');
+    setFallback(Boolean(payload.fallback));
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const loadRows = async () => {
-      setLoading(true);
-      const payload = await getAdminUsersData();
-      setRows(payload.rows);
-      setError(payload.error || '');
-      setFallback(Boolean(payload.fallback));
-      setLoading(false);
-    };
-
     loadRows();
   }, []);
 
@@ -45,11 +62,92 @@ export default function AdminUsersPage() {
     return { total, admins, ownerApproved, ownerPending };
   }, [rows]);
 
+  const openAction = (type, row) => {
+    setActionState({
+      open: true,
+      type,
+      row,
+      reason: ''
+    });
+  };
+
+  const closeAction = () => setActionState(initialActionState);
+
+  const executeAction = async () => {
+    if (!actionState.row?._id) return;
+    const userId = actionState.row._id;
+    const reason = String(actionState.reason || '').trim();
+
+    if (['block', 'delete'].includes(actionState.type) && !reason) {
+      pushToast({
+        tone: 'warning',
+        title: 'Thiếu lý do',
+        message: 'Vui lòng nhập lý do trước khi xác nhận thao tác.'
+      });
+      return;
+    }
+
+    setSubmittingAction(true);
+    try {
+      if (actionState.type === 'block') {
+        await userApi.blockUser(userId, reason);
+      } else if (actionState.type === 'unblock') {
+        await userApi.unblockUser(userId);
+      } else if (actionState.type === 'delete') {
+        await userApi.softDeleteUser(userId, reason);
+      }
+
+      pushToast({
+        tone: 'success',
+        title: 'Cập nhật thành công',
+        message:
+          actionState.type === 'block'
+            ? 'Tài khoản đã được khóa.'
+            : actionState.type === 'unblock'
+              ? 'Tài khoản đã được mở khóa.'
+              : 'Tài khoản đã được xóa mềm.'
+      });
+
+      closeAction();
+      await loadRows();
+      if (selected && String(selected._id) === String(userId)) {
+        const detail = await userApi.getUserById(userId).then((res) => res.data?.data).catch(() => null);
+        if (detail) {
+          setSelected(detail);
+        }
+      }
+    } catch (actionError) {
+      pushToast({
+        tone: 'error',
+        title: 'Thao tác thất bại',
+        message: actionError?.response?.data?.error || actionError?.response?.data?.message || 'Không thể cập nhật tài khoản.'
+      });
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  const actionTitle = useMemo(() => {
+    if (actionState.type === 'block') return 'Khóa tài khoản';
+    if (actionState.type === 'unblock') return 'Mở khóa tài khoản';
+    if (actionState.type === 'delete') return 'Xóa mềm tài khoản';
+    return 'Xác nhận thao tác';
+  }, [actionState.type]);
+
+  const actionDescription = useMemo(() => {
+    if (!actionState.row) return '';
+    const fullName = `${actionState.row.first_name || ''} ${actionState.row.last_name || ''}`.trim() || actionState.row.email || 'người dùng';
+    if (actionState.type === 'block') return `Bạn sắp khóa tài khoản ${fullName}.`;
+    if (actionState.type === 'unblock') return `Bạn sắp mở khóa tài khoản ${fullName}.`;
+    if (actionState.type === 'delete') return `Bạn sắp xóa mềm tài khoản ${fullName}.`;
+    return '';
+  }, [actionState]);
+
   return (
     <div className="space-y-6">
       <SectionHeader
         title="Quản trị • Người dùng"
-        subtitle="Giám sát người dùng theo role và trạng thái hồ sơ chủ xe để đảm bảo luồng renter/owner/admin rõ ràng."
+        subtitle="Quản lý trạng thái tài khoản user/owner: xem chi tiết, khóa, mở khóa và xóa mềm có lý do."
       />
 
       <div className="grid gap-3 md:grid-cols-4">
@@ -62,7 +160,7 @@ export default function AdminUsersPage() {
       {fallback ? (
         <p className="inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
           <Users className="h-3.5 w-3.5" />
-          API danh sách người dùng chưa phản hồi, đang hiển thị dữ liệu dự phòng để kiểm thử luồng quản trị.
+          API danh sách người dùng chưa phản hồi, đang hiển thị dữ liệu dự phòng để kiểm thử giao diện.
         </p>
       ) : null}
 
@@ -84,29 +182,47 @@ export default function AdminUsersPage() {
           { key: 'owner_status', title: 'Trạng thái chủ xe', render: (row) => <StatusBadge status={`OWNER_${String(row.owner_status || 'NONE').toUpperCase()}`} /> },
           { key: 'owned_vehicle_count', title: 'Số xe sở hữu', render: (row) => Number(row.owned_vehicle_count || 0) },
           { key: 'renter_request_count', title: 'Request thuê', render: (row) => Number(row.renter_request_count || 0) },
+          { key: 'status', title: 'Trạng thái tài khoản', render: (row) => <StatusBadge status={resolveAccountStatus(row)} /> },
           {
-            key: 'status',
-            title: 'Trạng thái tài khoản',
-            render: (row) => <StatusBadge status={String(row.account_status || row.status || 'ACTIVE').toUpperCase()} />
-          },
-          {
-            key: 'created_at',
-            title: 'Ngày tạo',
-            render: (row) => new Date(row.created_at || Date.now()).toLocaleDateString('vi-VN')
-          },
-          {
-            key: 'detail',
-            title: 'Chi tiết',
-            render: (row) => (
-              <button
-                type="button"
-                onClick={() => setSelected(row)}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-xs text-slate-200 hover:bg-white/10"
-              >
-                <Eye className="h-3.5 w-3.5" />
-                Xem
-              </button>
-            )
+            key: 'actions',
+            title: 'Thao tác',
+            render: (row) => {
+              const isAdmin = String(row.role || '').toUpperCase() === 'ADMIN';
+              const accountStatus = resolveAccountStatus(row);
+              const canUnblock = accountStatus === 'BLOCKED';
+              return (
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(row)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-xs text-slate-200 hover:bg-white/10"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Xem
+                  </button>
+                  {!isAdmin ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openAction(canUnblock ? 'unblock' : 'block', row)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-xs text-slate-200 hover:bg-white/10"
+                      >
+                        {canUnblock ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                        {canUnblock ? 'Mở khóa' : 'Khóa'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openAction('delete', row)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-rose-400/30 px-2 py-1 text-xs text-rose-200 hover:bg-rose-500/15"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Xóa mềm
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              );
+            }
           }
         ]}
         emptyTitle="Chưa có người dùng"
@@ -127,9 +243,11 @@ export default function AdminUsersPage() {
               <p>Điện thoại: <span className="font-semibold text-white">{selected.phone || 'Chưa cập nhật'}</span></p>
               <p>Vai trò: <span className="font-semibold text-white">{selected.role || 'USER'}</span></p>
               <p>Owner status: <span className="font-semibold text-white">{selected.owner_status || 'NONE'}</span></p>
-              <p>Ngày tạo: <span className="font-semibold text-white">{new Date(selected.created_at || Date.now()).toLocaleString('vi-VN')}</span></p>
+              <p>Trạng thái tài khoản: <span className="font-semibold text-white">{resolveAccountStatus(selected)}</span></p>
               <p>Số xe sở hữu: <span className="font-semibold text-white">{Number(selected.owned_vehicle_count || 0)}</span></p>
               <p>Số request thuê: <span className="font-semibold text-white">{Number(selected.renter_request_count || 0)}</span></p>
+              <p>Lý do khóa: <span className="font-semibold text-white">{selected.block_reason || 'Không có'}</span></p>
+              <p>Lý do xóa mềm: <span className="font-semibold text-white">{selected.delete_reason || 'Không có'}</span></p>
             </div>
 
             {selected.owner_application ? (
@@ -169,6 +287,48 @@ export default function AdminUsersPage() {
             ) : null}
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        open={actionState.open}
+        onClose={closeAction}
+        title={actionTitle}
+        width="max-w-lg"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeAction}
+              className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={executeAction}
+              disabled={submittingAction}
+              className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-slate-600"
+            >
+              {submittingAction ? 'Đang xử lý...' : 'Xác nhận'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm text-slate-300">
+          <p>{actionDescription}</p>
+          {['block', 'delete'].includes(actionState.type) ? (
+            <label className="block">
+              <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Lý do</span>
+              <textarea
+                rows={3}
+                value={actionState.reason}
+                onChange={(event) => setActionState((prev) => ({ ...prev, reason: event.target.value }))}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+                placeholder="Nhập lý do thao tác"
+              />
+            </label>
+          ) : null}
+        </div>
       </Modal>
     </div>
   );

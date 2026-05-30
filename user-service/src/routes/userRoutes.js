@@ -94,4 +94,69 @@ router.get('/:userId', authenticateToken, async (req, res) => {
   }
 });
 
+router.patch('/:userId/block', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const reason = req.body?.reason || req.body?.block_reason || '';
+    const data = await userService.blockUserByAdmin(req.userId, req.params.userId, reason);
+    return res.json({
+      success: true,
+      message: 'Đã khóa tài khoản',
+      data
+    });
+  } catch (error) {
+    const message = error.message || 'Failed to block user';
+    if (message.toLowerCase().includes('not found')) {
+      return res.status(404).json({ error: message });
+    }
+    return res.status(400).json({ error: message });
+  }
+});
+
+router.patch('/:userId/unblock', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const data = await userService.unblockUserByAdmin(req.userId, req.params.userId);
+    return res.json({
+      success: true,
+      message: 'Đã mở khóa tài khoản',
+      data
+    });
+  } catch (error) {
+    const message = error.message || 'Failed to unblock user';
+    if (message.toLowerCase().includes('not found')) {
+      return res.status(404).json({ error: message });
+    }
+    return res.status(400).json({ error: message });
+  }
+});
+
+router.delete('/:userId', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const reason = req.body?.reason || req.body?.delete_reason || '';
+    const data = await userService.softDeleteUserByAdmin(req.userId, req.params.userId, reason);
+    return res.json({
+      success: true,
+      message: 'Đã xóa mềm tài khoản',
+      data
+    });
+  } catch (error) {
+    const message = error.message || 'Failed to delete user';
+    if (message.toLowerCase().includes('not found')) {
+      return res.status(404).json({ error: message });
+    }
+    return res.status(400).json({ error: message });
+  }
+});
+
 export default router;

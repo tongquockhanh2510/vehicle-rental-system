@@ -39,6 +39,15 @@ router.get('/user/:userId/reviews', async (req, res) => {
   }
 });
 
+router.get('/reviewer/:userId/reviews', async (req, res) => {
+  try {
+    const reviews = await reviewService.getReviewsByRenter(req.params.userId);
+    res.json(reviews);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 router.get('/user/:userId/rating', async (req, res) => {
   try {
     const rating = await reviewService.calculateAverageRating(req.params.userId);

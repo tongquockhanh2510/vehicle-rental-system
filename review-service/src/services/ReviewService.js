@@ -1,10 +1,67 @@
 import { ReviewRepository } from '../repositories/ReviewRepository.js';
+import mongoose from 'mongoose';
 
 const reviewRepository = new ReviewRepository();
 
+function toObjectId(value) {
+  if (value instanceof mongoose.Types.ObjectId) return value;
+  if (mongoose.Types.ObjectId.isValid(value)) return new mongoose.Types.ObjectId(value);
+  return value;
+}
+
 export class ReviewService {
   async createReview(reviewData) {
-    const review = await reviewRepository.create(reviewData);
+    const rentalRequestId = reviewData?.rental_request_id || reviewData?.contract_id;
+    const reviewerId = reviewData?.reviewer_id;
+    const reviewedUserId = reviewData?.reviewed_user_id;
+
+    if (!rentalRequestId || !reviewerId || !reviewedUserId) {
+      throw new Error('Missing required fields for review');
+    }
+
+    if (String(reviewerId) === String(reviewedUserId)) {
+      throw new Error('Reviewer and reviewed user must be different');
+    }
+
+    const rating = Number(reviewData?.rating || 0);
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      throw new Error('Rating must be between 1 and 5');
+    }
+
+    const rental = await mongoose.connection.collection('rental_requests').findOne({
+      _id: toObjectId(rentalRequestId)
+    });
+
+    if (!rental) {
+      throw new Error('Rental request not found');
+    }
+
+    const rentalStatus = String(rental.status || '').toUpperCase();
+    if (rentalStatus !== 'COMPLETED') {
+      throw new Error('Bạn chỉ có thể đánh giá sau khi chuyến thuê hoàn tất.');
+    }
+
+    const reviewerIsRenter = String(rental.renter_id) === String(reviewerId);
+    const reviewerIsOwner = String(rental.owner_id) === String(reviewerId);
+    if (!reviewerIsRenter && !reviewerIsOwner) {
+      throw new Error('Reviewer is not related to this rental');
+    }
+
+    const expectedReviewedId = reviewerIsRenter ? String(rental.owner_id) : String(rental.renter_id);
+    if (String(reviewedUserId) !== expectedReviewedId) {
+      throw new Error('Reviewed user does not match rental participants');
+    }
+
+    const existing = await reviewRepository.findByRentalAndReviewer(rental._id, reviewerId);
+    if (existing) {
+      throw new Error('Bạn đã đánh giá chuyến thuê này rồi.');
+    }
+
+    const review = await reviewRepository.create({
+      ...reviewData,
+      rental_request_id: rental._id,
+      rating
+    });
     return review;
   }
 

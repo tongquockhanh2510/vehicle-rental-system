@@ -73,7 +73,7 @@ async function fromMultipleApi(loaders = [], fallbackRows = []) {
 }
 
 export async function getAdminUsersData() {
-  return fromSingleApi(() => userApi.getUsers({ page: 1, limit: 120 }), MOCK_ADMIN_USERS);
+  return fromSingleApi(() => userApi.getAdminUsers({ page: 1, limit: 120 }), MOCK_ADMIN_USERS);
 }
 
 export async function getAdminOwnerApplicationsData(statusFilter = 'ALL') {

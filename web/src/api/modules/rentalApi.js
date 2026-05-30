@@ -16,7 +16,7 @@ export const rentalApi = {
     }
   },
   getAdminRentals(params = {}) {
-    return apiClient.get('/api/rentals/admin/list', { params });
+    return apiClient.get('/api/admin/rentals', { params });
   },
   createRequest(payload) {
     return apiClient.post('/api/rentals/request', payload);
@@ -24,13 +24,30 @@ export const rentalApi = {
   checkAvailability(payload) {
     return apiClient.post('/api/rentals/check-availability', payload);
   },
-  confirm(rentalId) {
-    return apiClient.put(`/api/rentals/${rentalId}/confirm`);
+  approve(rentalId) {
+    return apiClient.patch(`/api/rentals/${rentalId}/approve`);
   },
   reject(rentalId) {
-    return apiClient.put(`/api/rentals/${rentalId}/reject`);
+    return apiClient.patch(`/api/rentals/${rentalId}/reject`);
   },
   cancel(rentalId) {
-    return apiClient.put(`/api/rentals/${rentalId}/cancel`);
+    return apiClient.patch(`/api/rentals/${rentalId}/cancel`);
+  },
+  confirmPickup(rentalId) {
+    return apiClient.patch(`/api/rentals/${rentalId}/confirm-pickup`);
+  },
+  returnVehicle(rentalId) {
+    return apiClient.patch(`/api/rentals/${rentalId}/return`);
+  },
+  confirmReturn(rentalId) {
+    return apiClient.patch(`/api/rentals/${rentalId}/confirm-return`);
+  },
+  dispute(rentalId, reason) {
+    return apiClient.patch(`/api/rentals/${rentalId}/dispute`, { reason });
+  },
+
+  // Backward-compat helpers for existing screens
+  confirm(rentalId) {
+    return this.approve(rentalId);
   }
 };
