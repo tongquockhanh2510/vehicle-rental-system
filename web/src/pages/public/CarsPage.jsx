@@ -14,7 +14,6 @@ import {
   toBackendVehicleTypeFilter,
 } from "../../constants/vehicle";
 import { normalizeLocationText } from "../../constants/locationOptions";
-import { mapMockVehicle, MOCK_VEHICLES } from "../../data/mockVehicles";
 import { pickArray } from "../../utils/formatters";
 
 const defaultFilters = {
@@ -70,28 +69,26 @@ function applyClientFilters(items, filters) {
       `${vehicle.brand || ""} ${vehicle.model || ""} ${vehicle.license_plate || ""}`,
     );
     const locationBlob = toLocationBlob(vehicle);
-    const type = normalizeVehicleTypeValue(vehicle.vehicle_type);
     const sourceType = String(vehicle.vehicle_type || "").toUpperCase();
     const vehicleStatus = String(
       vehicle.status || (vehicle.is_available ? "AVAILABLE" : "PENDING"),
     ).toUpperCase();
     const rate = Number(vehicle.daily_rate || 0);
     const seats = Number(vehicle.seats || 0);
-    const rating = Number(vehicle.rating || 0);
+    const rating = Number(vehicle.rating || vehicle.average_rating || 0);
 
     if (q && !haystack.includes(q)) return false;
     if (city && !locationBlob.includes(city)) return false;
     if (district && !locationBlob.includes(district)) return false;
     if (pickupArea && !locationBlob.includes(pickupArea)) return false;
-    if (vehicleType && !matchesVehicleTypeFilter(vehicle, vehicleType))
-      return false;
-    if (fuel && String(vehicle.fuel_type || "").toUpperCase() !== fuel)
-      return false;
+    if (vehicleType && !matchesVehicleTypeFilter(vehicle, vehicleType)) return false;
+    if (fuel && String(vehicle.fuel_type || "").toUpperCase() !== fuel) return false;
     if (
       transmission &&
       String(vehicle.transmission || "").toUpperCase() !== transmission
-    )
+    ) {
       return false;
+    }
     if (status && vehicleStatus !== status) return false;
     if (minSeats && seats < minSeats) return false;
     if (minPrice && rate < minPrice) return false;
@@ -130,18 +127,11 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
     setLoading(true);
     setError("");
     try {
-      const location = [
-        nextFilters.city,
-        nextFilters.district,
-        nextFilters.pickup_area,
-      ]
+      const location = [nextFilters.city, nextFilters.district, nextFilters.pickup_area]
         .filter((item) => String(item || "").trim())
         .join(", ");
 
-      const selectedVehicleType = normalizeVehicleTypeValue(
-        nextFilters.vehicle_type,
-      );
-
+      const selectedVehicleType = normalizeVehicleTypeValue(nextFilters.vehicle_type);
       const params = {
         ...nextFilters,
         vehicle_type: toBackendVehicleTypeFilter(nextFilters.vehicle_type),
@@ -153,6 +143,7 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
         limit: 60,
         availability_date: nextFilters.start_date || undefined,
       };
+
       Object.keys(params).forEach((key) => {
         if (params[key] === "" || params[key] === undefined) delete params[key];
       });
@@ -162,25 +153,17 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
         : await vehicleApi.getAvailable(params);
 
       const apiRows = pickArray(response.data);
-      const baseRows = apiRows.length
-        ? apiRows
-        : MOCK_VEHICLES.map(mapMockVehicle);
-      const filtered = applyClientFilters(baseRows, nextFilters);
+      const filtered = applyClientFilters(apiRows, nextFilters);
 
-      setAllVehicles(baseRows);
+      setAllVehicles(apiRows);
       setVehicles(filtered);
-      if (!apiRows.length) {
-        setError(
-          "API chưa trả dữ liệu đầy đủ, hệ thống đang dùng dữ liệu mô phỏng để bạn kiểm thử luồng marketplace.",
-        );
-      }
     } catch (err) {
-      const fallback = MOCK_VEHICLES.map(mapMockVehicle);
-      setAllVehicles(fallback);
-      setVehicles(applyClientFilters(fallback, nextFilters));
+      setAllVehicles([]);
+      setVehicles([]);
       setError(
         err?.response?.data?.error ||
-          "Không thể tải API, đã chuyển sang dữ liệu mô phỏng.",
+          err?.response?.data?.message ||
+          "Không thể tải danh sách phương tiện từ API.",
       );
     } finally {
       setLoading(false);
@@ -194,8 +177,7 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
 
   const activeFilterCount = useMemo(
     () =>
-      Object.values(filters).filter((value) => String(value || "").trim())
-        .length,
+      Object.values(filters).filter((value) => String(value || "").trim()).length,
     [filters],
   );
 
@@ -247,7 +229,11 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
                 key={item.value}
                 type="button"
                 onClick={() => onSelectCategory(item.value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${selected ? "bg-cyan-500 text-slate-950" : "border border-white/15 text-slate-200 hover:bg-white/10"}`}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  selected
+                    ? "bg-cyan-500 text-slate-950"
+                    : "border border-white/15 text-slate-200 hover:bg-white/10"
+                }`}
               >
                 {item.label}
               </button>
@@ -267,9 +253,7 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3">
             <p className="text-sm text-slate-200">
-              {loading
-                ? "Đang tải danh sách xe..."
-                : `${vehicles.length} phương tiện phù hợp`}
+              {loading ? "Đang tải danh sách xe..." : `${vehicles.length} phương tiện phù hợp`}
             </p>
             <p className="text-xs text-slate-400">
               Bộ lọc đang áp dụng: {activeFilterCount}
@@ -277,7 +261,7 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
           </div>
 
           {error ? (
-            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
               {error}
             </div>
           ) : null}
