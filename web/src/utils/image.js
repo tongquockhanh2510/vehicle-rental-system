@@ -1,71 +1,27 @@
-import { normalizeVehicleTypeValue } from "../constants/vehicle";
-
-export const CAR_PLACEHOLDERS = [
-  "/images/car-placeholder.svg",
-  "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1200&q=80",
-];
-
-const TYPE_PLACEHOLDERS = {
-  MOTORCYCLE: [
-    "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1623074074564-7e14b8f5dc2f?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1558981403-c5f9891f8f05?auto=format&fit=crop&w=1200&q=80",
-  ],
-  BICYCLE: [
-    "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1529422643025-0c9f6f28b8e3?auto=format&fit=crop&w=1200&q=80",
-  ],
-  ELECTRIC: [
-    "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1200&q=80",
-  ],
-  PICKUP_TRUCK: [
-    "https://images.unsplash.com/photo-1592853625511-adf3b4ca2029?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1609521263047-f8f205293f24?auto=format&fit=crop&w=1200&q=80",
-  ],
-  SEVEN_SEATER: [
-    "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80",
-    "https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=1200&q=80",
-  ],
-};
-
-function getBySeed(list, seed = 0) {
-  if (!Array.isArray(list) || !list.length) return null;
-  return list[Math.abs(seed) % list.length];
-}
-
-function inferTypeGroup(vehicleType = "") {
-  const type = normalizeVehicleTypeValue(vehicleType);
-  if (type === "MOTORCYCLE") return "MOTORCYCLE";
-  if (type === "BICYCLE" || type === "MOUNTAIN_BIKE") return "BICYCLE";
-  if (type === "PICKUP_TRUCK" || type === "MINI_TRUCK") return "PICKUP_TRUCK";
-  if (type === "SEVEN_SEATER" || type === "SEVEN_SEAT_CAR" || type === "7_SEAT_CAR")
-    return "SEVEN_SEATER";
-  if (type === "ELECTRIC" || type === "ELECTRIC_BIKE") return "ELECTRIC";
-  return "CAR";
-}
-
-export function getFallbackCarImage(seed = 0, vehicleType = "CAR") {
-  const group = inferTypeGroup(vehicleType);
-  const typeImage = getBySeed(TYPE_PLACEHOLDERS[group], seed);
-  return typeImage || getBySeed(CAR_PLACEHOLDERS, seed) || CAR_PLACEHOLDERS[0];
-}
-
-export function resolveImage(imageUrl, seed = 0, vehicleType = "CAR") {
-  if (typeof imageUrl === "string" && imageUrl.trim()) {
-    return imageUrl.trim();
-  }
-  return getFallbackCarImage(seed, vehicleType);
-}
+export const VEHICLE_PLACEHOLDER_IMAGE = "/images/car-placeholder.svg";
 
 function pickImageFromCandidate(candidate) {
   if (!candidate) return null;
 
   if (typeof candidate === "string" && candidate.trim()) {
-    return candidate.trim();
+    const normalizedText = candidate.trim();
+
+    // Support legacy payload where images were persisted as JSON string.
+    if (
+      normalizedText.startsWith("[") &&
+      normalizedText.endsWith("]")
+    ) {
+      try {
+        const parsed = JSON.parse(normalizedText);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return pickImageFromCandidate(parsed[0]);
+        }
+      } catch {
+        // Keep raw value fallback below.
+      }
+    }
+
+    return normalizeImageUrl(normalizedText);
   }
 
   if (typeof candidate === "object") {
@@ -76,14 +32,34 @@ function pickImageFromCandidate(candidate) {
       candidate.image ||
       candidate.location;
     if (typeof objectValue === "string" && objectValue.trim()) {
-      return objectValue.trim();
+      return normalizeImageUrl(objectValue.trim());
     }
   }
 
   return null;
 }
 
-export function getVehicleImage(vehicle) {
+function normalizeImageUrl(imageUrl) {
+  if (!imageUrl) return null;
+  const value = String(imageUrl).trim();
+  if (!value) return null;
+
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("//")
+  ) {
+    try {
+      return encodeURI(value);
+    } catch {
+      return value;
+    }
+  }
+
+  return value;
+}
+
+export function getVehicleImages(vehicle) {
   const listCandidates = Array.isArray(vehicle?.images)
     ? vehicle.images
     : vehicle?.images
@@ -97,12 +73,83 @@ export function getVehicleImage(vehicle) {
     vehicle?.photo_url,
   ];
 
-  const allCandidates = [...listCandidates, ...extraCandidates];
+  const merged = [...listCandidates, ...extraCandidates];
+  const images = merged
+    .map((candidate) => pickImageFromCandidate(candidate))
+    .filter(Boolean);
 
-  for (const candidate of allCandidates) {
-    const url = pickImageFromCandidate(candidate);
-    if (url) return url;
+  return Array.from(new Set(images));
+}
+
+export function getVehicleMainImage(vehicle) {
+  return getVehicleImages(vehicle)[0] || null;
+}
+
+export function getFallbackCarImage() {
+  return VEHICLE_PLACEHOLDER_IMAGE;
+}
+
+export function buildVehicleFallbackImage(vehicle) {
+  const brand = vehicle?.brand || "RentCar Premium";
+  const model = vehicle?.model || "Phuong tien";
+  const type = vehicle?.vehicle_type || "VEHICLE";
+  const title = `${brand} ${model}`.trim();
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#020617"/>
+        <stop offset="52%" stop-color="#0f172a"/>
+        <stop offset="100%" stop-color="#1e293b"/>
+      </linearGradient>
+      <radialGradient id="glow1" cx="0.15" cy="0.18" r="0.45">
+        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="glow2" cx="0.84" cy="0.16" r="0.48">
+        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <rect width="1280" height="720" fill="url(#bg)"/>
+    <rect width="1280" height="720" fill="url(#glow1)"/>
+    <rect width="1280" height="720" fill="url(#glow2)"/>
+    <rect x="48" y="48" width="1184" height="624" rx="30" fill="none" stroke="#334155" stroke-opacity="0.7"/>
+
+    <text x="92" y="130" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="30" letter-spacing="3">${escapeXml(
+      type,
+    )}</text>
+    <text x="92" y="220" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="62" font-weight="700">${escapeXml(
+      title,
+    )}</text>
+    <text x="92" y="280" fill="#38bdf8" font-family="Segoe UI, Arial, sans-serif" font-size="30">Hinh anh dang duoc cap nhat</text>
+
+    <g transform="translate(740,175)">
+      <rect x="0" y="0" width="420" height="270" rx="26" fill="#0b1220" stroke="#1e293b"/>
+      <path d="M70 170c12-42 45-72 88-72h105c42 0 80 24 100 62l20 38v31h-26c-4 21-22 37-44 37-22 0-40-16-44-37H174c-4 21-22 37-44 37-22 0-40-16-44-37H60v-30z" fill="#0ea5e9" fill-opacity="0.25" stroke="#67e8f9" stroke-width="4"/>
+      <circle cx="125" cy="234" r="27" fill="#020617" stroke="#94a3b8" stroke-width="5"/>
+      <circle cx="312" cy="234" r="27" fill="#020617" stroke="#94a3b8" stroke-width="5"/>
+      <rect x="170" y="120" width="128" height="42" rx="10" fill="#38bdf8" fill-opacity="0.3"/>
+    </g>
+  </svg>`;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+export function resolveImage(imageUrl) {
+  if (typeof imageUrl === "string" && imageUrl.trim()) {
+    return normalizeImageUrl(imageUrl.trim());
   }
-
-  return null;
+  return VEHICLE_PLACEHOLDER_IMAGE;
 }

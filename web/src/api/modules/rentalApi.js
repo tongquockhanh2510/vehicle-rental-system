@@ -1,8 +1,12 @@
 ﻿import apiClient from '../client';
 
 export const rentalApi = {
-  getRenterRequests() {
-    return apiClient.get('/api/rentals/renter/my-rentals');
+  async getRenterRequests() {
+    try {
+      return await apiClient.get('/api/rentals/my-requests');
+    } catch {
+      return apiClient.get('/api/rentals/renter/my-rentals');
+    }
   },
   getOwnerRequests() {
     return apiClient.get('/api/rentals/owner/my-rentals');

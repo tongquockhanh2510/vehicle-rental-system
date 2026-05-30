@@ -4,17 +4,28 @@ import axios from 'axios';
 import FormData from 'form-data';
 
 const vehicleRepository = new VehicleRepository();
-const redisClient = createClient({ url: process.env.REDIS_URL });
+const redisClient = createClient({
+  url: process.env.REDIS_URL,
+  socket: {
+    connectTimeout: 2000,
+    // Do not block service startup when Redis is down.
+    reconnectStrategy: () => false,
+  },
+});
 const CACHE_TTL_SECONDS = Number.parseInt(process.env.VEHICLE_CACHE_TTL || '120', 10);
 
 redisClient.on('error', (err) => console.log('Redis Client Error', err.message));
 
-try {
-  await redisClient.connect();
-  console.log('Connected to Redis');
-} catch (error) {
-  console.log('Redis unavailable, continue without cache:', error.message);
+async function initRedis() {
+  try {
+    await redisClient.connect();
+    console.log('Connected to Redis');
+  } catch (error) {
+    console.log('Redis unavailable, continue without cache:', error.message);
+  }
 }
+
+void initRedis();
 
 export class VehicleService {
   normalizeVehicleType(value) {

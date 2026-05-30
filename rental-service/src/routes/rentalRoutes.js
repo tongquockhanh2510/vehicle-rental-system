@@ -10,9 +10,15 @@ router.post("/request", authenticateToken, async (req, res) => {
       req.userId,
       req.body,
     );
-    res.status(201).json(rentalRequest);
+    res.status(201).json({
+      success: true,
+      message: "Gửi yêu cầu thuê thành công",
+      data: rentalRequest,
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Failed to create rental request" });
   }
 });
 
@@ -21,7 +27,16 @@ router.get("/renter/my-rentals", authenticateToken, async (req, res) => {
     const rentals = await rentalService.getRenterRentals(req.userId);
     res.json(rentals);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+router.get("/my-requests", authenticateToken, async (req, res) => {
+  try {
+    const rentals = await rentalService.getRenterRentals(req.userId);
+    res.json(rentals);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
@@ -30,7 +45,7 @@ router.get("/owner/my-rentals", authenticateToken, async (req, res) => {
     const rentals = await rentalService.getOwnerRentals(req.userId);
     res.json(rentals);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
@@ -39,7 +54,7 @@ router.put("/:rentalId/cancel", authenticateToken, async (req, res) => {
     const rental = await rentalService.cancelRental(req.params.rentalId);
     res.json(rental);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
@@ -48,7 +63,7 @@ router.get("/:rentalId", authenticateToken, async (req, res) => {
     const rental = await rentalService.getRentalById(req.params.rentalId);
     res.json(rental);
   } catch (error) {
-    res.status(404).json({ error: error.message });
+    res.status(error.status || 404).json({ error: error.message });
   }
 });
 
@@ -60,7 +75,7 @@ router.put("/:rentalId/confirm", authenticateToken, async (req, res) => {
     );
     res.json(rental);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
@@ -72,7 +87,7 @@ router.put("/:rentalId/reject", authenticateToken, async (req, res) => {
     );
     res.json(rental);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
@@ -87,7 +102,7 @@ router.post("/check-availability", authenticateToken, async (req, res) => {
     );
     res.json({ available });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 

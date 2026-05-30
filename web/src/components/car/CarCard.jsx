@@ -2,109 +2,44 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BadgeCheck,
-  Bike,
-  CarFront,
   Fuel,
   Gauge,
   MapPin,
   Star,
-  Truck,
-  Users,
-  Zap,
 } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
-import { formatCurrency } from "../../utils/formatters";
-import { getVehicleImage, resolveImage } from "../../utils/image";
 import VehicleTypeBadge from "../common/VehicleTypeBadge";
+import { formatCurrency } from "../../utils/formatters";
 import {
-  getFuelTypeLabel,
-  getTransmissionLabel,
-  normalizeVehicleTypeValue,
-} from "../../constants/vehicle";
-
-const PLACEHOLDER_META = {
-  CAR: { label: "Ảnh ô tô đang cập nhật", Icon: CarFront },
-  MOTORCYCLE: { label: "Ảnh xe máy đang cập nhật", Icon: Bike },
-  ELECTRIC: { label: "Ảnh xe điện đang cập nhật", Icon: Zap },
-  BICYCLE: { label: "Ảnh xe đạp đang cập nhật", Icon: Bike },
-  PICKUP_TRUCK: { label: "Ảnh xe bán tải đang cập nhật", Icon: Truck },
-  SEVEN_SEATER: { label: "Ảnh xe 7 chỗ đang cập nhật", Icon: Users },
-  DEFAULT: { label: "Ảnh phương tiện đang cập nhật", Icon: CarFront },
-};
-
-function getImagePlaceholderMeta(vehicle) {
-  const normalizedType = normalizeVehicleTypeValue(vehicle?.vehicle_type);
-  const fuelType = String(vehicle?.fuel_type || "").toUpperCase();
-
-  if (fuelType === "ELECTRIC" || normalizedType === "ELECTRIC") {
-    return PLACEHOLDER_META.ELECTRIC;
-  }
-  if (normalizedType === "MOTORCYCLE") return PLACEHOLDER_META.MOTORCYCLE;
-  if (normalizedType === "BICYCLE" || normalizedType === "MOUNTAIN_BIKE") {
-    return PLACEHOLDER_META.BICYCLE;
-  }
-  if (normalizedType === "PICKUP_TRUCK" || normalizedType === "MINI_TRUCK") {
-    return PLACEHOLDER_META.PICKUP_TRUCK;
-  }
-  if (
-    normalizedType === "SEVEN_SEATER" ||
-    normalizedType === "SEVEN_SEAT_CAR" ||
-    normalizedType === "7_SEAT_CAR"
-  ) {
-    return PLACEHOLDER_META.SEVEN_SEATER;
-  }
-  if (
-    ["CAR", "SUV", "LUXURY_CAR", "SELF_DRIVE_CAR", "WITH_DRIVER_CAR"].includes(
-      normalizedType,
-    )
-  ) {
-    return PLACEHOLDER_META.CAR;
-  }
-  return PLACEHOLDER_META.DEFAULT;
-}
-
-function VehicleImagePlaceholder({ vehicle }) {
-  const { Icon, label } = getImagePlaceholderMeta(vehicle);
-
-  return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_25%_25%,rgba(34,211,238,0.18),transparent_48%),radial-gradient(circle_at_75%_15%,rgba(59,130,246,0.12),transparent_45%),linear-gradient(135deg,rgba(2,6,23,0.95),rgba(15,23,42,0.95))] p-4 text-center">
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <Icon className="h-10 w-10 text-cyan-200" />
-      </div>
-      <p className="mt-3 text-xs font-medium text-slate-300">{label}</p>
-    </div>
-  );
-}
+  buildVehicleFallbackImage,
+  getVehicleMainImage,
+} from "../../utils/image";
+import { getFuelTypeLabel, getTransmissionLabel } from "../../constants/vehicle";
 
 export default function CarCard({ vehicle, to }) {
   const [imageError, setImageError] = useState(false);
-  const [fallbackTried, setFallbackTried] = useState(false);
   const [imageSrc, setImageSrc] = useState("");
 
-  const imageUrl = useMemo(() => getVehicleImage(vehicle), [vehicle]);
+  const imageUrl = useMemo(() => getVehicleMainImage(vehicle), [vehicle]);
   const fallbackImage = useMemo(
-    () =>
-      resolveImage(
-        "",
-        Number(vehicle?.year) || Number(vehicle?.seats) || 1,
-        vehicle?.vehicle_type || "CAR",
-      ),
-    [vehicle?.vehicle_type, vehicle?.year, vehicle?.seats],
+    () => buildVehicleFallbackImage(vehicle),
+    [vehicle],
   );
 
   useEffect(() => {
-    const initialSrc = imageUrl || fallbackImage || "";
-    setImageSrc(initialSrc);
-    setImageError(!initialSrc);
-    setFallbackTried(!imageUrl);
+    const src = imageUrl || fallbackImage;
+    setImageSrc(src);
+    setImageError(false);
   }, [imageUrl, fallbackImage, vehicle?._id]);
 
-  const canShowImage = Boolean(imageSrc) && !imageError;
-  const rawStatus = String(vehicle?.status || "").toUpperCase();
-  const status = vehicle?.is_available ? "AVAILABLE" : rawStatus || "PENDING";
-  const rating = Number(vehicle?.rating || 4.8).toFixed(1);
+  const status = vehicle?.is_available
+    ? "AVAILABLE"
+    : String(vehicle?.status || "PENDING").toUpperCase();
+  const rating = Number(vehicle?.rating || vehicle?.average_rating || 4.8).toFixed(
+    1,
+  );
   const completedTrips = Number(
-    vehicle?.completed_trips || vehicle?.booking_count || 0,
+    vehicle?.completed_trips || vehicle?.total_rentals || vehicle?.booking_count || 0,
   );
   const isPopular = completedTrips >= 12 || Number(rating) >= 4.9;
   const isVerifiedOwner = Boolean(vehicle?.owner_verified ?? true);
@@ -117,24 +52,19 @@ export default function CarCard({ vehicle, to }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/75 shadow-[0_20px_60px_rgba(2,6,23,0.45)] transition hover:-translate-y-1 hover:border-cyan-400/40">
       <div className="relative h-56 w-full overflow-hidden rounded-t-2xl bg-slate-950/80">
-        {canShowImage ? (
-          <img
-            src={imageSrc}
-            alt={`${vehicle?.brand || "Phương tiện"} ${vehicle?.model || ""}`.trim()}
-            loading="lazy"
-            className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
-            onError={() => {
-              if (!fallbackTried && fallbackImage && imageSrc !== fallbackImage) {
-                setImageSrc(fallbackImage);
-                setFallbackTried(true);
-                return;
-              }
+        <img
+          src={imageError ? fallbackImage : imageSrc}
+          alt={`${vehicle?.brand || "Phương tiện"} ${vehicle?.model || ""}`.trim()}
+          loading="lazy"
+          className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+          onError={() => {
+            if (!imageError) {
               setImageError(true);
-            }}
-          />
-        ) : (
-          <VehicleImagePlaceholder vehicle={vehicle} />
-        )}
+              return;
+            }
+            setImageSrc(fallbackImage);
+          }}
+        />
 
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <StatusBadge status={status} />
@@ -144,6 +74,7 @@ export default function CarCard({ vehicle, to }) {
             </span>
           ) : null}
         </div>
+
         <div className="absolute right-3 top-3">
           <VehicleTypeBadge type={vehicle?.vehicle_type} />
         </div>

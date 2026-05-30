@@ -5,6 +5,12 @@ import axios from "axios";
 const rentalRepository = new RentalRepository();
 const eventBus = new EventBus();
 
+function makeError(message, status = 400) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
 function buildVehicleLocationSnapshot(vehicle = {}) {
   const cityDistrict = [vehicle.district, vehicle.city]
     .filter(Boolean)
@@ -27,18 +33,36 @@ function buildVehicleLocationSnapshot(vehicle = {}) {
 
 export class RentalService {
   async createRentalRequest(renterId, rentalData) {
-    const vehicleRes = await axios.get(
-      `${process.env.VEHICLE_SERVICE_URL}/api/vehicles/${rentalData.vehicle_id}`,
-    );
+    if (!rentalData?.vehicle_id) {
+      throw makeError("Missing required field: vehicle_id", 400);
+    }
 
-    const vehicle = vehicleRes.data;
+    let vehicle = null;
+    try {
+      const vehicleRes = await axios.get(
+        `${process.env.VEHICLE_SERVICE_URL}/api/vehicles/${rentalData.vehicle_id}`,
+      );
+      vehicle = vehicleRes?.data?.data || vehicleRes?.data || null;
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        throw makeError("Vehicle not found", 404);
+      }
+      throw makeError(
+        "Vehicle service unavailable, please try again later",
+        503,
+      );
+    }
 
     if (!vehicle) {
-      throw new Error("Vehicle not found");
+      throw makeError("Vehicle not found", 404);
+    }
+
+    if (!vehicle.is_available) {
+      throw makeError("Vehicle is not available", 400);
     }
 
     if (vehicle.owner_id.toString() === renterId) {
-      throw new Error("Cannot rent your own vehicle");
+      throw makeError("Cannot rent your own vehicle", 400);
     }
 
     const startDateValue =
@@ -48,7 +72,7 @@ export class RentalService {
     const endDate = new Date(endDateValue);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new Error("Invalid rental dates");
+      throw makeError("Invalid rental dates", 400);
     }
 
     const totalDays = Math.ceil(
@@ -56,13 +80,13 @@ export class RentalService {
     );
 
     if (totalDays <= 0) {
-      throw new Error("Rental end date must be after start date");
+      throw makeError("Rental end date must be after start date", 400);
     }
 
     const dailyRate = Number(vehicle.daily_rate || vehicle.price_per_day);
 
     if (isNaN(dailyRate)) {
-      throw new Error("Invalid vehicle daily rate");
+      throw makeError("Invalid vehicle daily rate", 400);
     }
 
     const totalAmount = dailyRate * totalDays;
