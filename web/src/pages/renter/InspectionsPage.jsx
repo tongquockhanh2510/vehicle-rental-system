@@ -1,21 +1,21 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { Camera, ClipboardCheck } from 'lucide-react';
-import { contractApi } from '../../api';
-import EmptyState from '../../components/common/EmptyState';
-import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import SectionHeader from '../../components/common/SectionHeader';
-import Timeline from '../../components/common/Timeline';
-import { useToast } from '../../context/ToastContext';
-import { compactId, pickArray } from '../../utils/formatters';
-import { resolveImage } from '../../utils/image';
+﻿import React, { useEffect, useMemo, useState } from "react";
+import { Camera, ClipboardCheck } from "lucide-react";
+import { contractApi } from "../../api";
+import EmptyState from "../../components/common/EmptyState";
+import LoadingSkeleton from "../../components/common/LoadingSkeleton";
+import SectionHeader from "../../components/common/SectionHeader";
+import Timeline from "../../components/common/Timeline";
+import { useToast } from "../../context/ToastContext";
+import { compactId, pickArray } from "../../utils/formatters";
+import { resolveImage } from "../../utils/image";
 
 export default function InspectionsPage() {
   const { pushToast } = useToast();
   const [contracts, setContracts] = useState([]);
-  const [selectedContractId, setSelectedContractId] = useState('');
+  const [selectedContractId, setSelectedContractId] = useState("");
   const [pickupImages, setPickupImages] = useState([]);
   const [returnImages, setReturnImages] = useState([]);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,8 +38,9 @@ export default function InspectionsPage() {
   }, []);
 
   const selectedContract = useMemo(
-    () => contracts.find((item) => String(item._id) === String(selectedContractId)),
-    [contracts, selectedContractId]
+    () =>
+      contracts.find((item) => String(item._id) === String(selectedContractId)),
+    [contracts, selectedContractId],
   );
 
   const submitInspection = async (type) => {
@@ -48,27 +49,37 @@ export default function InspectionsPage() {
 
     try {
       const formData = new FormData();
-      const files = type === 'pickup' ? pickupImages : returnImages;
-      const key = type === 'pickup' ? 'pickup_images' : 'return_images';
+      const files = type === "pickup" ? pickupImages : returnImages;
+      const key = type === "pickup" ? "pickup_images" : "return_images";
 
       files.forEach((file) => formData.append(key, file));
-      formData.append('description', notes || `Biên bản ${type === 'pickup' ? 'nhận' : 'trả'} xe từ người thuê`);
+      formData.append(
+        "description",
+        notes ||
+          `Biên bản ${type === "pickup" ? "nhận" : "trả"} xe từ người thuê`,
+      );
 
-      if (type === 'pickup') {
+      if (type === "pickup") {
         await contractApi.pickup(selectedContractId, formData);
       } else {
         await contractApi.returnVehicle(selectedContractId, formData);
       }
 
-      pushToast({ tone: 'success', title: 'Đã gửi biên bản', message: `Đã gửi biên bản ${type === 'pickup' ? 'nhận xe' : 'trả xe'} thành công.` });
-      setNotes('');
+      pushToast({
+        tone: "success",
+        title: "Đã gửi biên bản",
+        message: `Đã gửi biên bản ${type === "pickup" ? "nhận xe" : "trả xe"} thành công.`,
+      });
+      setNotes("");
       setPickupImages([]);
       setReturnImages([]);
     } catch (error) {
       pushToast({
-        tone: 'error',
-        title: 'Gửi biên bản thất bại',
-        message: error?.response?.data?.error || 'Không thể gửi biên bản kiểm tra ở thời điểm này.'
+        tone: "error",
+        title: "Gửi biên bản thất bại",
+        message:
+          error?.response?.data?.error ||
+          "Không thể gửi biên bản kiểm tra ở thời điểm này.",
       });
     } finally {
       setSubmitting(false);
@@ -97,7 +108,9 @@ export default function InspectionsPage() {
       />
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-        <label className="text-xs uppercase tracking-[0.18em] text-slate-300">Chọn hợp đồng</label>
+        <label className="text-xs uppercase tracking-[0.18em] text-slate-300">
+          Chọn hợp đồng
+        </label>
         <select
           value={selectedContractId}
           onChange={(event) => setSelectedContractId(event.target.value)}
@@ -113,7 +126,9 @@ export default function InspectionsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="text-lg font-semibold text-white">Bằng chứng kiểm tra xe</h3>
+          <h3 className="text-lg font-semibold text-white">
+            Bằng chứng kiểm tra xe
+          </h3>
 
           <label className="block text-sm text-slate-300">
             Ảnh nhận xe
@@ -121,7 +136,9 @@ export default function InspectionsPage() {
               type="file"
               multiple
               accept="image/*"
-              onChange={(event) => setPickupImages(Array.from(event.target.files || []))}
+              onChange={(event) =>
+                setPickupImages(Array.from(event.target.files || []))
+              }
               className="mt-1 block w-full text-sm text-slate-200"
             />
           </label>
@@ -132,7 +149,9 @@ export default function InspectionsPage() {
               type="file"
               multiple
               accept="image/*"
-              onChange={(event) => setReturnImages(Array.from(event.target.files || []))}
+              onChange={(event) =>
+                setReturnImages(Array.from(event.target.files || []))
+              }
               className="mt-1 block w-full text-sm text-slate-200"
             />
           </label>
@@ -149,7 +168,7 @@ export default function InspectionsPage() {
             <button
               type="button"
               disabled={submitting}
-              onClick={() => submitInspection('pickup')}
+              onClick={() => submitInspection("pickup")}
               className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-slate-600"
             >
               Gửi biên bản nhận xe
@@ -157,7 +176,7 @@ export default function InspectionsPage() {
             <button
               type="button"
               disabled={submitting}
-              onClick={() => submitInspection('return')}
+              onClick={() => submitInspection("return")}
               className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 disabled:bg-slate-600"
             >
               Gửi biên bản trả xe
@@ -165,7 +184,10 @@ export default function InspectionsPage() {
           </div>
 
           <div className="grid grid-cols-4 gap-2">
-            {[...(selectedContract?.pickup_images || []), ...(selectedContract?.return_images || [])]
+            {[
+              ...(selectedContract?.pickup_images || []),
+              ...(selectedContract?.return_images || []),
+            ]
               .slice(0, 8)
               .map((image, idx) => (
                 <img
@@ -174,7 +196,7 @@ export default function InspectionsPage() {
                   alt="kiem-tra-xe"
                   className="h-16 w-full rounded-lg object-cover"
                   onError={(event) => {
-                    event.currentTarget.src = resolveImage('', idx + 3);
+                    event.currentTarget.src = resolveImage("", idx + 3);
                   }}
                 />
               ))}
@@ -182,33 +204,53 @@ export default function InspectionsPage() {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <h3 className="mb-4 text-lg font-semibold text-white">Dòng thời gian kiểm tra xe</h3>
+          <h3 className="mb-4 text-lg font-semibold text-white">
+            Dòng thời gian kiểm tra xe
+          </h3>
           <Timeline
             items={[
-              { title: 'Hợp đồng được tạo', status: 'APPROVED', timestamp: selectedContract?.created_at },
-              { title: 'Đã thanh toán cọc', status: 'PENDING', description: 'Nền tảng xác nhận thanh toán' },
               {
-                title: 'Kiểm tra khi nhận xe',
-                status: selectedContract?.pickup_time ? 'COMPLETED' : 'PENDING',
+                title: "Hợp đồng được tạo",
+                status: "APPROVED",
+                timestamp: selectedContract?.created_at,
+              },
+              {
+                title: "Đã thanh toán cọc",
+                status: "PENDING",
+                description: "Nền tảng xác nhận thanh toán",
+              },
+              {
+                title: "Kiểm tra khi nhận xe",
+                status: selectedContract?.pickup_time ? "COMPLETED" : "PENDING",
                 timestamp: selectedContract?.pickup_time,
-                description: 'Tải ảnh tình trạng xe khi nhận'
+                description: "Tải ảnh tình trạng xe khi nhận",
               },
-              { title: 'Xe đang được sử dụng', status: selectedContract?.pickup_time ? 'ACTIVE' : 'PENDING' },
               {
-                title: 'Kiểm tra khi trả xe',
-                status: selectedContract?.return_time ? 'COMPLETED' : 'PENDING',
+                title: "Xe đang được sử dụng",
+                status: selectedContract?.pickup_time ? "ACTIVE" : "PENDING",
+              },
+              {
+                title: "Kiểm tra khi trả xe",
+                status: selectedContract?.return_time ? "COMPLETED" : "PENDING",
                 timestamp: selectedContract?.return_time,
-                description: 'Tải ảnh tình trạng xe khi trả'
+                description: "Tải ảnh tình trạng xe khi trả",
               },
               {
-                title: selectedContract?.status === 'DISPUTED' ? 'Đã tạo tranh chấp' : 'Đã hoàn tiền cọc',
-                status: selectedContract?.status === 'DISPUTED' ? 'DISPUTED' : 'REFUNDED'
-              }
+                title:
+                  selectedContract?.status === "DISPUTED"
+                    ? "Đã tạo tranh chấp"
+                    : "Đã hoàn tiền cọc",
+                status:
+                  selectedContract?.status === "DISPUTED"
+                    ? "DISPUTED"
+                    : "REFUNDED",
+              },
             ]}
           />
           <p className="mt-4 inline-flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
             <Camera className="h-3.5 w-3.5" />
-            Hãy chụp rõ thân xe, góc bánh, cabin và các vết xước để tăng độ chính xác xử lý tranh chấp.
+            Hãy chụp rõ thân xe, góc bánh, cabin và các vết xước để tăng độ
+            chính xác xử lý tranh chấp.
           </p>
         </div>
       </div>

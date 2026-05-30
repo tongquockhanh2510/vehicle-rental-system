@@ -1,10 +1,10 @@
-import React from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { LogOut, SwitchCamera } from 'lucide-react';
-import AppLayout from './AppLayout';
-import Sidebar from '../navigation/Sidebar';
-import { OWNER_MENU } from '../../constants/navigationConfig';
-import { useAuth } from '../../context/AuthContext';
+import React from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { LogOut, SwitchCamera } from "lucide-react";
+import AppLayout from "./AppLayout";
+import Sidebar from "../navigation/Sidebar";
+import { OWNER_MENU } from "../../constants/navigationConfig";
+import { useAuth } from "../../context/AuthContext";
 
 export default function OwnerLayout() {
   const navigate = useNavigate();
@@ -24,13 +24,13 @@ export default function OwnerLayout() {
               Quay lại thuê xe
             </Link>
             <div className="hidden rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white md:block">
-              {user?.first_name || user?.email || 'Tài khoản'}
+              {user?.first_name || user?.email || "Tài khoản"}
             </div>
             <button
               type="button"
               onClick={() => {
                 logout();
-                navigate('/login');
+                navigate("/login");
               }}
               className="inline-flex items-center gap-1 rounded-xl border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
             >
