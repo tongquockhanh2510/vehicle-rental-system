@@ -5,6 +5,9 @@ import FormData from 'form-data';
 import { UserRepository } from '../repositories/UserRepository.js';
 import fs from 'fs';
 import path from 'path';
+import User from '../models/User.js';
+import OwnerApplication from '../models/OwnerApplication.js';
+import mongoose from 'mongoose';
 
 const userRepository = new UserRepository();
 
@@ -95,7 +98,9 @@ export class UserService {
     if (!user) {
       throw new Error('User not found');
     }
-    return user;
+    const safeUser = typeof user.toObject === 'function' ? user.toObject() : { ...user };
+    delete safeUser.password;
+    return safeUser;
   }
 
   async updateProfile(userId, updateData) {
@@ -111,7 +116,10 @@ export class UserService {
       }
     });
 
-    return await userRepository.update(userId, filteredData);
+    const updated = await userRepository.update(userId, filteredData);
+    const safeUser = typeof updated?.toObject === 'function' ? updated.toObject() : { ...updated };
+    delete safeUser.password;
+    return safeUser;
   }
 
   async verifyPersonalInformation(userId, infoData, files, authHeader) {
@@ -173,6 +181,174 @@ export class UserService {
     } catch (error) {
       throw new Error(`Failed to verify personal information: ${error.message}`);
     }
+  }
+
+  normalizeUserRole(value) {
+    return String(value || '').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER';
+  }
+
+  normalizeOwnerProfile(profile = {}) {
+    const normalized = profile || {};
+    return {
+      legal_name: normalized.legal_name || normalized.full_name || '',
+      phone: normalized.phone || '',
+      email: normalized.email || '',
+      address: normalized.address || '',
+      id_number: normalized.id_number || '',
+      id_card_front_url:
+        normalized.id_card_front_url ||
+        normalized.id_image_front ||
+        normalized.id_front_url ||
+        '',
+      id_card_back_url:
+        normalized.id_card_back_url ||
+        normalized.id_image_back ||
+        normalized.id_back_url ||
+        '',
+      bank_name: normalized.bank_name || '',
+      bank_account_number: normalized.bank_account_number || '',
+      bank_account_holder: normalized.bank_account_holder || '',
+      bank_branch: normalized.bank_branch || ''
+    };
+  }
+
+  mapOwnerApplication(application) {
+    if (!application) return null;
+    const ownerProfile = this.normalizeOwnerProfile(application.owner_profile || {});
+    return {
+      _id: application._id,
+      user_id: application.user_id,
+      applicant_name: application.applicant_name || ownerProfile.legal_name || '',
+      email: application.email || ownerProfile.email || '',
+      phone: application.phone || ownerProfile.phone || '',
+      owner_profile: ownerProfile,
+      legal_name: ownerProfile.legal_name,
+      address: ownerProfile.address,
+      id_number: ownerProfile.id_number,
+      id_card_front_url: ownerProfile.id_card_front_url,
+      id_card_back_url: ownerProfile.id_card_back_url,
+      bank_name: ownerProfile.bank_name,
+      bank_account_number: ownerProfile.bank_account_number,
+      bank_account_holder: ownerProfile.bank_account_holder,
+      bank_branch: ownerProfile.bank_branch,
+      status: this.normalizeOwnerStatus(application.status),
+      rejection_reason: application.rejection_reason || '',
+      review_note: application.review_note || '',
+      submitted_at: application.submitted_at || application.created_at || null,
+      reviewed_at: application.reviewed_at || null,
+      reviewed_by: application.reviewed_by || null,
+      created_at: application.created_at,
+      updated_at: application.updated_at
+    };
+  }
+
+  async buildAdminUserRows(rawUsers = []) {
+    const users = Array.isArray(rawUsers) ? rawUsers : [];
+    if (!users.length) {
+      return [];
+    }
+
+    const userIds = users.map((item) => item._id).filter(Boolean);
+    const db = mongoose.connection;
+    const [ownerVehicleCounts, renterRequestCounts, ownerApplications] = await Promise.all([
+      db
+        .collection('vehicles')
+        .aggregate([
+          { $match: { owner_id: { $in: userIds } } },
+          { $group: { _id: '$owner_id', count: { $sum: 1 } } }
+        ])
+        .toArray(),
+      db
+        .collection('rental_requests')
+        .aggregate([
+          { $match: { renter_id: { $in: userIds } } },
+          { $group: { _id: '$renter_id', count: { $sum: 1 } } }
+        ])
+        .toArray(),
+      OwnerApplication.find({ user_id: { $in: userIds } })
+        .sort({ created_at: -1 })
+        .lean()
+    ]);
+
+    const ownerVehicleMap = new Map(ownerVehicleCounts.map((item) => [String(item._id), Number(item.count || 0)]));
+    const renterRequestMap = new Map(renterRequestCounts.map((item) => [String(item._id), Number(item.count || 0)]));
+    const ownerApplicationMap = new Map();
+    ownerApplications.forEach((item) => {
+      const key = String(item.user_id || '');
+      if (key && !ownerApplicationMap.has(key)) {
+        ownerApplicationMap.set(key, item);
+      }
+    });
+
+    return users.map((user) => {
+      const key = String(user._id || '');
+      const application = ownerApplicationMap.get(key);
+      return {
+        ...user,
+        role: this.normalizeUserRole(user.role),
+        owner_status: this.normalizeOwnerStatus(user.owner_status),
+        owned_vehicle_count: ownerVehicleMap.get(key) || 0,
+        renter_request_count: renterRequestMap.get(key) || 0,
+        owner_application: this.mapOwnerApplication(application)
+      };
+    });
+  }
+
+  async listUsersForAdmin(params = {}) {
+    const page = Math.max(parseInt(params.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(params.limit, 10) || 50, 1), 200);
+    const skip = (page - 1) * limit;
+    const filters = {};
+
+    if (params.role) {
+      filters.role = this.normalizeUserRole(params.role);
+    }
+
+    if (params.owner_status) {
+      filters.owner_status = this.normalizeOwnerStatus(params.owner_status);
+    }
+
+    const keyword = String(params.q || params.keyword || '').trim();
+    if (keyword) {
+      filters.$or = [
+        { email: { $regex: keyword, $options: 'i' } },
+        { first_name: { $regex: keyword, $options: 'i' } },
+        { last_name: { $regex: keyword, $options: 'i' } },
+        { phone: { $regex: keyword, $options: 'i' } }
+      ];
+    }
+
+    const [total, rows] = await Promise.all([
+      User.countDocuments(filters),
+      User.find(filters)
+        .select('-password')
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    ]);
+
+    const data = await this.buildAdminUserRows(rows);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  async getUserDetailForAdmin(userId) {
+    const user = await User.findById(userId).select('-password').lean();
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const rows = await this.buildAdminUserRows([user]);
+    return rows[0];
   }
 }
 

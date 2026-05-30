@@ -214,6 +214,25 @@ export class RentalService {
     return await rentalRepository.findByOwnerId(ownerId);
   }
 
+  async getAdminRentals(filters = {}, options = {}) {
+    const query = {};
+
+    if (filters.status) {
+      query.status = String(filters.status).toUpperCase();
+    }
+    if (filters.owner_id) {
+      query.owner_id = filters.owner_id;
+    }
+    if (filters.renter_id) {
+      query.renter_id = filters.renter_id;
+    }
+    if (filters.vehicle_id) {
+      query.vehicle_id = filters.vehicle_id;
+    }
+
+    return await rentalRepository.findAll(query, options);
+  }
+
   async checkAvailability(vehicleId, startDate, endDate) {
     const conflicts = await rentalRepository.findByVehicleId(vehicleId);
 

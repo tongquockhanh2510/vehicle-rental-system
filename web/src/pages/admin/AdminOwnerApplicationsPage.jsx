@@ -17,6 +17,28 @@ const filters = [
   { key: 'REJECTED', label: 'REJECTED' }
 ];
 
+function resolveOwnerImageUrl(application, side = 'front') {
+  const profile = application?.owner_profile || {};
+  const candidates =
+    side === 'front'
+      ? [
+          application?.id_card_front_url,
+          profile?.id_card_front_url,
+          profile?.id_image_front,
+          profile?.id_front_url,
+          profile?.id_front
+        ]
+      : [
+          application?.id_card_back_url,
+          profile?.id_card_back_url,
+          profile?.id_image_back,
+          profile?.id_back_url,
+          profile?.id_back
+        ];
+
+  return candidates.find((value) => typeof value === 'string' && value.trim()) || '';
+}
+
 export default function AdminOwnerApplicationsPage() {
   const { pushToast } = useToast();
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -136,10 +158,38 @@ export default function AdminOwnerApplicationsPage() {
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-300">
-                Ảnh CCCD trước: <span className="text-white">{selected.owner_profile?.id_front_name || 'Chưa cập nhật'}</span>
+                <p className="mb-2 text-slate-200">Ảnh CCCD mặt trước</p>
+                {resolveOwnerImageUrl(selected, 'front') ? (
+                  <img
+                    src={resolveOwnerImageUrl(selected, 'front')}
+                    alt="CCCD mặt trước"
+                    className="h-40 w-full rounded-lg border border-white/10 object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-white/20 text-slate-400">
+                    Chưa có ảnh
+                  </div>
+                )}
               </div>
               <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-300">
-                Ảnh CCCD sau: <span className="text-white">{selected.owner_profile?.id_back_name || 'Chưa cập nhật'}</span>
+                <p className="mb-2 text-slate-200">Ảnh CCCD mặt sau</p>
+                {resolveOwnerImageUrl(selected, 'back') ? (
+                  <img
+                    src={resolveOwnerImageUrl(selected, 'back')}
+                    alt="CCCD mặt sau"
+                    className="h-40 w-full rounded-lg border border-white/10 object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-white/20 text-slate-400">
+                    Chưa có ảnh
+                  </div>
+                )}
               </div>
             </div>
 

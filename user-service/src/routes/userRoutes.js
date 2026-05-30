@@ -5,6 +5,10 @@ import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
+function isAdmin(req) {
+  return String(req.userRole || '').toUpperCase() === 'ADMIN';
+}
+
 router.post('/register', async (req, res) => {
   try {
     const result = await userService.register(req.body);
@@ -21,6 +25,23 @@ router.post('/login', async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(401).json({ error: error.message });
+  }
+});
+
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const result = await userService.listUsersForAdmin(req.query || {});
+    return res.json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Failed to fetch users' });
   }
 });
 
@@ -51,6 +72,25 @@ router.put('/verify-personal-information', authenticateToken, upload.fields([
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/:userId', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const data = await userService.getUserDetailForAdmin(req.params.userId);
+    return res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    if (String(error.message || '').toLowerCase().includes('not found')) {
+      return res.status(404).json({ error: error.message });
+    }
+    return res.status(500).json({ error: error.message || 'Failed to fetch user detail' });
   }
 });
 

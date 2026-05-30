@@ -5,6 +5,10 @@ import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
+function isAdmin(req) {
+  return String(req.userRole || '').toUpperCase() === 'ADMIN';
+}
+
 function applySearchFiltersFromQuery(query, includeAvailability = false) {
   const filters = {};
 
@@ -122,6 +126,26 @@ router.get('/search/suggestions', async (req, res) => {
     res.json({ data: suggestions });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/admin/list', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const sort = req.query.sort || '-created_at';
+    const filters = applySearchFiltersFromQuery(req.query, true);
+    const result = await vehicleService.getAdminVehicles(filters, page, limit, sort);
+    return res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Failed to fetch admin vehicles' });
   }
 });
 

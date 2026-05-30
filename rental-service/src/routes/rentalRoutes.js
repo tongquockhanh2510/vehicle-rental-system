@@ -4,6 +4,10 @@ import { authenticateToken } from "../middlewares/auth.js";
 
 const router = express.Router();
 
+function isAdmin(req) {
+  return String(req.userRole || "").toUpperCase() === "ADMIN";
+}
+
 router.post("/request", authenticateToken, async (req, res) => {
   try {
     const rentalRequest = await rentalService.createRentalRequest(
@@ -46,6 +50,33 @@ router.get("/owner/my-rentals", authenticateToken, async (req, res) => {
     res.json(rentals);
   } catch (error) {
     res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+router.get("/owner-requests", authenticateToken, async (req, res) => {
+  try {
+    const rentals = await rentalService.getOwnerRentals(req.userId);
+    res.json(rentals);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+router.get("/admin/list", authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const rentals = await rentalService.getAdminRentals(req.query || {}, {
+      limit: req.query.limit || 0,
+    });
+    return res.json({
+      success: true,
+      data: rentals,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({ error: error.message });
   }
 });
 

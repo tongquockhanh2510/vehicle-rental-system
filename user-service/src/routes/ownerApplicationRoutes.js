@@ -23,18 +23,52 @@ function toOwnerStatus(value) {
 function mapApplicationDoc(application) {
   if (!application) return null;
 
+  const profile = application.owner_profile || {};
+  const ownerProfile = {
+    ...profile,
+    legal_name: profile.legal_name || profile.full_name || '',
+    phone: profile.phone || '',
+    email: profile.email || '',
+    address: profile.address || '',
+    id_number: profile.id_number || '',
+    id_card_front_url:
+      profile.id_card_front_url ||
+      profile.id_image_front ||
+      profile.id_front_url ||
+      '',
+    id_card_back_url:
+      profile.id_card_back_url ||
+      profile.id_image_back ||
+      profile.id_back_url ||
+      '',
+    bank_name: profile.bank_name || '',
+    bank_account_number: profile.bank_account_number || '',
+    bank_account_holder: profile.bank_account_holder || '',
+    bank_branch: profile.bank_branch || ''
+  };
+
   return {
     _id: application._id,
     user_id: application.user_id,
     applicant_name: application.applicant_name || '',
     email: application.email || '',
     phone: application.phone || '',
-    owner_profile: application.owner_profile || {},
+    owner_profile: ownerProfile,
+    legal_name: ownerProfile.legal_name,
+    address: ownerProfile.address,
+    id_number: ownerProfile.id_number,
+    id_card_front_url: ownerProfile.id_card_front_url,
+    id_card_back_url: ownerProfile.id_card_back_url,
+    bank_name: ownerProfile.bank_name,
+    bank_account_number: ownerProfile.bank_account_number,
+    bank_account_holder: ownerProfile.bank_account_holder,
+    bank_branch: ownerProfile.bank_branch,
     status: toOwnerStatus(application.status),
     review_note: application.review_note || '',
     rejection_reason: application.rejection_reason || '',
     submitted_at: application.submitted_at,
     reviewed_at: application.reviewed_at,
+    reviewed_by: application.reviewed_by || null,
     created_at: application.created_at,
     updated_at: application.updated_at
   };
@@ -168,6 +202,35 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/:applicationId', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden'
+      });
+    }
+
+    const application = await OwnerApplication.findById(req.params.applicationId);
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        error: 'Owner application not found'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: mapApplicationDoc(application)
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 router.put('/:applicationId/approve', authenticateToken, async (req, res) => {
   try {
     if (!isAdmin(req)) {
@@ -198,6 +261,7 @@ router.put('/:applicationId/approve', authenticateToken, async (req, res) => {
     application.rejection_reason = '';
     application.review_note = req.body?.review_note || '';
     application.reviewed_at = now;
+    application.reviewed_by = req.userId;
     application.updated_at = now;
     await application.save();
 
@@ -253,6 +317,7 @@ router.put('/:applicationId/reject', authenticateToken, async (req, res) => {
     application.rejection_reason = reason;
     application.review_note = reason;
     application.reviewed_at = now;
+    application.reviewed_by = req.userId;
     application.updated_at = now;
     await application.save();
 
@@ -278,4 +343,3 @@ router.put('/:applicationId/reject', authenticateToken, async (req, res) => {
 });
 
 export default router;
-

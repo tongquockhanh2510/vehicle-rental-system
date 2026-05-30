@@ -5,6 +5,29 @@ import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
+function isAdmin(req) {
+  return String(req.userRole || '').toUpperCase() === 'ADMIN';
+}
+
+router.get('/admin/list', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const contracts = await contractService.getAdminContracts(req.query || {}, {
+      limit: req.query.limit || 0
+    });
+
+    return res.json({
+      success: true,
+      data: contracts
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Failed to fetch admin contracts' });
+  }
+});
+
 router.get('/:contractId', authenticateToken, async (req, res) => {
   try {
     const contract = await contractService.getContractById(req.params.contractId);

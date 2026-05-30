@@ -132,6 +132,24 @@ export class DisputeService {
   async getDisputesByRenter(renterId) {
     return await disputeRepository.findByRenterId(renterId);
   }
+
+  async getAdminDisputes(filters = {}) {
+    const query = {};
+    if (filters.status) {
+      query.status = String(filters.status).toUpperCase();
+    }
+    if (filters.owner_id) {
+      query.owner_id = filters.owner_id;
+    }
+    if (filters.renter_id) {
+      query.renter_id = filters.renter_id;
+    }
+    if (filters.vehicle_id) {
+      query.vehicle_id = filters.vehicle_id;
+    }
+
+    return await disputeRepository.findAll(query);
+  }
 }
 
 export default new DisputeService();

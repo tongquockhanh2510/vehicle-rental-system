@@ -72,6 +72,18 @@ const services = {
 
 app.use(generalLimiter);
 
+const isAdminRequest = (req) => String(req.userRole || '').toUpperCase() === 'ADMIN';
+
+const requireAdmin = (req, res, next) => {
+  if (!isAdminRequest(req)) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Admin permission required'
+    });
+  }
+  return next();
+};
+
 const unavailableProxy = (serviceName) => (req, res) => {
   res.status(503).json({
     error: 'Service unavailable',
@@ -107,6 +119,64 @@ const proxy = (serviceName) => {
   });
 };
 
+const proxyWithRewrite = (serviceName, pathRewrite) => {
+  const target = services[serviceName];
+
+  if (!target) {
+    return unavailableProxy(serviceName);
+  }
+
+  return createProxyMiddleware({
+    target,
+    changeOrigin: true,
+    proxyTimeout: 30000,
+    timeout: 30000,
+    pathRewrite,
+    onProxyReq(proxyReq, req) {
+      proxyReq.setHeader('X-Request-ID', req.requestId);
+    },
+    onError(err, req, res) {
+      console.error(`[${req.requestId}] Proxy error (${serviceName}):`, err.message);
+      res.status(502).json({
+        error: 'Bad gateway',
+        service: serviceName,
+        request_id: req.requestId,
+        message: err.message
+      });
+    }
+  });
+};
+
+async function fetchJson(url, req) {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: req.headers.authorization || '',
+      'X-Request-ID': req.requestId
+    }
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.error || body?.message || `Request failed with status ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  return body;
+}
+
+const pickRows = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+};
+
+const toUpper = (value) => String(value || '').toUpperCase();
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
@@ -115,6 +185,95 @@ app.get('/health', (req, res) => {
     services
   });
 });
+
+app.get('/api/admin/dashboard', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const [statsPayload, usersPayload, ownerAppsPayload] = await Promise.all([
+      fetchJson(`${services.statistics}/api/statistics/dashboard`, req),
+      fetchJson(`${services.users}/api/users?page=1&limit=500`, req),
+      fetchJson(`${services.users}/api/owner-applications`, req)
+    ]);
+
+    const stats = statsPayload?.data || statsPayload || {};
+    const users = pickRows(usersPayload);
+    const ownerApps = pickRows(ownerAppsPayload);
+
+    const totalUsers = Number(stats.total_users || usersPayload?.pagination?.total || users.length || 0);
+    const totalRenters = users.filter((item) => toUpper(item.role) === 'USER').length;
+    const approvedOwners = users.filter((item) => toUpper(item.owner_status) === 'APPROVED').length;
+    const pendingOwnerApplications = ownerApps.filter((item) => toUpper(item.status) === 'PENDING').length;
+
+    return res.json({
+      success: true,
+      data: {
+        totalUsers,
+        totalRenters,
+        approvedOwners,
+        pendingOwnerApplications,
+        totalVehicles: Number(stats.total_vehicles || 0),
+        pendingRentals: Number(stats.pending_rentals || 0),
+        activeContracts: Number(stats.active_contracts || 0),
+        totalRevenue: Number(stats.total_revenue || 0),
+        platformFeeRevenue: Number(stats.platform_revenue || 0),
+        pendingDisputes: Number(stats.pending_disputes || 0)
+      }
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      success: false,
+      error: error.message || 'Failed to load admin dashboard'
+    });
+  }
+});
+
+app.use(
+  '/api/admin/users',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('users', { '^/api/admin/users': '/api/users' })
+);
+app.use(
+  '/api/admin/owner-applications',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('users', { '^/api/admin/owner-applications': '/api/owner-applications' })
+);
+app.use(
+  '/api/admin/vehicles',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('vehicles', { '^/api/admin/vehicles': '/api/vehicles/admin/list' })
+);
+app.use(
+  '/api/admin/rentals',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('rentals', { '^/api/admin/rentals': '/api/rentals/admin/list' })
+);
+app.use(
+  '/api/admin/contracts',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('contracts', { '^/api/admin/contracts': '/api/contracts/admin/list' })
+);
+app.use(
+  '/api/admin/payments',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('payments', { '^/api/admin/payments': '/api/payments/admin/list' })
+);
+app.use(
+  '/api/admin/disputes',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('disputes', { '^/api/admin/disputes': '/api/disputes/admin/list' })
+);
+app.use(
+  '/api/admin/statistics',
+  authenticateToken,
+  requireAdmin,
+  proxyWithRewrite('statistics', { '^/api/admin/statistics': '/api/statistics/dashboard' })
+);
 
 // ================= USER ROUTES =================
 

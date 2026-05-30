@@ -8,8 +8,12 @@ export const rentalApi = {
       return apiClient.get('/api/rentals/renter/my-rentals');
     }
   },
-  getOwnerRequests() {
-    return apiClient.get('/api/rentals/owner/my-rentals');
+  async getOwnerRequests() {
+    try {
+      return await apiClient.get('/api/rentals/owner-requests');
+    } catch {
+      return apiClient.get('/api/rentals/owner/my-rentals');
+    }
   },
   getAdminRentals(params = {}) {
     return apiClient.get('/api/rentals/admin/list', { params });

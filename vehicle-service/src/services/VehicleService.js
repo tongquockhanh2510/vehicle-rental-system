@@ -2,6 +2,7 @@ import { VehicleRepository } from '../repositories/VehicleRepository.js';
 import { createClient } from 'redis';
 import axios from 'axios';
 import FormData from 'form-data';
+import mongoose from 'mongoose';
 
 const vehicleRepository = new VehicleRepository();
 const redisClient = createClient({
@@ -244,6 +245,79 @@ export class VehicleService {
     const suggestions = await vehicleRepository.suggestKeywords(keyword, limit);
     await this.setCache(cacheKey, suggestions);
     return suggestions;
+  }
+
+  async getAdminVehicles(filters = {}, page = 1, limit = 50, sort = '-created_at') {
+    const keyword = filters.keyword || '';
+    const cleanFilters = this.normalizeVehiclePayload({ ...filters });
+    delete cleanFilters.keyword;
+
+    const cacheKey = this.buildListCacheKey('vehicles:list:admin', {
+      filters: cleanFilters,
+      keyword,
+      page,
+      limit,
+      sort
+    });
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = keyword
+      ? await vehicleRepository.searchVehicles(cleanFilters, keyword, page, limit, sort)
+      : await vehicleRepository.findAll(cleanFilters, page, limit, sort);
+
+    const ownerIds = Array.from(
+      new Set(
+        (result?.data || [])
+          .map((item) => String(item?.owner_id || ''))
+          .filter(Boolean)
+      )
+    );
+
+    if (ownerIds.length) {
+      const objectIds = ownerIds
+        .filter((value) => mongoose.Types.ObjectId.isValid(value))
+        .map((value) => new mongoose.Types.ObjectId(value));
+      const users = await mongoose.connection
+        .collection('users')
+        .find(
+          { _id: { $in: objectIds } },
+          {
+            projection: {
+              _id: 1,
+              email: 1,
+              first_name: 1,
+              last_name: 1,
+              owner_status: 1
+            }
+          }
+        )
+        .toArray();
+
+      const ownerMap = new Map(
+        users.map((user) => [
+          String(user._id),
+          {
+            _id: user._id,
+            email: user.email || '',
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            owner_status: user.owner_status || 'NONE'
+          }
+        ])
+      );
+
+      result.data = (result.data || []).map((vehicle) => ({
+        ...vehicle,
+        owner: ownerMap.get(String(vehicle.owner_id || '')) || null
+      }));
+    }
+
+    await this.setCache(cacheKey, result, 30);
+    return result;
   }
 
   async deleteVehicle(vehicleId, userId, authToken) {

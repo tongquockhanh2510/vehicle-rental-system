@@ -96,31 +96,19 @@ export async function getAdminVehiclesData() {
 }
 
 export async function getAdminRentalsData() {
-  return fromMultipleApi(
-    [() => (rentalApi.getAdminRentals ? rentalApi.getAdminRentals() : rentalApi.getRenterRequests()), () => rentalApi.getOwnerRequests()],
-    MOCK_ADMIN_RENTALS
-  );
+  return fromSingleApi(() => rentalApi.getAdminRentals({ limit: 300 }), MOCK_ADMIN_RENTALS);
 }
 
 export async function getAdminContractsData() {
-  return fromMultipleApi(
-    [() => (contractApi.getAdminContracts ? contractApi.getAdminContracts() : contractApi.getRenterContracts()), () => contractApi.getOwnerContracts()],
-    MOCK_ADMIN_CONTRACTS
-  );
+  return fromSingleApi(() => contractApi.getAdminContracts({ limit: 300 }), MOCK_ADMIN_CONTRACTS);
 }
 
 export async function getAdminPaymentsData() {
-  return fromMultipleApi(
-    [() => (paymentApi.getAdminPayments ? paymentApi.getAdminPayments() : paymentApi.getRenterPayments()), () => paymentApi.getOwnerPayments()],
-    MOCK_ADMIN_PAYMENTS
-  );
+  return fromSingleApi(() => paymentApi.getAdminPayments({ limit: 300 }), MOCK_ADMIN_PAYMENTS);
 }
 
 export async function getAdminDisputesData() {
-  return fromMultipleApi(
-    [() => (disputeApi.getAdminDisputes ? disputeApi.getAdminDisputes() : disputeApi.getPending()), () => disputeApi.getApproved()],
-    MOCK_ADMIN_DISPUTES
-  );
+  return fromSingleApi(() => disputeApi.getAdminDisputes({ limit: 300 }), MOCK_ADMIN_DISPUTES);
 }
 
 function monthLabel(dateValue) {
@@ -239,10 +227,7 @@ export async function getAdminDashboardData() {
     rentalsRes.fallback,
     contractsRes.fallback,
     paymentsRes.fallback,
-    disputesRes.fallback,
-    !dashboardApi.ok,
-    !revenueApi.length,
-    !topVehiclesApi.length
+    disputesRes.fallback
   ].some(Boolean);
 
   return {
