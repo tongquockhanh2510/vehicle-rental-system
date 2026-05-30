@@ -55,7 +55,7 @@ export default function CarDetailPage({
   const { id: routeId, vehicleId: routeVehicleId } = useParams();
   const vehicleId = routeId || routeVehicleId;
   const navigate = useNavigate();
-  const { userId, isAuthenticated } = useAuth();
+  const { userId, isAuthenticated, isOwnerApproved } = useAuth();
   const { pushToast } = useToast();
 
   const [vehicle, setVehicle] = useState(null);
@@ -126,7 +126,8 @@ export default function CarDetailPage({
       pushToast({
         tone: "warning",
         title: "Giới hạn chủ xe",
-        message: "Bạn không thể thuê phương tiện của chính mình.",
+        message:
+          "Đây là phương tiện của bạn. Bạn không thể gửi yêu cầu thuê chính phương tiện do mình đăng.",
       });
       return;
     }
@@ -354,14 +355,20 @@ export default function CarDetailPage({
 
           {isOwner ? (
             <div className="rounded-2xl border border-blue-400/30 bg-blue-500/10 p-4 text-sm text-blue-100">
-              Bạn là chủ xe này. Hãy vào cổng chủ xe để quản lý giá, lịch khả dụng
-              và yêu cầu thuê.
+              Đây là phương tiện của bạn. Bạn không thể gửi yêu cầu thuê chính
+              phương tiện do mình đăng.
               <button
                 type="button"
-                onClick={() => navigate(`/owner/vehicles/${vehicle._id}/edit`)}
+                onClick={() =>
+                  navigate(
+                    isOwnerApproved
+                      ? `/owner/vehicles/${vehicle._id}/edit`
+                      : "/app/owner-application-status"
+                  )
+                }
                 className="mt-3 block rounded-xl bg-blue-500 px-4 py-2 font-semibold text-white"
               >
-                Chỉnh sửa xe
+                Quản lý phương tiện
               </button>
             </div>
           ) : (

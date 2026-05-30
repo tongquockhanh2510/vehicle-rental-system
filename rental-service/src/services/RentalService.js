@@ -61,8 +61,8 @@ export class RentalService {
       throw makeError("Vehicle is not available", 400);
     }
 
-    if (vehicle.owner_id.toString() === renterId) {
-      throw makeError("Cannot rent your own vehicle", 400);
+    if (String(vehicle.owner_id) === String(renterId)) {
+      throw makeError("Bạn không thể thuê phương tiện do chính mình đăng.", 400);
     }
 
     const startDateValue =
