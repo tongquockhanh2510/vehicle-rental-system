@@ -30,6 +30,13 @@ export class ReviewRepository {
     return await Review.find({ vehicle_id: vehicleId });
   }
 
+  async findByRentalAndReviewer(rentalRequestId, reviewerId) {
+    return await Review.findOne({
+      rental_request_id: rentalRequestId,
+      reviewer_id: reviewerId
+    });
+  }
+
   async delete(id) {
     return await Review.findByIdAndDelete(id);
   }

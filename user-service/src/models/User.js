@@ -82,6 +82,32 @@ const user_schema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    blocked_at: {
+      type: Date,
+      default: null
+    },
+    blocked_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    block_reason: {
+      type: String,
+      default: ''
+    },
+    deleted_at: {
+      type: Date,
+      default: null
+    },
+    deleted_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    delete_reason: {
+      type: String,
+      default: ''
+    },
     created_at: {
       type: Date,
       default: Date.now

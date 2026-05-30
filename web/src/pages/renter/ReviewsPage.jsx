@@ -47,13 +47,23 @@ export default function ReviewsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [renterRes, reviewRes] = await Promise.allSettled([
+      const [renterRes, ownerRes, reviewRes] = await Promise.allSettled([
         contractApi.getRenterContracts(),
-        userId ? reviewApi.getByUser(userId) : Promise.resolve({ data: [] })
+        contractApi.getOwnerContracts(),
+        userId ? reviewApi.getByReviewer(userId) : Promise.resolve({ data: [] })
       ]);
 
       const renterContracts = renterRes.status === 'fulfilled' ? pickArray(renterRes.value.data) : [];
-      setContracts(renterContracts);
+      const ownerContracts = ownerRes.status === 'fulfilled' ? pickArray(ownerRes.value.data) : [];
+      const mergedContracts = [...renterContracts, ...ownerContracts].reduce((acc, item) => {
+        const key = String(item._id || '');
+        if (key && !acc.some((row) => String(row._id || '') === key)) {
+          acc.push(item);
+        }
+        return acc;
+      }, []);
+
+      setContracts(mergedContracts);
       setReviews(reviewRes.status === 'fulfilled' ? pickArray(reviewRes.value.data) : []);
     } finally {
       setLoading(false);

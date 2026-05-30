@@ -64,7 +64,17 @@ const rental_request_schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED'],
+      enum: [
+        'PENDING',
+        'APPROVED',
+        'CONFIRMED',
+        'REJECTED',
+        'CANCELLED',
+        'ACTIVE',
+        'RETURN_REQUESTED',
+        'COMPLETED',
+        'DISPUTED'
+      ],
       default: 'PENDING'
     },
     daily_rate: Number,
@@ -73,6 +83,10 @@ const rental_request_schema = new mongoose.Schema(
     deposit_amount: Number,
     platform_fee: Number,
     notes: String,
+    pickup_confirmed_at: Date,
+    return_requested_at: Date,
+    completed_at: Date,
+    dispute_reason: String,
     created_at: {
       type: Date,
       default: Date.now

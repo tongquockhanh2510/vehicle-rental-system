@@ -12,6 +12,10 @@ import mongoose from 'mongoose';
 const userRepository = new UserRepository();
 
 export class UserService {
+  isUserInactive(user) {
+    return Boolean(user?.deleted_at) || user?.is_active === false;
+  }
+
   normalizeOwnerStatus(value) {
     const status = String(value || '').toUpperCase();
     if (status === 'APPROVED') return 'APPROVED';
@@ -60,6 +64,9 @@ export class UserService {
     if (!user) {
       throw new Error('User not found');
     }
+    if (this.isUserInactive(user)) {
+      throw new Error('Tài khoản đã bị khóa hoặc không còn hoạt động.');
+    }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -98,12 +105,23 @@ export class UserService {
     if (!user) {
       throw new Error('User not found');
     }
+    if (this.isUserInactive(user)) {
+      throw new Error('Tài khoản đã bị khóa hoặc không còn hoạt động.');
+    }
     const safeUser = typeof user.toObject === 'function' ? user.toObject() : { ...user };
     delete safeUser.password;
     return safeUser;
   }
 
   async updateProfile(userId, updateData) {
+    const current = await userRepository.findById(userId);
+    if (!current) {
+      throw new Error('User not found');
+    }
+    if (this.isUserInactive(current)) {
+      throw new Error('Tài khoản đã bị khóa hoặc không còn hoạt động.');
+    }
+
     const allowedFields = [
       'first_name', 'last_name', 'phone', 'avatar', 'address',
       'bank_account', 'bank_name', 'id_number', 'license_number'
@@ -283,10 +301,13 @@ export class UserService {
     return users.map((user) => {
       const key = String(user._id || '');
       const application = ownerApplicationMap.get(key);
+      const isDeleted = Boolean(user.deleted_at);
+      const isBlocked = user.is_active === false && !isDeleted;
       return {
         ...user,
         role: this.normalizeUserRole(user.role),
         owner_status: this.normalizeOwnerStatus(user.owner_status),
+        account_status: isDeleted ? 'DELETED' : isBlocked ? 'BLOCKED' : 'ACTIVE',
         owned_vehicle_count: ownerVehicleMap.get(key) || 0,
         renter_request_count: renterRequestMap.get(key) || 0,
         owner_application: this.mapOwnerApplication(application)
@@ -349,6 +370,78 @@ export class UserService {
 
     const rows = await this.buildAdminUserRows([user]);
     return rows[0];
+  }
+
+  async blockUserByAdmin(adminId, userId, reason = '') {
+    const target = await User.findById(userId);
+    if (!target) {
+      throw new Error('User not found');
+    }
+    if (String(target._id) === String(adminId)) {
+      throw new Error('Admin không thể tự khóa chính mình.');
+    }
+    if (this.normalizeUserRole(target.role) === 'ADMIN') {
+      throw new Error('Không thể khóa tài khoản ADMIN khác.');
+    }
+
+    const updated = await userRepository.update(userId, {
+      is_active: false,
+      blocked_at: new Date(),
+      blocked_by: adminId,
+      block_reason: String(reason || '').trim() || 'Khóa bởi quản trị viên'
+    });
+
+    const payload = typeof updated?.toObject === 'function' ? updated.toObject() : { ...updated };
+    delete payload.password;
+    return payload;
+  }
+
+  async unblockUserByAdmin(adminId, userId) {
+    const target = await User.findById(userId);
+    if (!target) {
+      throw new Error('User not found');
+    }
+    if (Boolean(target.deleted_at)) {
+      throw new Error('Tài khoản đã bị xóa mềm, không thể mở khóa trực tiếp.');
+    }
+
+    const updated = await userRepository.update(userId, {
+      is_active: true,
+      blocked_at: null,
+      blocked_by: null,
+      block_reason: ''
+    });
+
+    const payload = typeof updated?.toObject === 'function' ? updated.toObject() : { ...updated };
+    delete payload.password;
+    return payload;
+  }
+
+  async softDeleteUserByAdmin(adminId, userId, reason = '') {
+    const target = await User.findById(userId);
+    if (!target) {
+      throw new Error('User not found');
+    }
+    if (String(target._id) === String(adminId)) {
+      throw new Error('Admin không thể tự xóa chính mình.');
+    }
+    if (this.normalizeUserRole(target.role) === 'ADMIN') {
+      throw new Error('Không thể xóa mềm tài khoản ADMIN khác.');
+    }
+
+    const updated = await userRepository.update(userId, {
+      is_active: false,
+      deleted_at: new Date(),
+      deleted_by: adminId,
+      delete_reason: String(reason || '').trim() || 'Xóa mềm bởi quản trị viên',
+      blocked_at: new Date(),
+      blocked_by: adminId,
+      block_reason: String(reason || '').trim() || 'Xóa mềm bởi quản trị viên'
+    });
+
+    const payload = typeof updated?.toObject === 'function' ? updated.toObject() : { ...updated };
+    delete payload.password;
+    return payload;
   }
 }
 
