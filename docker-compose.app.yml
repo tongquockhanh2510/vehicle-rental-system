@@ -146,6 +146,8 @@ services:
     working_dir: /app
     command: sh -c "npm install --no-audit --no-fund && npm run start"
     restart: unless-stopped
+    ports:
+      - "3007:3007"
     volumes:
       - ./image-service:/app
       - image_service_node_modules:/app/node_modules
