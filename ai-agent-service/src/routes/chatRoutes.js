@@ -1,4 +1,5 @@
 import express from 'express';
+import axios from 'axios';
 import { extractIntent } from '../utils/intentExtractor.js';
 import {
   searchVehicles,
@@ -7,6 +8,80 @@ import {
 } from '../services/vehicleSearchClient.js';
 
 const router = express.Router();
+
+/**
+ * Generate a friendly and context-aware chat response in Vietnamese.
+ * Utilizes Google Gemini API if available, otherwise falls back to static templates.
+ */
+async function generateFriendlyResponse(userMessage, slots, vehicles = null, alternatives = null) {
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (geminiApiKey) {
+    try {
+      let prompt = `You are a helpful, friendly, and professional AI Rental Assistant for the P2P vehicle rental system "RentCar Premium".
+Your task is to write a warm, engaging, and conversational reply in Vietnamese in response to the user's message: "${userMessage}".
+
+Intent detected: ${slots.intent}
+Parsed Slots: ${JSON.stringify(slots)}
+`;
+
+      if (vehicles && vehicles.length > 0) {
+        const vehicleDetails = vehicles.map((v, i) => `#${i+1}: ${v.brand} ${v.model} (${v.year}) - Giá: ${v.daily_rate?.toLocaleString('vi-VN')} VND/ngày, Địa điểm: ${v.location}, Xếp hạng: ${v.rating || v.average_rating || 5}*`).join('\n');
+        prompt += `\nI found the following available vehicles matching their criteria:\n${vehicleDetails}\n\nIntroduce these vehicles to the user, highlight their features briefly, and encourage them to click "Đặt xe ngay" (Confirm booking) on the vehicle cards below. Keep it concise, friendly, and polite.`;
+      } else if (alternatives && alternatives.length > 0) {
+        const altDetails = alternatives.map((v, i) => `#${i+1}: ${v.brand} ${v.model} (${v.year}) - Giá: ${v.daily_rate?.toLocaleString('vi-VN')} VND/ngày, Địa điểm: ${v.location}`).join('\n');
+        prompt += `\nI could NOT find exactly what they wanted, but here are some alternatives:\n${altDetails}\n\nApologize politely in Vietnamese, and present these alternative vehicles to see if they might like them instead.`;
+      } else if (!slots.vehicleType && !slots.location) {
+        prompt += `\nThe user's request is too vague. Politely ask them in Vietnamese to clarify what kind of vehicle they want to rent (e.g., 4-seat car, 7-seater, motorcycle) and their desired location/area.`;
+      } else {
+        prompt += `\nNo vehicles were found, and no alternatives are available. Politely apologize in Vietnamese and suggest they modify their search criteria (like choosing another date or city).`;
+      }
+
+      prompt += `\n\nRule: Write ONLY the response text in natural Vietnamese. Do not add any prefix like "Assistant:" or markdown block quotes.`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{ text: prompt }]
+          }]
+        },
+        { timeout: 7000 }
+      );
+
+      const responseText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (responseText) {
+        return responseText.trim();
+      }
+    } catch (err) {
+      console.warn('[ai-agent] Gemini friendly response generation failed, falling back to static templates:', err.message);
+    }
+  }
+
+  // Fallback to static Vietnamese responses:
+  if (slots.intent === 'UNKNOWN') {
+    return "Xin lỗi, tôi chưa hiểu rõ yêu cầu của bạn. Bạn vui lòng mô tả chi tiết loại xe bạn cần tìm (xe máy, xe 4 chỗ, 7 chỗ...), địa điểm và thời gian nhận xe nhé!";
+  }
+
+  if (!slots.vehicleType && !slots.location) {
+    return "Tôi có thể giúp bạn tìm xe rất nhanh! Bạn vui lòng cung cấp thêm loại xe mong muốn (xe máy, ô tô...) và khu vực bạn cần thuê nhé.";
+  }
+
+  if (vehicles && vehicles.length > 0) {
+    const typeLabel = slots.vehicleType === 'CAR' ? 'ô tô 4 chỗ' :
+                      slots.vehicleType === 'SEVEN_SEATER' ? 'ô tô 7 chỗ' :
+                      slots.vehicleType === 'MOTORCYCLE' ? 'xe máy' :
+                      slots.vehicleType === 'PICKUP_TRUCK' ? 'xe bán tải' : 'phương tiện';
+    const locLabel = slots.location || 'khu vực của bạn';
+    return `Tuyệt vời! Tôi đã tìm thấy ${vehicles.length} chiếc ${typeLabel} phù hợp tại ${locLabel} dành cho bạn. Bạn có thể nhấn nút "Đặt xe ngay" dưới các thẻ xe phía dưới nhé!`;
+  }
+
+  if (alternatives && alternatives.length > 0) {
+    const locLabel = slots.location || 'khu vực này';
+    return `Rất tiếc, hiện tại tôi chưa tìm thấy xe chính xác theo yêu cầu của bạn tại ${locLabel}. Dù vậy, tôi có một số gợi ý thay thế rất tốt sau đây mà bạn có thể cân nhắc:`;
+  }
+
+  return `Rất tiếc, tôi chưa tìm thấy xe nào phù hợp với yêu cầu của bạn tại khu vực này. Bạn vui lòng thử thay đổi thời gian hoặc địa điểm tìm kiếm nhé!`;
+}
 
 /**
  * POST /api/ai-agent/chat
@@ -28,8 +103,9 @@ router.post('/chat', async (req, res) => {
     const slots = await extractIntent(message);
 
     if (slots.intent === 'UNKNOWN') {
+      const responseMessage = await generateFriendlyResponse(message, slots, null, null);
       return res.json({
-        message: "I'm sorry, I didn't understand your request. Could you please describe what type of vehicle you're looking for, where, and when?",
+        message: responseMessage,
         intent: 'UNKNOWN',
         slots,
         vehicles: [],
@@ -39,13 +115,14 @@ router.post('/chat', async (req, res) => {
 
     // Step 2: Validate essential slots for search
     if (!slots.vehicleType && !slots.location) {
+      const responseMessage = await generateFriendlyResponse(message, slots, null, null);
       return res.json({
-        message: 'Could you provide more details? Please mention the vehicle type (e.g., 7-seat car, motorcycle) and your desired location.',
+        message: responseMessage,
         intent: slots.intent,
         slots,
         vehicles: [],
         actions: [
-          { type: 'CLARIFY', label: 'Provide more details' },
+          { type: 'CLARIFY', label: 'Cung cấp thêm chi tiết' },
         ],
       });
     }
@@ -56,15 +133,7 @@ router.post('/chat', async (req, res) => {
     // Step 4: Rank results
     if (allVehicles.length > 0) {
       const topVehicles = rankVehicles(allVehicles, slots);
-
-      const typeLabel = slots.vehicleType
-        ? slots.vehicleType.replace('_', '-').toLowerCase()
-        : 'vehicle';
-      const locationLabel = slots.location || 'your area';
-
-      const responseMessage = topVehicles.length === 1
-        ? `I found 1 suitable ${typeLabel} in ${locationLabel} for you.`
-        : `I found ${topVehicles.length} suitable ${typeLabel}s in ${locationLabel} for you.`;
+      const responseMessage = await generateFriendlyResponse(message, slots, topVehicles, null);
 
       return res.json({
         message: responseMessage,
@@ -73,7 +142,7 @@ router.post('/chat', async (req, res) => {
         vehicles: topVehicles,
         actions: topVehicles.map((v) => ({
           type: 'BOOK_NOW',
-          label: 'Confirm booking',
+          label: 'Đặt xe ngay',
           vehicleId: v.id,
           bookingUrl: v.bookingUrl,
         })),
@@ -82,17 +151,17 @@ router.post('/chat', async (req, res) => {
 
     // Step 5: No vehicles found - suggest alternatives
     const alternatives = generateAlternatives(slots);
-    const locationLabel = slots.location || 'this area';
+    const responseMessage = await generateFriendlyResponse(message, slots, null, alternatives);
 
     return res.json({
-      message: `Sorry, I couldn't find any available vehicles matching your criteria in ${locationLabel}. Here are some alternatives:`,
+      message: responseMessage,
       intent: slots.intent,
       slots,
       vehicles: [],
       alternatives,
       actions: [
-        { type: 'MODIFY_SEARCH', label: 'Modify search criteria' },
-        { type: 'BROWSE_ALL', label: 'Browse all available vehicles', url: '/vehicles' },
+        { type: 'MODIFY_SEARCH', label: 'Thay đổi bộ lọc' },
+        { type: 'BROWSE_ALL', label: 'Xem tất cả xe sẵn có', url: '/vehicles' },
       ],
     });
   } catch (error) {

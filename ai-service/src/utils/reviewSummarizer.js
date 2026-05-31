@@ -87,9 +87,9 @@ export async function summarizeReviews(vehicleId, reviews) {
         pros: [],
         cons: [],
         commonComplaints: [],
-        ownerBehavior: 'No reviews yet.',
-        vehicleCondition: 'No reviews yet.',
-        recommendation: 'This vehicle has no reviews yet. Proceed with caution.',
+        ownerBehavior: 'Chưa có đánh giá nào.',
+        vehicleCondition: 'Chưa có đánh giá nào.',
+        recommendation: 'Phương tiện này chưa có đánh giá nào. Hãy cân nhắc kỹ trước khi thuê.',
       },
       averageRating: null,
       reviewCount: 0,
@@ -176,17 +176,17 @@ Strict follow these rules:
     }
   }
 
-  if (proAspectCount.owner >= 2) pros.push('Owner is friendly and professional.');
-  if (proAspectCount.condition >= 2) pros.push('Vehicle is in good condition.');
-  if (proAspectCount.cleanliness >= 2) pros.push('Vehicle is clean.');
-  if (proAspectCount.punctuality >= 2) pros.push('Owner delivers the vehicle on time.');
-  if (proAspectCount.ac >= 1) pros.push('Air conditioning works well.');
+  if (proAspectCount.owner >= 2) pros.push('Chủ xe thân thiện và chuyên nghiệp.');
+  if (proAspectCount.condition >= 2) pros.push('Phương tiện ở trong tình trạng tốt.');
+  if (proAspectCount.cleanliness >= 2) pros.push('Phương tiện sạch sẽ.');
+  if (proAspectCount.punctuality >= 2) pros.push('Chủ xe bàn giao xe đúng giờ.');
+  if (proAspectCount.ac >= 1) pros.push('Hệ thống máy lạnh hoạt động tốt.');
 
-  if (averageRating >= 4.5) pros.push('Highly rated by most renters.');
-  else if (averageRating >= 4.0) pros.push('Consistently good ratings.');
+  if (averageRating >= 4.5) pros.push('Được hầu hết người thuê đánh giá rất cao.');
+  else if (averageRating >= 4.0) pros.push('Điểm đánh giá tốt và ổn định.');
 
   if (pros.length === 0 && posReviews.length > 0) {
-    pros.push('Generally positive feedback from renters.');
+    pros.push('Nhận được nhiều phản hồi tích cực từ khách thuê.');
   }
 
   // Build cons
@@ -199,10 +199,10 @@ Strict follow these rules:
     }
   }
 
-  if (conAspectCount.ac >= 2) cons.push('Air conditioning may not cool the cabin effectively.');
-  if (conAspectCount.cleanliness >= 2) cons.push('Some renters noted cleanliness issues.');
-  if (conAspectCount.punctuality >= 2) cons.push('Owner has had some delays in delivery.');
-  if (conAspectCount.condition >= 2) cons.push('Vehicle condition may need attention.');
+  if (conAspectCount.ac >= 2) cons.push('Hệ thống điều hòa/máy lạnh có thể hoạt động chưa hiệu quả.');
+  if (conAspectCount.cleanliness >= 2) cons.push('Một số người thuê lưu ý về vệ sinh xe chưa tốt.');
+  if (conAspectCount.punctuality >= 2) cons.push('Chủ xe đôi khi bàn giao xe trễ hẹn.');
+  if (conAspectCount.condition >= 2) cons.push('Tình trạng xe có thể cần được bảo dưỡng thêm.');
 
   // Common complaints
   const commonComplaints = [];
@@ -222,30 +222,30 @@ Strict follow these rules:
 
   for (const [kw] of sortedComplaints) {
     if (allKeywordHits[kw] >= 2) {
-      commonComplaints.push(`Recurring mention: "${kw}"`);
+      commonComplaints.push(`Nhắc đến nhiều lần: "${kw}"`);
     }
   }
 
   // Owner behavior summary
-  let ownerBehavior = 'Owner behavior is satisfactory based on reviews.';
-  if (proAspectCount.owner >= 3) ownerBehavior = 'Owner is very responsive, friendly and professional.';
-  else if (conAspectCount.punctuality >= 2) ownerBehavior = 'Owner has had some delays. Plan accordingly.';
+  let ownerBehavior = 'Thái độ của chủ xe được đánh giá tốt.';
+  if (proAspectCount.owner >= 3) ownerBehavior = 'Chủ xe rất nhiệt tình, thân thiện và chuyên nghiệp.';
+  else if (conAspectCount.punctuality >= 2) ownerBehavior = 'Chủ xe đôi khi bị trễ giờ. Bạn hãy chủ động liên hệ trước.';
 
   // Vehicle condition summary
-  let vehicleCondition = 'Vehicle is in acceptable condition.';
-  if (proAspectCount.condition >= 3) vehicleCondition = 'Vehicle is in excellent condition, well-maintained.';
-  else if (conAspectCount.condition >= 2) vehicleCondition = 'Some renters reported condition issues.';
+  let vehicleCondition = 'Phương tiện ở trong tình trạng chấp nhận được.';
+  if (proAspectCount.condition >= 3) vehicleCondition = 'Phương tiện ở trong tình trạng tuyệt vời, được bảo dưỡng tốt.';
+  else if (conAspectCount.condition >= 2) vehicleCondition = 'Một số người thuê ghi nhận xe có lỗi nhỏ.';
 
   // Recommendation
   let recommendation;
   if (averageRating >= 4.5 && negReviews.length === 0) {
-    recommendation = 'Highly recommended. Excellent reviews and no significant complaints.';
+    recommendation = 'Rất khuyên dùng. Đánh giá xuất sắc và không có phàn nàn nào đáng kể.';
   } else if (averageRating >= 4.0) {
-    recommendation = 'Good choice overall. Minor issues reported but generally positive experience.';
+    recommendation = 'Lựa chọn tốt. Có một số phản hồi nhỏ nhưng trải nghiệm chung rất tốt.';
   } else if (averageRating >= 3.0) {
-    recommendation = 'Average option. Check specific cons before booking.';
+    recommendation = 'Lựa chọn trung bình. Hãy kiểm tra kỹ các nhược điểm trước khi đặt.';
   } else {
-    recommendation = 'Consider alternatives. Several negative reviews reported.';
+    recommendation = 'Nên cân nhắc lựa chọn khác. Có nhiều đánh giá tiêu cực.';
   }
 
   return {
