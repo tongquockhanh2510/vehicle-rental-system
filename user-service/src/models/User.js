@@ -45,6 +45,37 @@ const user_schema = new mongoose.Schema(
     bank_name: {
       type: String
     },
+    payout_info: {
+      method: {
+        type: String,
+        enum: ['BANK', 'VISA', 'MOMO', 'CASH'],
+        default: 'BANK'
+      },
+      bank_name: {
+        type: String,
+        default: ''
+      },
+      bank_account_number: {
+        type: String,
+        default: ''
+      },
+      bank_account_holder: {
+        type: String,
+        default: ''
+      },
+      card_brand: {
+        type: String,
+        default: ''
+      },
+      card_last4: {
+        type: String,
+        default: ''
+      },
+      payout_note: {
+        type: String,
+        default: ''
+      }
+    },
     owner_status: {
       type: String,
       enum: ['NONE', 'PENDING', 'APPROVED', 'REJECTED'],

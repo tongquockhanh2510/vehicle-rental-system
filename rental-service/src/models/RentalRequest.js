@@ -34,6 +34,46 @@ const rental_request_schema = new mongoose.Schema(
       required: true
     },
     images: [String],
+    vehicle_snapshot: {
+      brand: String,
+      model: String,
+      license_plate: String,
+      vehicle_type: String,
+      fuel_type: String,
+      transmission: String,
+      seats: Number,
+      year: Number,
+      image: String,
+      pickup_location: String,
+      return_location: String
+    },
+    owner_snapshot: {
+      name: String,
+      email: String,
+      phone: String,
+      payout_info: {
+        method: String,
+        bank_name: String,
+        bank_account_holder: String,
+        masked_account_number: String,
+        card_brand: String,
+        card_last4: String,
+        payout_note: String
+      }
+    },
+    renter_snapshot: {
+      name: String,
+      email: String,
+      phone: String
+    },
+    pricing_snapshot: {
+      daily_rate: Number,
+      deposit_amount: Number,
+      rental_days: Number,
+      rental_amount: Number,
+      platform_fee: Number,
+      total_amount: Number
+    },
     rental_start_date: {
       type: Date,
       required: true

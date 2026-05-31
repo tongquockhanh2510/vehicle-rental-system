@@ -1,26 +1,33 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarRange, ClipboardList, MapPin, Wallet } from 'lucide-react';
 import { rentalApi } from '../../api';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import RentalBillModal from '../../components/common/RentalBillModal';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useToast } from '../../context/ToastContext';
-import { compactId, formatCurrency, formatDate, pickArray } from '../../utils/formatters';
+import {
+  compactId,
+  formatCurrency,
+  formatDate,
+  pickArray
+} from '../../utils/formatters';
 import { getFallbackCarImage, getVehicleMainImage } from '../../utils/image';
+import {
+  filterRentalsByTab,
+  getRentalBillPayload,
+  normalizeRentalStatus,
+  RENTER_REQUEST_TABS
+} from '../../utils/rentalBill';
 
-const CANCEL_ALLOWED_STATUSES = ['PENDING', 'APPROVED', 'CONFIRMED'];
-
-function normalizeRequestStatus(status) {
-  const raw = String(status || '').toUpperCase();
-  if (raw === 'CONFIRMED') return 'APPROVED';
-  return raw || 'PENDING';
-}
+const CANCEL_ALLOWED_STATUSES = ['PENDING', 'APPROVED'];
 
 function getVehicleTitle(rental) {
-  const brand = rental?.brand || rental?.vehicle?.brand;
-  const model = rental?.model || rental?.vehicle?.model;
+  const bill = getRentalBillPayload(rental);
+  const brand = bill?.vehicle?.brand;
+  const model = bill?.vehicle?.model;
   if (brand || model) {
     return `${brand || ''} ${model || ''}`.trim();
   }
@@ -29,9 +36,14 @@ function getVehicleTitle(rental) {
 
 export default function RentalRequestsPage() {
   const { pushToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = String(searchParams.get('tab') || 'all').toLowerCase();
+
   const [mine, setMine] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState('');
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [selectedBillRental, setSelectedBillRental] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -49,7 +61,26 @@ export default function RentalRequestsPage() {
     loadData();
   }, []);
 
-  const rows = useMemo(() => mine, [mine]);
+  useEffect(() => {
+    const fromQuery = String(searchParams.get('tab') || 'all').toLowerCase();
+    if (fromQuery !== activeTab) {
+      setActiveTab(fromQuery);
+    }
+  }, [searchParams, activeTab]);
+
+  const filteredRows = useMemo(
+    () => filterRentalsByTab(mine, activeTab),
+    [mine, activeTab]
+  );
+
+  const setTab = (tabKey) => {
+    setActiveTab(tabKey);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tabKey);
+      return next;
+    });
+  };
 
   const runAction = async (rentalId, actionFn, successMessage, errorFallback) => {
     setActionLoadingId(rentalId);
@@ -61,7 +92,10 @@ export default function RentalRequestsPage() {
       pushToast({
         tone: 'error',
         title: 'Thao tác thất bại',
-        message: error?.response?.data?.error || error?.response?.data?.message || errorFallback
+        message:
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          errorFallback
       });
     } finally {
       setActionLoadingId('');
@@ -71,13 +105,30 @@ export default function RentalRequestsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Yêu cầu thuê của tôi"
-        subtitle="Theo dõi trạng thái thuê xe theo thời gian thực: duyệt yêu cầu, nhận xe, trả xe và hoàn tất chuyến đi."
+        title="Theo dõi yêu cầu thuê"
+        subtitle="Bạn có thể xem đầy đủ trạng thái thuê xe: chờ duyệt, đã duyệt, đang thuê, chờ xác nhận trả và hoàn tất."
       />
+
+      <div className="flex flex-wrap gap-2">
+        {RENTER_REQUEST_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setTab(tab.key)}
+            className={`rounded-xl px-3 py-1.5 text-xs transition ${
+              activeTab === tab.key
+                ? 'bg-cyan-500 text-slate-950 font-semibold'
+                : 'border border-white/10 bg-slate-900/55 text-slate-200 hover:bg-white/10'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <LoadingSkeleton rows={4} />
-      ) : rows.length === 0 ? (
+      ) : filteredRows.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title="Bạn chưa có yêu cầu thuê nào"
@@ -93,14 +144,15 @@ export default function RentalRequestsPage() {
         />
       ) : (
         <div className="space-y-3">
-          {rows.map((rental) => {
-            const normalizedStatus = normalizeRequestStatus(rental.status);
+          {filteredRows.map((rental) => {
+            const normalizedStatus = normalizeRentalStatus(rental.status);
             const canCancel = CANCEL_ALLOWED_STATUSES.includes(normalizedStatus);
             const isActionLoading = actionLoadingId === String(rental._id || '');
             const mainImage =
               getVehicleMainImage(rental) ||
-              getVehicleMainImage(rental?.vehicle) ||
+              getVehicleMainImage(rental?.vehicle_snapshot) ||
               getFallbackCarImage();
+            const bill = getRentalBillPayload(rental);
 
             return (
               <article
@@ -120,7 +172,8 @@ export default function RentalRequestsPage() {
                     <div>
                       <p className="text-sm font-semibold text-white">{getVehicleTitle(rental)}</p>
                       <p className="text-xs text-slate-400">
-                        Mã yêu cầu #{compactId(rental._id)} • Biển số: {rental.license_plate || 'Chưa cập nhật'}
+                        Mã yêu cầu #{compactId(rental._id)} • Biển số:{' '}
+                        {bill?.vehicle?.license_plate || 'Chưa cập nhật'}
                       </p>
 
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-300">
@@ -130,11 +183,11 @@ export default function RentalRequestsPage() {
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1">
                           <MapPin className="h-3.5 w-3.5 text-cyan-300" />
-                          Nhận: {rental.pickup_location || 'Chưa xác định điểm nhận'}
+                          Nhận: {bill?.vehicle?.pickup_location || 'Chưa xác định'}
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1">
                           <Wallet className="h-3.5 w-3.5 text-cyan-300" />
-                          Tạm tính: {formatCurrency(rental.total_amount || 0)}
+                          Tổng: {formatCurrency(bill?.pricing?.total_amount || 0)}
                         </span>
                       </div>
                     </div>
@@ -142,17 +195,20 @@ export default function RentalRequestsPage() {
 
                   <div className="space-y-2 text-right">
                     <StatusBadge status={normalizedStatus} />
-                    <p className="text-xs text-slate-400">Trả xe: {rental.return_location || 'Chưa xác định'}</p>
+                    <p className="text-xs text-slate-400">
+                      Trả xe: {bill?.vehicle?.return_location || 'Chưa xác định'}
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  <Link
-                    to="/app/contracts"
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBillRental(rental)}
                     className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
                   >
-                    Xem hợp đồng
-                  </Link>
+                    Xem bill
+                  </button>
 
                   {normalizedStatus === 'APPROVED' ? (
                     <button
@@ -237,6 +293,14 @@ export default function RentalRequestsPage() {
           })}
         </div>
       )}
+
+      <RentalBillModal
+        open={Boolean(selectedBillRental)}
+        onClose={() => setSelectedBillRental(null)}
+        title={`Bill yêu cầu #${compactId(selectedBillRental?._id)}`}
+        bill={selectedBillRental ? getRentalBillPayload(selectedBillRental) : null}
+      />
     </div>
   );
 }
+

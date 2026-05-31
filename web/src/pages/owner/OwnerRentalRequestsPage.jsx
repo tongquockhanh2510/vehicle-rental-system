@@ -1,25 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { ClipboardList } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { rentalApi } from '../../api';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import RentalBillModal from '../../components/common/RentalBillModal';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useToast } from '../../context/ToastContext';
-import { compactId, formatDate, pickArray } from '../../utils/formatters';
-
-function normalizeRequestStatus(status) {
-  const raw = String(status || '').toUpperCase();
-  if (raw === 'CONFIRMED') return 'APPROVED';
-  return raw || 'PENDING';
-}
+import { compactId, formatCurrency, formatDate, pickArray } from '../../utils/formatters';
+import { getRentalBillPayload, normalizeRentalStatus } from '../../utils/rentalBill';
 
 export default function OwnerRentalRequestsPage() {
   const { pushToast } = useToast();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState('');
+  const [selectedBillRental, setSelectedBillRental] = useState(null);
 
   const loadRows = async () => {
     setLoading(true);
@@ -47,7 +44,10 @@ export default function OwnerRentalRequestsPage() {
       pushToast({
         tone: 'error',
         title: 'Thao tác thất bại',
-        message: error?.response?.data?.error || error?.response?.data?.message || errorFallback
+        message:
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          errorFallback
       });
     } finally {
       setActionLoadingId('');
@@ -58,7 +58,7 @@ export default function OwnerRentalRequestsPage() {
     <div className="space-y-6">
       <SectionHeader
         title="Yêu cầu thuê nhận được"
-        subtitle="Duyệt yêu cầu từ người thuê, xác nhận trả xe để hoàn tất chuyến và mở lại trạng thái sẵn sàng cho phương tiện."
+        subtitle="Xem bill từ người thuê, duyệt yêu cầu và xác nhận trả xe để hoàn tất chuyến."
       />
 
       {loading ? (
@@ -72,27 +72,48 @@ export default function OwnerRentalRequestsPage() {
       ) : (
         <div className="space-y-3">
           {rows.map((rental) => {
-            const normalizedStatus = normalizeRequestStatus(rental.status);
+            const normalizedStatus = normalizeRentalStatus(rental.status);
             const isActionLoading = actionLoadingId === String(rental._id || '');
+            const bill = getRentalBillPayload(rental);
+
             return (
-              <article key={rental._id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+              <article
+                key={rental._id}
+                className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-white">Yêu cầu #{compactId(rental._id)}</p>
+                    <p className="text-sm font-semibold text-white">
+                      Yêu cầu #{compactId(rental._id)}
+                    </p>
                     <p className="text-xs text-slate-300">
-                      Xe: {rental.brand || 'Xe'} {rental.model || ''} • Biển số: {rental.license_plate || 'Chưa cập nhật'}
+                      Xe: {bill?.vehicle?.brand || 'Xe'} {bill?.vehicle?.model || ''} • Biển số:{' '}
+                      {bill?.vehicle?.license_plate || 'Chưa cập nhật'}
                     </p>
                     <p className="text-xs text-slate-400">
-                      Người thuê: #{compactId(rental.renter_id)} • {formatDate(rental.rental_start_date)} - {formatDate(rental.rental_end_date)}
+                      Người thuê: {bill?.renter?.name || `#${compactId(rental.renter_id)}`} •{' '}
+                      {formatDate(rental.rental_start_date)} - {formatDate(rental.rental_end_date)}
                     </p>
                     <p className="mt-1 text-xs text-slate-400">
-                      Nhận xe: {rental.pickup_location || 'Chưa cập nhật'} • Trả xe: {rental.return_location || 'Chưa cập nhật'}
+                      Nhận: {bill?.vehicle?.pickup_location || 'Chưa cập nhật'} • Trả:{' '}
+                      {bill?.vehicle?.return_location || 'Chưa cập nhật'}
+                    </p>
+                    <p className="mt-1 text-xs text-cyan-200">
+                      Tổng tạm tính: {formatCurrency(bill?.pricing?.total_amount || 0)}
                     </p>
                   </div>
                   <StatusBadge status={normalizedStatus} />
                 </div>
 
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBillRental(rental)}
+                    className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+                  >
+                    Xem bill
+                  </button>
+
                   {normalizedStatus === 'PENDING' ? (
                     <>
                       <button
@@ -117,7 +138,7 @@ export default function OwnerRentalRequestsPage() {
                           runAction(
                             rental._id,
                             () => rentalApi.approve(rental._id),
-                            'Đã duyệt yêu cầu thuê. Xe đã chuyển sang trạng thái đang cho thuê.',
+                            'Đã duyệt yêu cầu thuê.',
                             'Không thể duyệt yêu cầu này.'
                           )
                         }
@@ -136,7 +157,11 @@ export default function OwnerRentalRequestsPage() {
                         onClick={() =>
                           runAction(
                             rental._id,
-                            () => rentalApi.dispute(rental._id, 'Chủ xe yêu cầu xử lý tranh chấp sau khi nhận xe'),
+                            () =>
+                              rentalApi.dispute(
+                                rental._id,
+                                'Chủ xe yêu cầu xử lý tranh chấp sau khi nhận xe'
+                              ),
                             'Đã tạo tranh chấp cho chuyến thuê này.',
                             'Không thể tạo tranh chấp.'
                           )
@@ -152,7 +177,7 @@ export default function OwnerRentalRequestsPage() {
                           runAction(
                             rental._id,
                             () => rentalApi.confirmReturn(rental._id),
-                            'Đã hoàn tất thuê xe. Phương tiện sẵn sàng cho lượt thuê tiếp theo.',
+                            'Đã hoàn tất thuê xe. Phương tiện trở lại trạng thái sẵn sàng.',
                             'Không thể xác nhận nhận lại xe.'
                           )
                         }
@@ -182,6 +207,15 @@ export default function OwnerRentalRequestsPage() {
           })}
         </div>
       )}
+
+      <RentalBillModal
+        open={Boolean(selectedBillRental)}
+        onClose={() => setSelectedBillRental(null)}
+        title={`Bill yêu cầu #${compactId(selectedBillRental?._id)}`}
+        bill={selectedBillRental ? getRentalBillPayload(selectedBillRental) : null}
+        showRenter
+      />
     </div>
   );
 }
+

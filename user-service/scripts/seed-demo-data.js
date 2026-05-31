@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+﻿import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -80,53 +80,65 @@ const OWNER_PROFILE_MAP = {
     legal_name: 'Owner Car',
     phone: '0900000001',
     email: 'owner.car@test.com',
-    address: 'Quận 1, TP.HCM',
+    address: 'Quáº­n 1, TP.HCM',
     id_number: '079000000001',
     id_card_front_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Truoc+Owner+Car',
     id_card_back_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Sau+Owner+Car',
     bank_name: 'Vietcombank',
-    bank_account_number: '1000000001',
+    bank_account_number: '9704****1001',
     bank_account_holder: 'OWNER CAR',
-    bank_branch: 'TP.HCM'
+    bank_branch: 'TP.HCM',
+    card_brand: 'Visa',
+    card_last4: '1001',
+    payout_method: 'BANK'
   },
   ownerMotor: {
     legal_name: 'Owner Motorbike',
     phone: '0900000002',
     email: 'owner.motor@test.com',
-    address: 'Quận 3, TP.HCM',
+    address: 'Quáº­n 3, TP.HCM',
     id_number: '079000000002',
     id_card_front_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Truoc+Owner+Motor',
     id_card_back_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Sau+Owner+Motor',
-    bank_name: 'BIDV',
-    bank_account_number: '1000000002',
-    bank_account_holder: 'OWNER MOTOR',
-    bank_branch: 'TP.HCM'
+    bank_name: 'Techcombank',
+    bank_account_number: '9704****2002',
+    bank_account_holder: 'OWNER MOTORBIKE',
+    bank_branch: 'TP.HCM',
+    card_brand: 'Visa',
+    card_last4: '2002',
+    payout_method: 'BANK'
   },
   ownerBicycle: {
     legal_name: 'Owner Bicycle',
     phone: '0900000003',
     email: 'owner.bicycle@test.com',
-    address: 'Cầu Giấy, Hà Nội',
+    address: 'Cáº§u Giáº¥y, HÃ  Ná»™i',
     id_number: '079000000003',
     id_card_front_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Truoc+Owner+Bicycle',
     id_card_back_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Sau+Owner+Bicycle',
-    bank_name: 'Techcombank',
-    bank_account_number: '1000000003',
+    bank_name: 'MB Bank',
+    bank_account_number: '9704****3003',
     bank_account_holder: 'OWNER BICYCLE',
-    bank_branch: 'Hà Nội'
+    bank_branch: 'HÃ  Ná»™i',
+    card_brand: 'Visa',
+    card_last4: '3003',
+    payout_method: 'BANK'
   },
   ownerPickup: {
     legal_name: 'Owner Pickup',
     phone: '0900000004',
     email: 'owner.pickup@test.com',
-    address: 'Quận 7, TP.HCM',
+    address: 'Quáº­n 7, TP.HCM',
     id_number: '079000000004',
     id_card_front_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Truoc+Owner+Pickup',
     id_card_back_url: 'https://placehold.co/900x560/png?text=CCCD+Mat+Sau+Owner+Pickup',
     bank_name: 'ACB',
-    bank_account_number: '1000000004',
+    bank_account_number: '9704****4004',
     bank_account_holder: 'OWNER PICKUP',
-    bank_branch: 'TP.HCM'
+    bank_branch: 'TP.HCM',
+    card_brand: 'Visa',
+    card_last4: '4004',
+    payout_method: 'BANK'
   }
 };
 
@@ -146,6 +158,26 @@ async function upsertDemoUsers(usersCollection, passwordHash) {
         owner_status: item.owner_status,
         owner_application_id: null,
         rejection_reason: '',
+        payout_info:
+          item.owner_status === 'APPROVED'
+            ? {
+                method: OWNER_PROFILE_MAP[item.key]?.payout_method || 'BANK',
+                bank_name: OWNER_PROFILE_MAP[item.key]?.bank_name || '',
+                bank_account_number: OWNER_PROFILE_MAP[item.key]?.bank_account_number || '',
+                bank_account_holder: OWNER_PROFILE_MAP[item.key]?.bank_account_holder || '',
+                card_brand: OWNER_PROFILE_MAP[item.key]?.card_brand || '',
+                card_last4: OWNER_PROFILE_MAP[item.key]?.card_last4 || '',
+                payout_note: 'Seed demo owner payout info'
+              }
+            : {
+                method: 'BANK',
+                bank_name: '',
+                bank_account_number: '',
+                bank_account_holder: '',
+                card_brand: '',
+                card_last4: '',
+                payout_note: ''
+              },
         is_active: true,
         updated_at: now,
         password: passwordHash
@@ -181,7 +213,7 @@ async function upsertOwnerApplications(ownerApplicationsCollection, usersCollect
         phone: profile.phone,
         owner_profile: profile,
         status: 'APPROVED',
-        review_note: 'Hồ sơ hợp lệ',
+        review_note: 'Há»“ sÆ¡ há»£p lá»‡',
         rejection_reason: '',
         submitted_at: now,
         reviewed_at: now,
@@ -203,6 +235,15 @@ async function upsertOwnerApplications(ownerApplicationsCollection, usersCollect
           owner_status: 'APPROVED',
           owner_application_id: application?._id || null,
           rejection_reason: '',
+          payout_info: {
+            method: profile.payout_method || 'BANK',
+            bank_name: profile.bank_name || '',
+            bank_account_number: profile.bank_account_number || '',
+            bank_account_holder: profile.bank_account_holder || '',
+            card_brand: profile.card_brand || '',
+            card_last4: profile.card_last4 || '',
+            payout_note: 'Seed demo owner payout info'
+          },
           updated_at: now
         }
       }
@@ -295,3 +336,4 @@ run().catch(async (error) => {
   }
   process.exit(1);
 });
+

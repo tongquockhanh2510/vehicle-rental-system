@@ -1,16 +1,17 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
-import { contractApi, reviewApi } from '../../api';
+import { rentalApi, reviewApi } from '../../api';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import SectionHeader from '../../components/common/SectionHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { formatDate, pickArray } from '../../utils/formatters';
+import { compactId, pickArray } from '../../utils/formatters';
+import { getRentalBillPayload, normalizeRentalStatus } from '../../utils/rentalBill';
 
 const defaultForm = {
-  contract_id: '',
+  rental_id: '',
   rating: 5,
   comment: ''
 };
@@ -20,25 +21,33 @@ function StarRating({ value, onChange }) {
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((point) => (
         <button key={point} type="button" onClick={() => onChange(point)}>
-          <Star className={`h-5 w-5 ${point <= value ? 'fill-amber-300 text-amber-300' : 'text-slate-500'}`} />
+          <Star
+            className={`h-5 w-5 ${
+              point <= value
+                ? 'fill-amber-300 text-amber-300'
+                : 'text-slate-500'
+            }`}
+          />
         </button>
       ))}
     </div>
   );
 }
 
-function getContractStatus(contract) {
-  return String(contract.status || contract.contract_status || '').toUpperCase();
-}
-
-function getContractReviewKey(contract) {
-  return String(contract.rental_request_id || contract._id || '');
+function dedupeById(rows = []) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const key = String(row?._id || '');
+    if (!key) return;
+    if (!map.has(key)) map.set(key, row);
+  });
+  return Array.from(map.values());
 }
 
 export default function ReviewsPage() {
   const { userId } = useAuth();
   const { pushToast } = useToast();
-  const [contracts, setContracts] = useState([]);
+  const [rentals, setRentals] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(true);
@@ -48,22 +57,14 @@ export default function ReviewsPage() {
     setLoading(true);
     try {
       const [renterRes, ownerRes, reviewRes] = await Promise.allSettled([
-        contractApi.getRenterContracts(),
-        contractApi.getOwnerContracts(),
+        rentalApi.getRenterRequests(),
+        rentalApi.getOwnerRequests(),
         userId ? reviewApi.getByReviewer(userId) : Promise.resolve({ data: [] })
       ]);
 
-      const renterContracts = renterRes.status === 'fulfilled' ? pickArray(renterRes.value.data) : [];
-      const ownerContracts = ownerRes.status === 'fulfilled' ? pickArray(ownerRes.value.data) : [];
-      const mergedContracts = [...renterContracts, ...ownerContracts].reduce((acc, item) => {
-        const key = String(item._id || '');
-        if (key && !acc.some((row) => String(row._id || '') === key)) {
-          acc.push(item);
-        }
-        return acc;
-      }, []);
-
-      setContracts(mergedContracts);
+      const renterRows = renterRes.status === 'fulfilled' ? pickArray(renterRes.value.data) : [];
+      const ownerRows = ownerRes.status === 'fulfilled' ? pickArray(ownerRes.value.data) : [];
+      setRentals(dedupeById([...renterRows, ...ownerRows]));
       setReviews(reviewRes.status === 'fulfilled' ? pickArray(reviewRes.value.data) : []);
     } finally {
       setLoading(false);
@@ -75,68 +76,91 @@ export default function ReviewsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const completedContracts = useMemo(
-    () => contracts.filter((contract) => getContractStatus(contract) === 'COMPLETED'),
-    [contracts]
+  const completedRentals = useMemo(
+    () => rentals.filter((item) => normalizeRentalStatus(item.status) === 'COMPLETED'),
+    [rentals]
   );
 
-  const reviewedKeys = useMemo(() => {
+  const reviewedRentalIds = useMemo(() => {
     const set = new Set();
     reviews.forEach((review) => {
-      const key = String(review.rental_request_id || review.contract_id || review._id || '');
-      if (key) set.add(key);
+      const rentalId = String(review.rental_request_id || review.contract_id || '');
+      if (rentalId) set.add(rentalId);
     });
     return set;
   }, [reviews]);
 
-  const pendingReviewContracts = useMemo(
-    () => completedContracts.filter((contract) => !reviewedKeys.has(getContractReviewKey(contract))),
-    [completedContracts, reviewedKeys]
+  const pendingReviewRentals = useMemo(
+    () =>
+      completedRentals.filter(
+        (rental) => !reviewedRentalIds.has(String(rental._id || ''))
+      ),
+    [completedRentals, reviewedRentalIds]
   );
 
   useEffect(() => {
-    if (!pendingReviewContracts.length) {
+    if (!pendingReviewRentals.length) {
       setForm(defaultForm);
       return;
     }
-    const defaultId = String(pendingReviewContracts[0]._id || '');
-    setForm((prev) => ({ ...prev, contract_id: prev.contract_id || defaultId }));
-  }, [pendingReviewContracts]);
+    setForm((prev) => ({
+      ...prev,
+      rental_id: prev.rental_id || String(pendingReviewRentals[0]._id || '')
+    }));
+  }, [pendingReviewRentals]);
 
-  const selectedContract = useMemo(
-    () => pendingReviewContracts.find((item) => String(item._id) === String(form.contract_id)),
-    [pendingReviewContracts, form.contract_id]
+  const selectedRental = useMemo(
+    () =>
+      pendingReviewRentals.find(
+        (item) => String(item._id || '') === String(form.rental_id || '')
+      ),
+    [pendingReviewRentals, form.rental_id]
   );
 
-  const reviewedUserId = useMemo(() => {
-    if (!selectedContract || !userId) return '';
-    const ownerId = String(selectedContract.owner_id || '');
-    const renterId = String(selectedContract.renter_id || '');
-    return String(userId) === ownerId ? renterId : ownerId;
-  }, [selectedContract, userId]);
+  const reviewTarget = useMemo(() => {
+    if (!selectedRental || !userId) return null;
+    const bill = getRentalBillPayload(selectedRental);
+    const renterId = String(selectedRental.renter_id || '');
+    const ownerId = String(selectedRental.owner_id || '');
+    const isCurrentRenter = String(userId) === renterId;
+    return {
+      reviewee_id: isCurrentRenter ? ownerId : renterId,
+      role: isCurrentRenter ? 'OWNER' : 'RENTER',
+      display_name: isCurrentRenter
+        ? bill?.owner?.name || `#${compactId(ownerId)}`
+        : bill?.renter?.name || `#${compactId(renterId)}`
+    };
+  }, [selectedRental, userId]);
 
   const setField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!selectedContract || !reviewedUserId || !userId) return;
+    if (!selectedRental || !reviewTarget?.reviewee_id || !userId) return;
 
     setSubmitting(true);
     try {
       await reviewApi.create({
-        rental_request_id: selectedContract.rental_request_id || selectedContract._id,
-        contract_id: selectedContract._id,
-        vehicle_id: selectedContract.vehicle_id,
-        reviewed_user_id: reviewedUserId,
+        rental_request_id: selectedRental._id,
+        vehicle_id: selectedRental.vehicle_id,
+        reviewed_user_id: reviewTarget.reviewee_id,
         rating: Number(form.rating),
         comment: form.comment,
         reviewer_id: userId
       });
-      pushToast({ tone: 'success', title: 'Đã gửi đánh giá', message: 'Đánh giá của bạn đã được ghi nhận.' });
+      pushToast({
+        tone: 'success',
+        title: 'Đã gửi đánh giá',
+        message: 'Đánh giá của bạn đã được ghi nhận.'
+      });
       setForm(defaultForm);
       await loadData();
     } catch (error) {
-      pushToast({ tone: 'error', title: 'Gửi thất bại', message: error?.response?.data?.error || 'Không thể gửi đánh giá.' });
+      pushToast({
+        tone: 'error',
+        title: 'Gửi thất bại',
+        message: error?.response?.data?.error || 'Không thể gửi đánh giá.'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +170,7 @@ export default function ReviewsPage() {
     return <LoadingSkeleton rows={4} />;
   }
 
-  if (!completedContracts.length) {
+  if (!completedRentals.length) {
     return (
       <div className="space-y-6">
         <SectionHeader
@@ -156,7 +180,14 @@ export default function ReviewsPage() {
         <EmptyState
           title="Chưa có chuyến đi hoàn tất"
           description="Bạn chỉ có thể đánh giá sau khi hợp đồng thuê xe đã hoàn tất."
-          action={<Link to="/app/explore" className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Khám phá phương tiện</Link>}
+          action={
+            <Link
+              to="/app/explore"
+              className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
+            >
+              Khám phá phương tiện
+            </Link>
+          }
         />
       </div>
     );
@@ -166,40 +197,60 @@ export default function ReviewsPage() {
     <div className="space-y-6">
       <SectionHeader
         title="Đánh giá"
-        subtitle="Chỉ có thể đánh giá các hợp đồng đã hoàn tất và chưa được review."
+        subtitle="Chỉ có thể đánh giá các chuyến thuê đã hoàn tất và chưa được review."
       />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        {pendingReviewContracts.length ? (
-          <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+        {pendingReviewRentals.length ? (
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+          >
             <h3 className="text-lg font-semibold text-white">Gửi đánh giá</h3>
 
             <label className="block text-xs uppercase tracking-[0.18em] text-slate-300">
-              Hợp đồng đã hoàn tất
+              Chuyến thuê đã hoàn tất
               <select
-                value={form.contract_id}
-                onChange={(event) => setField('contract_id', event.target.value)}
+                value={form.rental_id}
+                onChange={(event) => setField('rental_id', event.target.value)}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
               >
-                {pendingReviewContracts.map((contract) => (
-                  <option key={contract._id} value={contract._id}>
-                    #{String(contract._id || '').slice(-8)} - {formatDate(contract.rental_start_date)} / {formatDate(contract.rental_end_date)}
-                  </option>
-                ))}
+                {pendingReviewRentals.map((rental) => {
+                  const bill = getRentalBillPayload(rental);
+                  const title = `${bill?.vehicle?.brand || 'Xe'} ${bill?.vehicle?.model || ''}`.trim();
+                  return (
+                    <option key={rental._id} value={rental._id}>
+                      #{compactId(rental._id)} - {title}
+                    </option>
+                  );
+                })}
               </select>
             </label>
 
-            {selectedContract ? (
+            {selectedRental ? (
               <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-300">
-                <p>Phương tiện: <span className="text-white">{String(selectedContract.vehicle_id || '').slice(-8) || 'Chưa cập nhật'}</span></p>
-                <p>Người được đánh giá: <span className="text-white">{String(reviewedUserId || '').slice(-8) || 'Chưa cập nhật'}</span></p>
+                <p>
+                  Phương tiện:{' '}
+                  <span className="text-white">
+                    {(getRentalBillPayload(selectedRental)?.vehicle?.brand || 'Xe') +
+                      ' ' +
+                      (getRentalBillPayload(selectedRental)?.vehicle?.model || '')}
+                  </span>
+                </p>
+                <p>
+                  Người được đánh giá:{' '}
+                  <span className="text-white">{reviewTarget?.display_name || 'Chưa cập nhật'}</span>
+                </p>
               </div>
             ) : null}
 
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Số sao</p>
               <div className="mt-2">
-                <StarRating value={form.rating} onChange={(point) => setField('rating', point)} />
+                <StarRating
+                  value={form.rating}
+                  onChange={(point) => setField('rating', point)}
+                />
               </div>
             </div>
 
@@ -224,8 +275,8 @@ export default function ReviewsPage() {
           </form>
         ) : (
           <EmptyState
-            title="Đã đánh giá hết các hợp đồng đã hoàn tất"
-            description="Không còn hợp đồng COMPLETED nào chờ đánh giá."
+            title="Đã đánh giá hết các chuyến thuê hoàn tất"
+            description="Không còn chuyến COMPLETED nào chờ đánh giá."
           />
         )}
 
@@ -239,10 +290,17 @@ export default function ReviewsPage() {
           ) : (
             <div className="mt-4 space-y-3">
               {reviews.map((review) => (
-                <article key={review._id} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+                <article
+                  key={review._id}
+                  className="rounded-xl border border-white/10 bg-slate-950/40 p-3"
+                >
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">Review #{String(review._id || '').slice(-6)}</p>
-                    <span className="text-sm text-amber-300">{Number(review.rating || 0).toFixed(1)} / 5</span>
+                    <p className="text-sm font-semibold text-white">
+                      Review #{compactId(review._id)}
+                    </p>
+                    <span className="text-sm text-amber-300">
+                      {Number(review.rating || 0).toFixed(1)} / 5
+                    </span>
                   </div>
                   <p className="mt-1 text-sm text-slate-300">{review.comment || '--'}</p>
                 </article>
@@ -254,3 +312,4 @@ export default function ReviewsPage() {
     </div>
   );
 }
+

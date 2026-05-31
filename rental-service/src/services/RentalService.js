@@ -43,6 +43,40 @@ function buildVehicleLocationSnapshot(vehicle = {}) {
   };
 }
 
+function getDisplayName(user = {}) {
+  const fullName = [user.last_name, user.first_name].filter(Boolean).join(' ').trim();
+  return fullName || user.full_name || user.name || 'Chưa cập nhật';
+}
+
+function maskAccountNumber(value = '') {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const digits = text.replace(/\D/g, '');
+  if (digits.length >= 4) {
+    return `•••• ${digits.slice(-4)}`;
+  }
+  return text.length > 4 ? `•••• ${text.slice(-4)}` : text;
+}
+
+function buildPayoutSnapshot(owner = {}) {
+  const payout = owner.payout_info || {};
+  const bankAccountNumber = payout.bank_account_number || owner.bank_account_number || '';
+  const masked =
+    payout.masked_account_number ||
+    payout.maskedAccountNumber ||
+    maskAccountNumber(bankAccountNumber);
+
+  return {
+    method: payout.method || 'BANK',
+    bank_name: payout.bank_name || owner.bank_name || '',
+    bank_account_holder: payout.bank_account_holder || '',
+    masked_account_number: masked,
+    card_brand: payout.card_brand || '',
+    card_last4: payout.card_last4 || '',
+    payout_note: payout.payout_note || ''
+  };
+}
+
 function toObjectId(value) {
   if (value instanceof mongoose.Types.ObjectId) return value;
   if (mongoose.Types.ObjectId.isValid(value)) return new mongoose.Types.ObjectId(value);
@@ -50,6 +84,29 @@ function toObjectId(value) {
 }
 
 export class RentalService {
+  async fetchUserProfile(userId) {
+    try {
+      const user = await mongoose.connection.collection('users').findOne(
+        { _id: toObjectId(userId) },
+        {
+          projection: {
+            _id: 1,
+            first_name: 1,
+            last_name: 1,
+            full_name: 1,
+            email: 1,
+            phone: 1,
+            bank_name: 1,
+            payout_info: 1
+          }
+        }
+      );
+      return user || null;
+    } catch {
+      return null;
+    }
+  }
+
   async fetchVehicle(vehicleId) {
     try {
       const vehicleRes = await axios.get(
@@ -126,6 +183,51 @@ export class RentalService {
     const depositAmount = Number(vehicle.deposit_amount || 0);
     const platformFee = totalAmount * 0.04;
     const locationSnapshot = buildVehicleLocationSnapshot(vehicle);
+    const [ownerProfile, renterProfile] = await Promise.all([
+      this.fetchUserProfile(vehicle.owner_id),
+      this.fetchUserProfile(renterId)
+    ]);
+
+    const rentalDays = Math.max(1, totalDays);
+    const rentalAmount = dailyRate * rentalDays;
+    const finalPlatformFee = rentalAmount * 0.04;
+    const finalTotalAmount = rentalAmount + depositAmount + finalPlatformFee;
+
+    const vehicleSnapshot = {
+      brand: vehicle.brand || '',
+      model: vehicle.model || '',
+      license_plate: vehicle.license_plate || '',
+      vehicle_type: vehicle.vehicle_type || '',
+      fuel_type: vehicle.fuel_type || '',
+      transmission: vehicle.transmission || '',
+      seats: Number(vehicle.seats || 0),
+      year: Number(vehicle.year || 0),
+      image: Array.isArray(vehicle.images) ? vehicle.images[0] || '' : '',
+      pickup_location: locationSnapshot.pickup_location,
+      return_location: locationSnapshot.return_location
+    };
+
+    const ownerSnapshot = {
+      name: getDisplayName(ownerProfile || {}),
+      email: ownerProfile?.email || '',
+      phone: ownerProfile?.phone || '',
+      payout_info: buildPayoutSnapshot(ownerProfile || {})
+    };
+
+    const renterSnapshot = {
+      name: getDisplayName(renterProfile || {}),
+      email: renterProfile?.email || '',
+      phone: renterProfile?.phone || ''
+    };
+
+    const pricingSnapshot = {
+      daily_rate: dailyRate,
+      deposit_amount: depositAmount,
+      rental_days: rentalDays,
+      rental_amount: rentalAmount,
+      platform_fee: finalPlatformFee,
+      total_amount: finalTotalAmount
+    };
 
     const rental = await rentalRepository.create({
       vehicle_id: rentalData.vehicle_id,
@@ -136,14 +238,18 @@ export class RentalService {
       owner_id: vehicle.owner_id,
       daily_rate: dailyRate,
       deposit_amount: depositAmount,
-      total_days: totalDays,
-      total_amount: totalAmount,
-      platform_fee: platformFee,
+      total_days: rentalDays,
+      total_amount: finalTotalAmount,
+      platform_fee: finalPlatformFee,
       brand: vehicle.brand,
       model: vehicle.model,
       year: vehicle.year,
       license_plate: vehicle.license_plate,
       images: Array.isArray(vehicle.images) ? vehicle.images : [],
+      vehicle_snapshot: vehicleSnapshot,
+      owner_snapshot: ownerSnapshot,
+      renter_snapshot: renterSnapshot,
+      pricing_snapshot: pricingSnapshot,
       status: RENTAL_STATUSES.PENDING,
       ...locationSnapshot
     });

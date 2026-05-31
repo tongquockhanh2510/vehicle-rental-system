@@ -20,6 +20,22 @@ function toOwnerStatus(value) {
   return STATUS.NONE;
 }
 
+function last4(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.slice(-4);
+}
+
+function maskAccountNumber(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const onlyDigits = text.replace(/\D/g, '');
+  if (onlyDigits.length >= 4) {
+    return `•••• ${onlyDigits.slice(-4)}`;
+  }
+  return text.length > 4 ? `•••• ${text.slice(-4)}` : text;
+}
+
 function mapApplicationDoc(application) {
   if (!application) return null;
 
@@ -44,7 +60,10 @@ function mapApplicationDoc(application) {
     bank_name: profile.bank_name || '',
     bank_account_number: profile.bank_account_number || '',
     bank_account_holder: profile.bank_account_holder || '',
-    bank_branch: profile.bank_branch || ''
+    bank_branch: profile.bank_branch || '',
+    card_brand: profile.card_brand || '',
+    card_last4: profile.card_last4 || last4(profile.bank_account_number || ''),
+    payout_method: profile.payout_method || profile.method || 'BANK'
   };
 
   return {
@@ -63,6 +82,16 @@ function mapApplicationDoc(application) {
     bank_account_number: ownerProfile.bank_account_number,
     bank_account_holder: ownerProfile.bank_account_holder,
     bank_branch: ownerProfile.bank_branch,
+    payout_info: {
+      method: ownerProfile.payout_method || 'BANK',
+      bank_name: ownerProfile.bank_name,
+      bank_account_holder: ownerProfile.bank_account_holder,
+      bank_account_number: ownerProfile.bank_account_number,
+      masked_account_number: maskAccountNumber(ownerProfile.bank_account_number),
+      card_brand: ownerProfile.card_brand || '',
+      card_last4: ownerProfile.card_last4 || '',
+      payout_note: ''
+    },
     status: toOwnerStatus(application.status),
     review_note: application.review_note || '',
     rejection_reason: application.rejection_reason || '',
@@ -268,6 +297,17 @@ router.put('/:applicationId/approve', authenticateToken, async (req, res) => {
     user.owner_status = STATUS.APPROVED;
     user.owner_application_id = application._id;
     user.rejection_reason = '';
+    user.payout_info = {
+      method: application.owner_profile?.payout_method || application.owner_profile?.method || 'BANK',
+      bank_name: application.owner_profile?.bank_name || '',
+      bank_account_number: application.owner_profile?.bank_account_number || '',
+      bank_account_holder: application.owner_profile?.bank_account_holder || '',
+      card_brand: application.owner_profile?.card_brand || '',
+      card_last4:
+        application.owner_profile?.card_last4 ||
+        last4(application.owner_profile?.bank_account_number || ''),
+      payout_note: 'Đã xác minh từ hồ sơ chủ xe'
+    };
     user.updated_at = now;
     await user.save();
 

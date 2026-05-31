@@ -207,6 +207,7 @@ export class UserService {
 
   normalizeOwnerProfile(profile = {}) {
     const normalized = profile || {};
+    const digits = String(normalized.bank_account_number || '').replace(/\D/g, '');
     return {
       legal_name: normalized.legal_name || normalized.full_name || '',
       phone: normalized.phone || '',
@@ -226,7 +227,10 @@ export class UserService {
       bank_name: normalized.bank_name || '',
       bank_account_number: normalized.bank_account_number || '',
       bank_account_holder: normalized.bank_account_holder || '',
-      bank_branch: normalized.bank_branch || ''
+      bank_branch: normalized.bank_branch || '',
+      card_brand: normalized.card_brand || '',
+      card_last4: normalized.card_last4 || (digits ? digits.slice(-4) : ''),
+      payout_method: normalized.payout_method || normalized.method || 'BANK'
     };
   }
 
@@ -249,6 +253,14 @@ export class UserService {
       bank_account_number: ownerProfile.bank_account_number,
       bank_account_holder: ownerProfile.bank_account_holder,
       bank_branch: ownerProfile.bank_branch,
+      payout_info: {
+        method: ownerProfile.payout_method || 'BANK',
+        bank_name: ownerProfile.bank_name,
+        bank_account_holder: ownerProfile.bank_account_holder,
+        bank_account_number: ownerProfile.bank_account_number,
+        card_brand: ownerProfile.card_brand || '',
+        card_last4: ownerProfile.card_last4 || ''
+      },
       status: this.normalizeOwnerStatus(application.status),
       rejection_reason: application.rejection_reason || '',
       review_note: application.review_note || '',

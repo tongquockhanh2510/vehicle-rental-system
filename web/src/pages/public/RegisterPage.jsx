@@ -28,6 +28,8 @@ const initialOwnerProfile = {
   bank_name: '',
   bank_account_number: '',
   bank_account_holder: '',
+  card_brand: '',
+  card_last4: '',
   accepted_accuracy: false,
   accepted_platform_fee: false,
   accepted_dispute_policy: false
@@ -147,6 +149,8 @@ export default function RegisterPage() {
         bank_name: ownerProfile.bank_name.trim(),
         bank_account_number: ownerProfile.bank_account_number.trim(),
         bank_account_holder: ownerProfile.bank_account_holder.trim(),
+        card_brand: ownerProfile.card_brand.trim(),
+        card_last4: ownerProfile.card_last4.trim(),
         accepted_accuracy: ownerProfile.accepted_accuracy,
         accepted_platform_fee: ownerProfile.accepted_platform_fee,
         accepted_dispute_policy: ownerProfile.accepted_dispute_policy,
@@ -306,6 +310,12 @@ export default function RegisterPage() {
                 </label>
                 <label className="text-sm text-slate-300">Chủ tài khoản
                   <input value={ownerProfile.bank_account_holder} onChange={(e) => setOwnerField('bank_account_holder', e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-white outline-none" required />
+                </label>
+                <label className="text-sm text-slate-300">Thương hiệu thẻ (tuỳ chọn)
+                  <input value={ownerProfile.card_brand} onChange={(e) => setOwnerField('card_brand', e.target.value)} placeholder="Visa / MasterCard" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-white outline-none" />
+                </label>
+                <label className="text-sm text-slate-300">4 số cuối thẻ (tuỳ chọn)
+                  <input value={ownerProfile.card_last4} onChange={(e) => setOwnerField('card_last4', e.target.value)} maxLength={4} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-white outline-none" />
                 </label>
               </div>
             </section>

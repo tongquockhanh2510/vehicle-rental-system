@@ -29,6 +29,44 @@ async function initRedis() {
 void initRedis();
 
 export class VehicleService {
+  buildOwnerPayload(user = null) {
+    if (!user) return null;
+    return {
+      _id: user._id,
+      email: user.email || '',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      owner_status: user.owner_status || 'NONE',
+      payout_info: user.payout_info || {}
+    };
+  }
+
+  async findOwnersByIds(ownerIds = []) {
+    const objectIds = ownerIds
+      .filter((value) => mongoose.Types.ObjectId.isValid(String(value || '')))
+      .map((value) => new mongoose.Types.ObjectId(value));
+    if (!objectIds.length) return [];
+
+    return await mongoose.connection
+      .collection('users')
+      .find(
+        { _id: { $in: objectIds } },
+        {
+          projection: {
+            _id: 1,
+            email: 1,
+            first_name: 1,
+            last_name: 1,
+            phone: 1,
+            owner_status: 1,
+            payout_info: 1
+          }
+        }
+      )
+      .toArray();
+  }
+
   normalizeVehicleType(value) {
     const raw = String(value || '').toUpperCase();
     if (!raw) return '';
@@ -165,8 +203,15 @@ export class VehicleService {
       throw new Error('Vehicle not found');
     }
 
-    await this.setCache(cacheKey, vehicle, 3600);
-    return vehicle;
+    const ownerRows = await this.findOwnersByIds([vehicle.owner_id]);
+    const owner = this.buildOwnerPayload(ownerRows[0] || null);
+    const enrichedVehicle = {
+      ...vehicle,
+      owner
+    };
+
+    await this.setCache(cacheKey, enrichedVehicle, 3600);
+    return enrichedVehicle;
   }
 
   async updateVehicle(vehicleId, updateData) {
@@ -278,35 +323,12 @@ export class VehicleService {
     );
 
     if (ownerIds.length) {
-      const objectIds = ownerIds
-        .filter((value) => mongoose.Types.ObjectId.isValid(value))
-        .map((value) => new mongoose.Types.ObjectId(value));
-      const users = await mongoose.connection
-        .collection('users')
-        .find(
-          { _id: { $in: objectIds } },
-          {
-            projection: {
-              _id: 1,
-              email: 1,
-              first_name: 1,
-              last_name: 1,
-              owner_status: 1
-            }
-          }
-        )
-        .toArray();
+      const users = await this.findOwnersByIds(ownerIds);
 
       const ownerMap = new Map(
         users.map((user) => [
           String(user._id),
-          {
-            _id: user._id,
-            email: user.email || '',
-            first_name: user.first_name || '',
-            last_name: user.last_name || '',
-            owner_status: user.owner_status || 'NONE'
-          }
+          this.buildOwnerPayload(user)
         ])
       );
 
