@@ -11,13 +11,61 @@ export function buildPayoutDisplay(payoutInfo = {}) {
   if (method === 'VISA') {
     const brand = payoutInfo?.card_brand || 'Visa';
     const last4 = payoutInfo?.card_last4 || '----';
-    return `${brand} •••• ${last4}`;
+    return `${brand} ****${last4}`;
   }
 
   const bank = payoutInfo?.bank_name || 'Ngân hàng';
   const masked = payoutInfo?.masked_account_number || payoutInfo?.bank_account_number || '';
   if (!masked) return bank;
   return `${bank} • ${masked}`;
+}
+
+export function getTransferAccountNumber(payoutInfo = {}) {
+  return (
+    payoutInfo?.bank_account_number ||
+    payoutInfo?.account_number ||
+    payoutInfo?.masked_account_number ||
+    ''
+  );
+}
+
+const BANK_CODE_MAP = {
+  VIETCOMBANK: 'VCB',
+  VCB: 'VCB',
+  TECHCOMBANK: 'TCB',
+  TCB: 'TCB',
+  ACB: 'ACB',
+  AGRIBANK: 'VBA',
+  BIDV: 'BIDV',
+  VIETINBANK: 'CTG',
+  MB: 'MB',
+  MBBANK: 'MB',
+  SACOMBANK: 'STB',
+  TPBANK: 'TPB',
+  VPBANK: 'VPB',
+  OCB: 'OCB'
+};
+
+function normalizeBankCode(input = '') {
+  const key = String(input || '')
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
+  return BANK_CODE_MAP[key] || '';
+}
+
+export function buildVietQrUrl(payoutInfo = {}, amount = 0, addInfo = '') {
+  const accountNumber = getTransferAccountNumber(payoutInfo).replace(/\s+/g, '');
+  const bankCode = normalizeBankCode(payoutInfo?.bank_code) || normalizeBankCode(payoutInfo?.bank_name);
+
+  if (!bankCode || !accountNumber || !/^\d{6,}$/.test(accountNumber)) {
+    return '';
+  }
+
+  const encodedName = encodeURIComponent(payoutInfo?.bank_account_holder || 'CHU XE');
+  const encodedInfo = encodeURIComponent(addInfo || 'RENTCAR PAYMENT');
+  const numericAmount = Math.max(0, Math.round(Number(amount || 0)));
+
+  return `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?amount=${numericAmount}&addInfo=${encodedInfo}&accountName=${encodedName}`;
 }
 
 export function getRentalBillPayload(rental = {}) {
@@ -38,7 +86,9 @@ export function getRentalBillPayload(rental = {}) {
   const depositAmount = Number(pricing?.deposit_amount || rental?.deposit_amount || 0);
   const rentalAmount = Number(pricing?.rental_amount || dailyRate * rentalDays);
   const platformFee = Number(pricing?.platform_fee || rental?.platform_fee || rentalAmount * 0.04);
-  const totalAmount = Number(pricing?.total_amount || rental?.total_amount || rentalAmount + depositAmount + platformFee);
+  const totalAmount = Number(
+    pricing?.total_amount || rental?.total_amount || rentalAmount + depositAmount + platformFee
+  );
 
   return {
     rental_id: rental?._id || '',
@@ -55,10 +105,7 @@ export function getRentalBillPayload(rental = {}) {
       fuel_type: vehicle?.fuel_type || rental?.fuel_type || '',
       transmission: vehicle?.transmission || rental?.transmission || '',
       seats: vehicle?.seats || rental?.seats || '',
-      image:
-        vehicle?.image ||
-        (Array.isArray(rental?.images) ? rental.images[0] : '') ||
-        '',
+      image: vehicle?.image || (Array.isArray(rental?.images) ? rental.images[0] : '') || '',
       pickup_location: vehicle?.pickup_location || rental?.pickup_location || 'Chưa cập nhật',
       return_location: vehicle?.return_location || rental?.return_location || 'Chưa cập nhật'
     },
@@ -119,4 +166,3 @@ export function getPricingRows(pricing = {}) {
     { label: 'Tiền cọc', value: formatCurrency(pricing.deposit_amount || 0) }
   ];
 }
-

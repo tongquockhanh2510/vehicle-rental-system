@@ -7,9 +7,16 @@ import { useAuth } from '../../context/AuthContext';
 import { getOwnerCta, getOwnerStatusHint } from '../../utils/ownerCta';
 
 function NavItem({ to, label }) {
+  const useExactMatch =
+    to === '/' ||
+    to === '/app' ||
+    to === '/owner/dashboard' ||
+    to === '/admin/dashboard';
+
   return (
     <NavLink
       to={to}
+      end={useExactMatch}
       className={({ isActive }) =>
         `rounded-full px-4 py-2 text-sm transition ${
           isActive ? 'bg-white/15 text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white'
@@ -45,12 +52,14 @@ export default function Navbar({
       });
     }
 
-    return PUBLIC_NAV.map((item) => {
+    const base = PUBLIC_NAV.map((item) => {
       if (item.to === '/become-owner') {
         return { ...item, label: ownerAction.label, to: ownerAction.to };
       }
       return item;
     });
+
+    return [{ label: 'Dịch vụ của tôi', to: '/app' }, ...base];
   }, [isAuthenticated, ownerAction, isAdmin]);
 
   const ownerToneClass =

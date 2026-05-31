@@ -9,7 +9,7 @@ services:
       - user_service_node_modules:/app/node_modules
     environment:
       USER_SERVICE_PORT: 3001
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       IMAGE_SERVICE_URL: http://image-service:3007
       JWT_EXPIRES_IN: 24h
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
@@ -31,7 +31,7 @@ services:
       - vehicle_service_node_modules:/app/node_modules
     environment:
       VEHICLE_SERVICE_PORT: 3002
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       REDIS_URL: redis://:password@redis:6379
       IMAGE_SERVICE_URL: http://image-service:3007
       SERVICE_TOKEN: internal-service-token
@@ -57,7 +57,7 @@ services:
       - rental_service_node_modules:/app/node_modules
     environment:
       RENTAL_SERVICE_PORT: 3003
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
       VEHICLE_SERVICE_URL: http://vehicle-service:3002
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
@@ -82,7 +82,7 @@ services:
       - contract_service_node_modules:/app/node_modules
     environment:
       CONTRACT_SERVICE_PORT: 3004
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
       IMAGE_SERVICE_URL: http://image-service:3007
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
@@ -107,7 +107,7 @@ services:
       - payment_service_node_modules:/app/node_modules
     environment:
       PAYMENT_SERVICE_PORT: 3005
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256
@@ -129,7 +129,7 @@ services:
       - tracking_service_node_modules:/app/node_modules
     environment:
       TRACKING_SERVICE_PORT: 3006
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256
@@ -177,7 +177,7 @@ services:
       - dispute_service_node_modules:/app/node_modules
     environment:
       DISPUTE_SERVICE_PORT: 3008
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
       CONTRACT_SERVICE_URL: http://contract-service:3004
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
@@ -202,7 +202,7 @@ services:
       - review_service_node_modules:/app/node_modules
     environment:
       REVIEW_SERVICE_PORT: 3009
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256
     depends_on:
@@ -221,7 +221,7 @@ services:
       - notification_service_node_modules:/app/node_modules
     environment:
       NOTIFICATION_SERVICE_PORT: 3010
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256
@@ -243,7 +243,7 @@ services:
       - statistic_service_node_modules:/app/node_modules
     environment:
       STATISTIC_SERVICE_PORT: 3011
-      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin}
       REDIS_URL: redis://:password@redis:6379
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256

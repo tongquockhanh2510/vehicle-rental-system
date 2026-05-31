@@ -69,8 +69,10 @@ function buildPayoutSnapshot(owner = {}) {
   return {
     method: payout.method || 'BANK',
     bank_name: payout.bank_name || owner.bank_name || '',
-    bank_account_holder: payout.bank_account_holder || '',
+    bank_account_holder: payout.bank_account_holder || owner.bank_account_holder || '',
+    bank_account_number: bankAccountNumber,
     masked_account_number: masked,
+    bank_code: payout.bank_code || owner.bank_code || '',
     card_brand: payout.card_brand || '',
     card_last4: payout.card_last4 || '',
     payout_note: payout.payout_note || ''
@@ -81,6 +83,13 @@ function toObjectId(value) {
   if (value instanceof mongoose.Types.ObjectId) return value;
   if (mongoose.Types.ObjectId.isValid(value)) return new mongoose.Types.ObjectId(value);
   return value;
+}
+
+function normalizeDayStart(dateInput) {
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 export class RentalService {
@@ -97,6 +106,9 @@ export class RentalService {
             email: 1,
             phone: 1,
             bank_name: 1,
+            bank_code: 1,
+            bank_account_number: 1,
+            bank_account_holder: 1,
             payout_info: 1
           }
         }
@@ -170,6 +182,12 @@ export class RentalService {
     }
     if (endDate < startDate) {
       throw makeError('Rental end date must be after start date', 400);
+    }
+
+    const todayStart = normalizeDayStart(new Date());
+    const startDay = normalizeDayStart(startDate);
+    if (!startDay || !todayStart || startDay < todayStart) {
+      throw makeError('Ngày nhận xe phải từ ngày hiện tại trở đi.', 400);
     }
 
     const totalDays =

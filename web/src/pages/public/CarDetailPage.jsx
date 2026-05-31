@@ -80,7 +80,14 @@ function buildDraftBill(vehicle, form, rentalDays) {
       name: getOwnerDisplayName(vehicle),
       email: owner?.email || '',
       phone: owner?.phone || '',
-      payout_info: owner?.payout_info || {}
+      payout_info: {
+        ...(owner?.payout_info || {}),
+        bank_name: owner?.payout_info?.bank_name || owner?.bank_name || '',
+        bank_account_holder:
+          owner?.payout_info?.bank_account_holder || owner?.bank_account_holder || '',
+        bank_account_number:
+          owner?.payout_info?.bank_account_number || owner?.bank_account_number || ''
+      }
     },
     pricing: {
       rental_days: rentalDays,
@@ -152,6 +159,7 @@ export default function CarDetailPage({
   const returnLocation = useMemo(() => resolveReturnLocation(vehicle), [vehicle]);
   const galleryImages = useMemo(() => getVehicleImages(vehicle), [vehicle]);
   const canSubmitBill = Object.values(terms).every(Boolean) && !submitting;
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const handleInput = (name, value) => setForm((prev) => ({ ...prev, [name]: value }));
 
@@ -192,6 +200,17 @@ export default function CarDetailPage({
         tone: 'warning',
         title: 'Ngày không hợp lệ',
         message: 'Ngày trả xe phải sau hoặc bằng ngày nhận xe.'
+      });
+      return;
+    }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    if (startDate < todayStart) {
+      pushToast({
+        tone: 'warning',
+        title: 'Ngày nhận xe không hợp lệ',
+        message: 'Ngày nhận xe phải từ ngày hiện tại trở đi.'
       });
       return;
     }
@@ -397,6 +416,7 @@ export default function CarDetailPage({
                     type="date"
                     required
                     value={form.start_date}
+                    min={todayIso}
                     onChange={(event) => handleInput('start_date', event.target.value)}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
                   />
@@ -407,6 +427,7 @@ export default function CarDetailPage({
                     type="date"
                     required
                     value={form.end_date}
+                    min={form.start_date || todayIso}
                     onChange={(event) => handleInput('end_date', event.target.value)}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
                   />
@@ -467,4 +488,3 @@ export default function CarDetailPage({
     </div>
   );
 }
-

@@ -15,6 +15,7 @@ import RegisterPage from './pages/public/RegisterPage';
 import NotFoundPage from './pages/public/NotFoundPage';
 
 import ExplorePage from './pages/renter/ExplorePage';
+import AppOverviewPage from './pages/renter/AppOverviewPage';
 import RentalRequestsPage from './pages/renter/RentalRequestsPage';
 import ContractsPage from './pages/renter/ContractsPage';
 import PaymentsPage from './pages/renter/PaymentsPage';
@@ -83,8 +84,8 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="explore" replace />} />
-              <Route path="overview" element={<Navigate to="/app/explore" replace />} />
+              <Route index element={<AppOverviewPage />} />
+              <Route path="overview" element={<Navigate to="/app" replace />} />
               <Route path="explore" element={<ExplorePage />} />
               <Route path="vehicles/:id" element={<CarDetailPage backTo="/app/explore" navigateAfterRequest="/app/requests" />} />
               <Route path="requests" element={<RentalRequestsPage />} />

@@ -37,6 +37,12 @@ export class VehicleService {
       first_name: user.first_name || '',
       last_name: user.last_name || '',
       phone: user.phone || '',
+      bank_name: user.bank_name || user.payout_info?.bank_name || '',
+      bank_code: user.bank_code || user.payout_info?.bank_code || '',
+      bank_account_holder:
+        user.bank_account_holder || user.payout_info?.bank_account_holder || '',
+      bank_account_number:
+        user.bank_account_number || user.payout_info?.bank_account_number || '',
       owner_status: user.owner_status || 'NONE',
       payout_info: user.payout_info || {}
     };
@@ -59,6 +65,10 @@ export class VehicleService {
             first_name: 1,
             last_name: 1,
             phone: 1,
+            bank_name: 1,
+            bank_code: 1,
+            bank_account_holder: 1,
+            bank_account_number: 1,
             owner_status: 1,
             payout_info: 1
           }

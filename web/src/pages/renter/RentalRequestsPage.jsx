@@ -73,6 +73,28 @@ export default function RentalRequestsPage() {
     [mine, activeTab]
   );
 
+  const statusSummary = useMemo(() => {
+    const counters = {
+      total: mine.length,
+      pending: 0,
+      approved: 0,
+      active: 0,
+      returnRequested: 0,
+      completed: 0
+    };
+
+    mine.forEach((item) => {
+      const status = normalizeRentalStatus(item?.status);
+      if (status === 'PENDING') counters.pending += 1;
+      if (status === 'APPROVED') counters.approved += 1;
+      if (status === 'ACTIVE') counters.active += 1;
+      if (status === 'RETURN_REQUESTED') counters.returnRequested += 1;
+      if (status === 'COMPLETED') counters.completed += 1;
+    });
+
+    return counters;
+  }, [mine]);
+
   const setTab = (tabKey) => {
     setActiveTab(tabKey);
     setSearchParams((prev) => {
@@ -109,16 +131,43 @@ export default function RentalRequestsPage() {
         subtitle="Bạn có thể xem đầy đủ trạng thái thuê xe: chờ duyệt, đã duyệt, đang thuê, chờ xác nhận trả và hoàn tất."
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="rounded-xl border border-white/10 bg-slate-900/55 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">Tổng yêu cầu</p>
+          <p className="mt-1 text-lg font-semibold text-white">{statusSummary.total}</p>
+        </div>
+        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-amber-200">Chờ duyệt</p>
+          <p className="mt-1 text-lg font-semibold text-amber-100">{statusSummary.pending}</p>
+        </div>
+        <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-blue-200">Đã duyệt</p>
+          <p className="mt-1 text-lg font-semibold text-blue-100">{statusSummary.approved}</p>
+        </div>
+        <div className="rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-cyan-200">Đang thuê</p>
+          <p className="mt-1 text-lg font-semibold text-cyan-100">{statusSummary.active}</p>
+        </div>
+        <div className="rounded-xl border border-orange-400/20 bg-orange-500/10 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-orange-200">Chờ xác nhận trả</p>
+          <p className="mt-1 text-lg font-semibold text-orange-100">{statusSummary.returnRequested}</p>
+        </div>
+        <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-200">Hoàn tất</p>
+          <p className="mt-1 text-lg font-semibold text-emerald-100">{statusSummary.completed}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {RENTER_REQUEST_TABS.map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setTab(tab.key)}
-            className={`rounded-xl px-3 py-1.5 text-xs transition ${
+            className={`whitespace-nowrap rounded-xl border px-3 py-1.5 text-xs transition ${
               activeTab === tab.key
-                ? 'bg-cyan-500 text-slate-950 font-semibold'
-                : 'border border-white/10 bg-slate-900/55 text-slate-200 hover:bg-white/10'
+                ? 'border-cyan-400/70 bg-cyan-500 text-slate-950 font-semibold shadow-[0_0_0_1px_rgba(6,182,212,0.3)]'
+                : 'border-white/10 bg-slate-900/55 text-slate-200 hover:bg-white/10'
             }`}
           >
             {tab.label}
@@ -174,6 +223,9 @@ export default function RentalRequestsPage() {
                       <p className="text-xs text-slate-400">
                         Mã yêu cầu #{compactId(rental._id)} • Biển số:{' '}
                         {bill?.vehicle?.license_plate || 'Chưa cập nhật'}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Chủ xe: <span className="text-slate-200">{bill?.owner?.name || `#${compactId(rental.owner_id)}`}</span>
                       </p>
 
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-300">
@@ -303,4 +355,3 @@ export default function RentalRequestsPage() {
     </div>
   );
 }
-
