@@ -48,6 +48,19 @@ function resolveReturnLocation(vehicle) {
   );
 }
 
+function toDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
 export default function CarDetailPage({
   backTo = "/vehicles",
   navigateAfterRequest = "/app/requests",
@@ -98,6 +111,7 @@ export default function CarDetailPage({
     () => calculateDays(form.start_date, form.end_date),
     [form],
   );
+  const minRentalStartDate = useMemo(() => toDateInputValue(addDays(new Date(), 1)), []);
   const vehicleStatus = String(vehicle?.status || "").toUpperCase() || "PENDING";
   const isOwner = String(vehicle?.owner_id || "") === String(userId || "");
   const isAvailable =
@@ -107,7 +121,16 @@ export default function CarDetailPage({
   const galleryImages = useMemo(() => getVehicleImages(vehicle), [vehicle]);
 
   const handleInput = (name, value) =>
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+
+      // If pickup date moves after return date, keep the range valid.
+      if (name === "start_date" && next.end_date && next.end_date < value) {
+        next.end_date = value;
+      }
+
+      return next;
+    });
 
   const submitRequest = async (event) => {
     event.preventDefault();
@@ -128,6 +151,33 @@ export default function CarDetailPage({
         title: "Giới hạn chủ xe",
         message:
           "Đây là phương tiện của bạn. Bạn không thể gửi yêu cầu thuê chính phương tiện do mình đăng.",
+      });
+      return;
+    }
+
+    if (!form.start_date || !form.end_date) {
+      pushToast({
+        tone: "warning",
+        title: "Thiáº¿u ngĂ y thuĂª",
+        message: "Vui lĂ²ng chá»n ngĂ y nháº­n xe vĂ  ngĂ y tráº£ xe.",
+      });
+      return;
+    }
+
+    if (form.start_date < minRentalStartDate) {
+      pushToast({
+        tone: "warning",
+        title: "NgĂ y khĂ´ng há»£p lá»‡",
+        message: "NgĂ y nháº­n xe pháº£i sau ngĂ y hiá»‡n táº¡i.",
+      });
+      return;
+    }
+
+    if (form.end_date < form.start_date) {
+      pushToast({
+        tone: "warning",
+        title: "NgĂ y khĂ´ng há»£p lá»‡",
+        message: "NgĂ y tráº£ xe pháº£i báº±ng hoáº·c sau ngĂ y nháº­n xe.",
       });
       return;
     }
@@ -386,6 +436,7 @@ export default function CarDetailPage({
                   <input
                     type="date"
                     required
+                    min={minRentalStartDate}
                     value={form.start_date}
                     onChange={(event) =>
                       handleInput("start_date", event.target.value)
@@ -398,6 +449,7 @@ export default function CarDetailPage({
                   <input
                     type="date"
                     required
+                    min={form.start_date || minRentalStartDate}
                     value={form.end_date}
                     onChange={(event) =>
                       handleInput("end_date", event.target.value)
