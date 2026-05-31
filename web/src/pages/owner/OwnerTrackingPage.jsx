@@ -1,0 +1,170 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, LocateFixed, MapPinned, Route } from 'lucide-react';
+import { trackingApi, vehicleApi } from '../../api';
+import EmptyState from '../../components/common/EmptyState';
+import GoogleMapView from '../../components/common/GoogleMapView';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import SectionHeader from '../../components/common/SectionHeader';
+import StatusBadge from '../../components/common/StatusBadge';
+import { useAuth } from '../../context/AuthContext';
+import { formatDateTime, pickArray } from '../../utils/formatters';
+
+export default function OwnerTrackingPage() {
+  const { userId } = useAuth();
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState('');
+  const [latest, setLatest] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [movement, setMovement] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadVehicles = async () => {
+      if (!userId) return;
+      setLoading(true);
+      try {
+        const response = await vehicleApi.getOwnerVehicles(userId);
+        const list = pickArray(response.data);
+        setVehicles(list);
+        if (list.length) setSelectedVehicleId(list[0]._id);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadVehicles();
+  }, [userId]);
+
+  useEffect(() => {
+    const loadTracking = async () => {
+      if (!selectedVehicleId) return;
+      try {
+        const [latestRes, historyRes, movementRes] = await Promise.allSettled([
+          trackingApi.latest(selectedVehicleId),
+          trackingApi.history(selectedVehicleId, {
+            start_date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+            end_date: new Date().toISOString(),
+          }),
+          trackingApi.movementHistory(selectedVehicleId, {
+            start_date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+            end_date: new Date().toISOString(),
+          }),
+        ]);
+
+        setLatest(latestRes.status === 'fulfilled' ? latestRes.value.data : null);
+        setHistory(historyRes.status === 'fulfilled' ? pickArray(historyRes.value.data) : []);
+        setMovement(movementRes.status === 'fulfilled' ? pickArray(movementRes.value.data) : []);
+      } catch {
+        setLatest(null);
+      }
+    };
+
+    loadTracking();
+  }, [selectedVehicleId]);
+
+  const boundaryStatus = useMemo(() => {
+    const value = String(latest?.boundary_status || latest?.status || '').toUpperCase();
+    if (value.includes('OUT')) return 'OUT_OF_BOUNDARY';
+    return latest ? 'IN_BOUNDARY' : 'PENDING';
+  }, [latest]);
+
+  const mapLat = useMemo(() => latest?.latitude ?? latest?.lat ?? 10.8231, [latest]);
+  const mapLng = useMemo(() => latest?.longitude ?? latest?.lng ?? 106.6297, [latest]);
+  const mapTitle = useMemo(() => {
+    const selected = vehicles.find((item) => item._id === selectedVehicleId);
+    if (!selected) return 'Vị trí hiện tại của phương tiện';
+    return `${selected.brand || 'Xe'} ${selected.model || ''}`.trim();
+  }, [selectedVehicleId, vehicles]);
+
+  if (loading) return <LoadingSkeleton rows={4} />;
+
+  if (!vehicles.length) {
+    return (
+      <EmptyState
+        icon={MapPinned}
+        title="Chưa có xe để theo dõi"
+        description="Bảng theo dõi sẽ hiển thị sau khi bạn có xe đang hoạt động trên nền tảng."
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        title="Theo dõi xe"
+        subtitle="Giám sát vị trí theo thời gian thực, lịch sử di chuyển và cảnh báo vượt phạm vi an toàn."
+      />
+
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+        <label className="text-xs uppercase tracking-[0.18em] text-slate-300">Chọn xe</label>
+        <select
+          value={selectedVehicleId}
+          onChange={(event) => setSelectedVehicleId(event.target.value)}
+          className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
+        >
+          {vehicles.map((item) => (
+            <option key={item._id} value={item._id}>
+              {item.brand} {item.model} ({item.license_plate})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Google Maps theo dõi vị trí</h3>
+            <StatusBadge status={boundaryStatus} />
+          </div>
+          <div className="relative mt-4">
+            <GoogleMapView lat={mapLat} lng={mapLng} zoom={13} title={mapTitle} />
+            <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 rounded-full border border-cyan-300/40 bg-cyan-500/15 px-3 py-1 text-xs text-cyan-100">
+              <LocateFixed className="h-3.5 w-3.5" />
+              Điểm vị trí hiện tại
+            </div>
+            <div className="pointer-events-none absolute right-4 top-4 rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-xs text-slate-200">
+              Cập nhật gần nhất: {formatDateTime(latest?.timestamp || latest?.updated_at)}
+            </div>
+          </div>
+        </article>
+
+        <aside className="space-y-4">
+          <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Vị trí hiện tại</h3>
+            <p className="mt-2 text-sm text-slate-200">{latest?.address || 'Chưa có dữ liệu vị trí trực tiếp.'}</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Lat: {latest?.latitude || '--'} | Lng: {latest?.longitude || '--'}
+            </p>
+            <p className="mt-2 text-xs text-slate-300">Phạm vi cho phép: {latest?.allowed_region || 'Cấu hình bởi chủ xe'}</p>
+          </article>
+
+          <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Cảnh báo phạm vi</h3>
+            {boundaryStatus === 'OUT_OF_BOUNDARY' ? (
+              <p className="mt-2 inline-flex items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+                <AlertTriangle className="h-3.5 w-3.5" /> Xe đã ra ngoài phạm vi cho phép.
+              </p>
+            ) : (
+              <p className="mt-2 text-xs text-emerald-200">Chưa ghi nhận vi phạm phạm vi di chuyển.</p>
+            )}
+          </article>
+
+          <article className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">Lịch sử di chuyển</h3>
+            <div className="mt-2 space-y-2">
+              {(movement.length ? movement : history).slice(0, 4).map((item, idx) => (
+                <div key={idx} className="rounded-lg border border-white/10 bg-slate-950/40 px-2 py-2 text-xs text-slate-200">
+                  <p className="flex items-center gap-1">
+                    <Route className="h-3.5 w-3.5 text-cyan-300" />
+                    {item.start_location || item.address || 'Điểm vị trí'}
+                  </p>
+                  <p className="mt-1 text-slate-400">{formatDateTime(item.created_at || item.timestamp)}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+        </aside>
+      </div>
+    </div>
+  );
+}

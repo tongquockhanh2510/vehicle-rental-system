@@ -79,6 +79,27 @@ export class PaymentService {
     return await paymentRepository.findByContractId(contractId);
   }
 
+  async getAdminPayments(filters = {}, options = {}) {
+    const query = {};
+    if (filters.status) {
+      query.status = String(filters.status).toUpperCase();
+    }
+    if (filters.owner_id) {
+      query.owner_id = filters.owner_id;
+    }
+    if (filters.renter_id) {
+      query.renter_id = filters.renter_id;
+    }
+    if (filters.contract_id) {
+      query.contract_id = filters.contract_id;
+    }
+    if (filters.payment_type) {
+      query.payment_type = String(filters.payment_type).toUpperCase();
+    }
+
+    return await paymentRepository.findAll(query, options);
+  }
+
   async calculateTotalRevenue() {
     // This would be used for statistics
     const payments = await paymentRepository.findByStatus('COMPLETED');

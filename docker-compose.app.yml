@@ -1,0 +1,338 @@
+services:
+  user-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./user-service:/app
+      - user_service_node_modules:/app/node_modules
+    environment:
+      USER_SERVICE_PORT: 3001
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      IMAGE_SERVICE_URL: http://image-service:3007
+      JWT_EXPIRES_IN: 24h
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_PRIVATE_KEY_PATH: ./keys/private.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  vehicle-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./vehicle-service:/app
+      - vehicle_service_node_modules:/app/node_modules
+    environment:
+      VEHICLE_SERVICE_PORT: 3002
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      REDIS_URL: redis://:password@redis:6379
+      IMAGE_SERVICE_URL: http://image-service:3007
+      SERVICE_TOKEN: internal-service-token
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      image-service:
+        condition: service_started
+    networks:
+      - app-network
+
+  rental-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./rental-service:/app
+      - rental_service_node_modules:/app/node_modules
+    environment:
+      RENTAL_SERVICE_PORT: 3003
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
+      VEHICLE_SERVICE_URL: http://vehicle-service:3002
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      vehicle-service:
+        condition: service_started
+    networks:
+      - app-network
+
+  contract-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./contract-service:/app
+      - contract_service_node_modules:/app/node_modules
+    environment:
+      CONTRACT_SERVICE_PORT: 3004
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
+      IMAGE_SERVICE_URL: http://image-service:3007
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      image-service:
+        condition: service_started
+    networks:
+      - app-network
+
+  payment-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./payment-service:/app
+      - payment_service_node_modules:/app/node_modules
+    environment:
+      PAYMENT_SERVICE_PORT: 3005
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  tracking-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./tracking-service:/app
+      - tracking_service_node_modules:/app/node_modules
+    environment:
+      TRACKING_SERVICE_PORT: 3006
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  image-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    ports:
+      - "3007:3007"
+    volumes:
+      - ./image-service:/app
+      - image_service_node_modules:/app/node_modules
+    environment:
+      IMAGE_SERVICE_PORT: 3007
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-ap-southeast-2}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME:-local-dev-bucket}
+      USE_LOCAL_IMAGE_STORAGE: ${USE_LOCAL_IMAGE_STORAGE:-true}
+      SERVICE_TOKEN: internal-service-token
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  dispute-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./dispute-service:/app
+      - dispute_service_node_modules:/app/node_modules
+    environment:
+      DISPUTE_SERVICE_PORT: 3008
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
+      CONTRACT_SERVICE_URL: http://contract-service:3004
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      contract-service:
+        condition: service_started
+    networks:
+      - app-network
+
+  review-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./review-service:/app
+      - review_service_node_modules:/app/node_modules
+    environment:
+      REVIEW_SERVICE_PORT: 3009
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  notification-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./notification-service:/app
+      - notification_service_node_modules:/app/node_modules
+    environment:
+      NOTIFICATION_SERVICE_PORT: 3010
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      RABBITMQ_URI: amqp://admin:password@rabbitmq:5672
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  statistic-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./statistic-service:/app
+      - statistic_service_node_modules:/app/node_modules
+    environment:
+      STATISTIC_SERVICE_PORT: 3011
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/rental_vehicle_db?authSource=admin
+      REDIS_URL: redis://:password@redis:6379
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  api-gateway:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api-gateway:/app
+      - api_gateway_node_modules:/app/node_modules
+    environment:
+      API_GATEWAY_PORT: 8000
+      USER_SERVICE_URL: http://user-service:3001
+      VEHICLE_SERVICE_URL: http://vehicle-service:3002
+      RENTAL_SERVICE_URL: http://rental-service:3003
+      CONTRACT_SERVICE_URL: http://contract-service:3004
+      PAYMENT_SERVICE_URL: http://payment-service:3005
+      TRACKING_SERVICE_URL: http://tracking-service:3006
+      DISPUTE_SERVICE_URL: http://dispute-service:3008
+      REVIEW_SERVICE_URL: http://review-service:3009
+      NOTIFICATION_SERVICE_URL: http://notification-service:3010
+      STATISTIC_SERVICE_URL: http://statistic-service:3011
+      JWT_PUBLIC_KEY_PATH: ./keys/public.key
+      JWT_ALGORITHM: RS256
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
+    depends_on:
+      user-service:
+        condition: service_started
+      vehicle-service:
+        condition: service_started
+      rental-service:
+        condition: service_started
+      contract-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      tracking-service:
+        condition: service_started
+      dispute-service:
+        condition: service_started
+      review-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      statistic-service:
+        condition: service_started
+    networks:
+      - app-network
+
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 5173"
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - app-network
+
+volumes:
+  user_service_node_modules:
+  vehicle_service_node_modules:
+  rental_service_node_modules:
+  contract_service_node_modules:
+  payment_service_node_modules:
+  tracking_service_node_modules:
+  image_service_node_modules:
+  dispute_service_node_modules:
+  review_service_node_modules:
+  notification_service_node_modules:
+  statistic_service_node_modules:
+  api_gateway_node_modules:
+  web_node_modules:

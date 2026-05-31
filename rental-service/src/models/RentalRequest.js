@@ -50,9 +50,31 @@ const rental_request_schema = new mongoose.Schema(
       type: String,
       required: true
     },
+    city: {
+      type: String,
+      default: ''
+    },
+    district: {
+      type: String,
+      default: ''
+    },
+    allowed_region: {
+      type: String,
+      default: ''
+    },
     status: {
       type: String,
-      enum: ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED'],
+      enum: [
+        'PENDING',
+        'APPROVED',
+        'CONFIRMED',
+        'REJECTED',
+        'CANCELLED',
+        'ACTIVE',
+        'RETURN_REQUESTED',
+        'COMPLETED',
+        'DISPUTED'
+      ],
       default: 'PENDING'
     },
     daily_rate: Number,
@@ -61,6 +83,10 @@ const rental_request_schema = new mongoose.Schema(
     deposit_amount: Number,
     platform_fee: Number,
     notes: String,
+    pickup_confirmed_at: Date,
+    return_requested_at: Date,
+    completed_at: Date,
+    dispute_reason: String,
     created_at: {
       type: Date,
       default: Date.now
@@ -72,5 +98,11 @@ const rental_request_schema = new mongoose.Schema(
   },
   { collection: 'rental_requests' }
 );
+
+rental_request_schema.index({ renter_id: 1, created_at: -1 });
+rental_request_schema.index({ owner_id: 1, created_at: -1 });
+rental_request_schema.index({ vehicle_id: 1, status: 1, rental_start_date: 1, rental_end_date: 1 });
+rental_request_schema.index({ status: 1, created_at: -1 });
+rental_request_schema.index({ created_at: -1 });
 
 export default mongoose.model('RentalRequest', rental_request_schema);

@@ -19,11 +19,11 @@ export class RentalRepository {
   }
 
   async findByRenterId(renterId) {
-    return await RentalRequest.find({ renter_id: renterId });
+    return await RentalRequest.find({ renter_id: renterId }).sort({ created_at: -1 });
   }
 
   async findByOwnerId(ownerId) {
-    return await RentalRequest.find({ owner_id: ownerId });
+    return await RentalRequest.find({ owner_id: ownerId }).sort({ created_at: -1 });
   }
 
   async findByVehicleId(vehicleId) {
@@ -34,7 +34,12 @@ export class RentalRepository {
     return await RentalRequest.find({ status });
   }
 
-  async findAll(filters = {}) {
-    return await RentalRequest.find(filters);
+  async findAll(filters = {}, options = {}) {
+    const limit = Number.parseInt(options.limit, 10) || 0;
+    const query = RentalRequest.find(filters).sort({ created_at: -1 });
+    if (limit > 0) {
+      query.limit(Math.min(limit, 500));
+    }
+    return await query;
   }
 }

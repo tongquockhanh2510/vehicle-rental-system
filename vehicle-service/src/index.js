@@ -12,6 +12,14 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log('MongoDB connection error:', err));
 
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'vehicle-service',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 app.use('/api/vehicles', vehicleRoutes);
 
 app.listen(PORT, () => {

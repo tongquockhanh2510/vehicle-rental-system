@@ -1,6 +1,13 @@
 node_modules/
 .env
 .env.*
+.env.local
+!.env.example
+!**/.env.example
+**/.env
+**/.env.local
+**/.env.development
+**/.env.production
 .DS_Store
 *.log
 dist/
@@ -12,3 +19,13 @@ build/
 *~
 .git/
 *.key
+*.pem
+private.key
+keys/private.key
+**/private.key
+**/keys/private.key
+prompt-*.md
+COMPLETION_SUMMARY.md
+KEY_SETUP.md
+e2e-result.json
+image-service/uploads/

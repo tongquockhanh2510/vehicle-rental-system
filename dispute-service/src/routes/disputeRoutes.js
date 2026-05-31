@@ -4,12 +4,32 @@ import { authenticateToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+function isAdmin(req) {
+  return String(req.userRole || '').toUpperCase() === 'ADMIN';
+}
+
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const dispute = await disputeService.createDispute(req.body, req.userId, req.headers.authorization);
     res.status(201).json(dispute);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/admin/list', authenticateToken, async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const disputes = await disputeService.getAdminDisputes(req.query || {});
+    return res.json({
+      success: true,
+      data: disputes
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Failed to fetch admin disputes' });
   }
 });
 

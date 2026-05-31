@@ -84,4 +84,10 @@ const contract_schema = new mongoose.Schema(
   { collection: 'contracts' }
 );
 
+contract_schema.index({ renter_id: 1, created_at: -1 });
+contract_schema.index({ owner_id: 1, created_at: -1 });
+contract_schema.index({ vehicle_id: 1, status: 1 });
+contract_schema.index({ rental_request_id: 1 }, { unique: true });
+contract_schema.index({ status: 1, created_at: -1 });
+
 export default mongoose.model('Contract', contract_schema);

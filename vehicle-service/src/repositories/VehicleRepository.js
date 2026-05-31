@@ -1,82 +1,109 @@
 import Vehicle from '../models/Vehicle.js';
 
 export class VehicleRepository {
+  buildSort(sort = '-created_at') {
+    const allowedSort = new Set(['created_at', '-created_at', 'daily_rate', '-daily_rate', 'average_rating', '-average_rating']);
+    return allowedSort.has(sort) ? sort : '-created_at';
+  }
+
+  async paginateQuery(query, page = 1, limit = 10, sort = '-created_at') {
+    const safePage = Math.max(Number.parseInt(page, 10) || 1, 1);
+    const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 10, 1), 50);
+    const skip = (safePage - 1) * safeLimit;
+    const safeSort = this.buildSort(sort);
+
+    const [total, data] = await Promise.all([
+      Vehicle.countDocuments(query),
+      Vehicle.find(query).sort(safeSort).skip(skip).limit(safeLimit).lean()
+    ]);
+
+    return {
+      data,
+      pagination: {
+        total,
+        page: safePage,
+        limit: safeLimit,
+        pages: Math.ceil(total / safeLimit)
+      }
+    };
+  }
+
   async create(vehicleData) {
     const vehicle = new Vehicle(vehicleData);
     return await vehicle.save();
   }
 
   async findById(id) {
-    return await Vehicle.findById(id);
+    return await Vehicle.findById(id).lean();
   }
 
   async update(id, updateData) {
     return await Vehicle.findByIdAndUpdate(
       id,
       { ...updateData, updated_at: new Date() },
-      { new: true }
+      { new: true, lean: true }
     );
   }
 
   async findByOwnerId(ownerId, page = 1, limit = 10, sort = '-created_at') {
-    const skip = (page - 1) * limit;
-    const total = await Vehicle.countDocuments({ owner_id: ownerId });
-    const data = await Vehicle.find({ owner_id: ownerId })
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
-    
-    return {
-      data,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
-    };
+    return this.paginateQuery({ owner_id: ownerId }, page, limit, sort);
   }
 
   async findAvailable(filters = {}, page = 1, limit = 10, sort = '-created_at') {
-    const skip = (page - 1) * limit;
     const query = { is_available: true, ...filters };
-    const total = await Vehicle.countDocuments(query);
-    const data = await Vehicle.find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
-    
-    return {
-      data,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
-    };
+    return this.paginateQuery(query, page, limit, sort);
   }
 
   async findAll(filters = {}, page = 1, limit = 10, sort = '-created_at') {
-    const skip = (page - 1) * limit;
-    const total = await Vehicle.countDocuments(filters);
-    const data = await Vehicle.find(filters)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
-    
-    return {
-      data,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
+    return this.paginateQuery(filters, page, limit, sort);
+  }
+
+  async searchVehicles(filters = {}, keyword = '', page = 1, limit = 10, sort = '-created_at') {
+    const query = { ...filters };
+
+    if (keyword && keyword.trim().length > 0) {
+      query.$or = [
+        { brand: { $regex: keyword.trim(), $options: 'i' } },
+        { model: { $regex: keyword.trim(), $options: 'i' } },
+        { description: { $regex: keyword.trim(), $options: 'i' } },
+        { license_plate: { $regex: keyword.trim(), $options: 'i' } }
+      ];
+    }
+
+    return this.paginateQuery(query, page, limit, sort);
+  }
+
+  async suggestKeywords(keyword = '', limit = 8) {
+    const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 8, 1), 20);
+    const q = (keyword || '').trim();
+
+    if (!q) {
+      return [];
+    }
+
+    const regex = new RegExp(q, 'i');
+
+    const [brands, models] = await Promise.all([
+      Vehicle.find({ brand: regex }, { brand: 1, _id: 0 }).limit(safeLimit).lean(),
+      Vehicle.find({ model: regex }, { model: 1, _id: 0 }).limit(safeLimit).lean()
+    ]);
+
+    const suggestions = new Set();
+    for (const b of brands) {
+      if (b.brand) {
+        suggestions.add(b.brand);
       }
-    };
+    }
+    for (const m of models) {
+      if (m.model) {
+        suggestions.add(m.model);
+      }
+    }
+
+    return Array.from(suggestions).slice(0, safeLimit);
   }
 
   async delete(id) {
-    return await Vehicle.findByIdAndDelete(id);
+    return await Vehicle.findByIdAndDelete(id).lean();
   }
 }

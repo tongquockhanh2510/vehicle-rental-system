@@ -2,22 +2,128 @@ import { VehicleRepository } from '../repositories/VehicleRepository.js';
 import { createClient } from 'redis';
 import axios from 'axios';
 import FormData from 'form-data';
+import mongoose from 'mongoose';
 
 const vehicleRepository = new VehicleRepository();
-console.log('Redis URL:', process.env.REDIS_URL);
-const redisClient = createClient({url: process.env.REDIS_URL});
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-await redisClient.connect();
+const redisClient = createClient({
+  url: process.env.REDIS_URL,
+  socket: {
+    connectTimeout: 2000,
+    // Do not block service startup when Redis is down.
+    reconnectStrategy: () => false,
+  },
+});
+const CACHE_TTL_SECONDS = Number.parseInt(process.env.VEHICLE_CACHE_TTL || '120', 10);
+
+redisClient.on('error', (err) => console.log('Redis Client Error', err.message));
+
+async function initRedis() {
+  try {
+    await redisClient.connect();
+    console.log('Connected to Redis');
+  } catch (error) {
+    console.log('Redis unavailable, continue without cache:', error.message);
+  }
+}
+
+void initRedis();
 
 export class VehicleService {
+  normalizeVehicleType(value) {
+    const raw = String(value || '').toUpperCase();
+    if (!raw) return '';
+    if (raw === 'MOTORBIKE') return 'MOTORCYCLE';
+    if (raw === 'SEVEN_SEAT_CAR' || raw === '7_SEAT_CAR') return 'SEVEN_SEATER';
+    if (raw === 'MINI_TRUCK') return 'OTHER';
+    if (raw === 'SUV' || raw === 'LUXURY_CAR' || raw === 'SELF_DRIVE_CAR' || raw === 'WITH_DRIVER_CAR' || raw === 'ELECTRIC_BIKE' || raw === 'MOUNTAIN_BIKE') return 'CAR';
+    return raw;
+  }
+
+  normalizeVehiclePayload(vehicleData = {}) {
+    const next = { ...vehicleData };
+    if (next.vehicle_type) {
+      next.vehicle_type = this.normalizeVehicleType(next.vehicle_type);
+    }
+    return next;
+  }
+
+  cacheEnabled() {
+    return redisClient?.isOpen;
+  }
+
+  buildListCacheKey(prefix, payload) {
+    return `${prefix}:${JSON.stringify(payload)}`;
+  }
+
+  async getFromCache(key) {
+    if (!this.cacheEnabled()) {
+      return null;
+    }
+
+    try {
+      const cached = await redisClient.get(key);
+      return cached ? JSON.parse(cached) : null;
+    } catch (err) {
+      console.log('Redis get cache error:', err.message);
+      return null;
+    }
+  }
+
+  async setCache(key, data, ttl = CACHE_TTL_SECONDS) {
+    if (!this.cacheEnabled()) {
+      return;
+    }
+
+    try {
+      await redisClient.setEx(key, ttl, JSON.stringify(data));
+    } catch (err) {
+      console.log('Redis set cache error:', err.message);
+    }
+  }
+
+  async invalidateVehicleCaches() {
+    if (!this.cacheEnabled()) {
+      return;
+    }
+
+    try {
+      const keys = [];
+      for await (const key of redisClient.scanIterator({
+        MATCH: 'vehicles:*',
+        COUNT: 100
+      })) {
+        keys.push(key);
+      }
+
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    } catch (err) {
+      console.log('Redis invalidate cache error:', err.message);
+    }
+  }
+
+  normalizeImageFiles(files) {
+    if (!files) {
+      return [];
+    }
+
+    if (Array.isArray(files)) {
+      return files;
+    }
+
+    return files.images || [];
+  }
+
   async createVehicle(userId, vehicleData, files, authToken) {
-    if (!files || files.length === 0) {
+    const imageFiles = this.normalizeImageFiles(files);
+    if (imageFiles.length === 0) {
       throw new Error('Missing required image files');
     }
+
     try {
-      ;
       const uploadedUrls = [];
-      for (const file of files) {
+      for (const file of imageFiles) {
         const formData = new FormData();
         formData.append('file', file.buffer, {
           filename: file.originalname,
@@ -31,50 +137,44 @@ export class VehicleService {
         });
         uploadedUrls.push(response.data.data.url);
       }
-      const vehicle = await vehicleRepository.create({ ...vehicleData, owner_id: userId, images: uploadedUrls });
+
+      const normalizedVehicleData = this.normalizeVehiclePayload(vehicleData);
+      const vehicle = await vehicleRepository.create({ ...normalizedVehicleData, owner_id: userId, images: uploadedUrls });
+      await this.invalidateVehicleCaches();
       return vehicle;
     } catch (error) {
+      const upstream = error.response
+        ? ` status=${error.response.status} body=${JSON.stringify(error.response.data)}`
+        : '';
+      console.log(`Create vehicle upload error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to create vehicle: ${error.message}`);
     }
   }
 
   async getVehicleById(vehicleId) {
-    const cacheKey = `vehicle:${vehicleId}`;
+    const cacheKey = `vehicles:detail:${vehicleId}`;
 
-    // Try to get from cache
-    try {
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch (err) {
-      console.log('Redis error:', err);
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     const vehicle = await vehicleRepository.findById(vehicleId);
 
-    // Cache the result
-    if (vehicle) {
-      try {
-        await redisClient.setEx(cacheKey, 3600, JSON.stringify(vehicle));
-      } catch (err) {
-        console.log('Redis cache error:', err);
-      }
+    if (!vehicle) {
+      throw new Error('Vehicle not found');
     }
 
+    await this.setCache(cacheKey, vehicle, 3600);
     return vehicle;
   }
 
   async updateVehicle(vehicleId, updateData) {
-    const vehicle = await vehicleRepository.update(vehicleId, updateData);
+    const normalizedUpdateData = this.normalizeVehiclePayload(updateData);
+    const vehicle = await vehicleRepository.update(vehicleId, normalizedUpdateData);
 
-    // Invalidate cache
-    const cacheKey = `vehicle:${vehicleId}`;
-    try {
-      await redisClient.del(cacheKey);
-    } catch (err) {
-      console.log('Redis cache delete error:', err);
-    }
+    await this.setCache(`vehicles:detail:${vehicleId}`, vehicle, 3600);
+    await this.invalidateVehicleCaches();
 
     return vehicle;
   }
@@ -84,11 +184,140 @@ export class VehicleService {
   }
 
   async getAvailableVehicles(filters = {}, page = 1, limit = 10, sort = '-created_at') {
-    return await vehicleRepository.findAvailable(filters, page, limit, sort);
+    const keyword = filters.keyword || '';
+    const cleanFilters = this.normalizeVehiclePayload({ ...filters });
+    delete cleanFilters.keyword;
+
+    const cacheKey = this.buildListCacheKey('vehicles:list:available', {
+      filters: cleanFilters,
+      keyword,
+      page,
+      limit,
+      sort
+    });
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = keyword
+      ? await vehicleRepository.searchVehicles({ is_available: true, ...cleanFilters }, keyword, page, limit, sort)
+      : await vehicleRepository.findAvailable(cleanFilters, page, limit, sort);
+
+    await this.setCache(cacheKey, result);
+    return result;
   }
 
   async searchVehicles(filters = {}, page = 1, limit = 10, sort = '-created_at') {
-    return await vehicleRepository.findAll(filters, page, limit, sort);
+    const keyword = filters.keyword || '';
+    const cleanFilters = this.normalizeVehiclePayload({ ...filters });
+    delete cleanFilters.keyword;
+
+    const cacheKey = this.buildListCacheKey('vehicles:list:search', {
+      filters: cleanFilters,
+      keyword,
+      page,
+      limit,
+      sort
+    });
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = keyword
+      ? await vehicleRepository.searchVehicles(cleanFilters, keyword, page, limit, sort)
+      : await vehicleRepository.findAll(cleanFilters, page, limit, sort);
+
+    await this.setCache(cacheKey, result);
+    return result;
+  }
+
+  async suggestKeywords(keyword, limit = 8) {
+    const cacheKey = this.buildListCacheKey('vehicles:suggest', { keyword, limit });
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const suggestions = await vehicleRepository.suggestKeywords(keyword, limit);
+    await this.setCache(cacheKey, suggestions);
+    return suggestions;
+  }
+
+  async getAdminVehicles(filters = {}, page = 1, limit = 50, sort = '-created_at') {
+    const keyword = filters.keyword || '';
+    const cleanFilters = this.normalizeVehiclePayload({ ...filters });
+    delete cleanFilters.keyword;
+
+    const cacheKey = this.buildListCacheKey('vehicles:list:admin', {
+      filters: cleanFilters,
+      keyword,
+      page,
+      limit,
+      sort
+    });
+
+    const cached = await this.getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const result = keyword
+      ? await vehicleRepository.searchVehicles(cleanFilters, keyword, page, limit, sort)
+      : await vehicleRepository.findAll(cleanFilters, page, limit, sort);
+
+    const ownerIds = Array.from(
+      new Set(
+        (result?.data || [])
+          .map((item) => String(item?.owner_id || ''))
+          .filter(Boolean)
+      )
+    );
+
+    if (ownerIds.length) {
+      const objectIds = ownerIds
+        .filter((value) => mongoose.Types.ObjectId.isValid(value))
+        .map((value) => new mongoose.Types.ObjectId(value));
+      const users = await mongoose.connection
+        .collection('users')
+        .find(
+          { _id: { $in: objectIds } },
+          {
+            projection: {
+              _id: 1,
+              email: 1,
+              first_name: 1,
+              last_name: 1,
+              owner_status: 1
+            }
+          }
+        )
+        .toArray();
+
+      const ownerMap = new Map(
+        users.map((user) => [
+          String(user._id),
+          {
+            _id: user._id,
+            email: user.email || '',
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            owner_status: user.owner_status || 'NONE'
+          }
+        ])
+      );
+
+      result.data = (result.data || []).map((vehicle) => ({
+        ...vehicle,
+        owner: ownerMap.get(String(vehicle.owner_id || '')) || null
+      }));
+    }
+
+    await this.setCache(cacheKey, result, 30);
+    return result;
   }
 
   async deleteVehicle(vehicleId, userId, authToken) {
@@ -113,13 +342,16 @@ export class VehicleService {
         }
       }
     }
-    const cacheKey = `vehicle:${vehicleId}`;
-    try {
-      await redisClient.del(cacheKey);
-    } catch (err) {
-      console.log('Redis cache delete error:', err);
+    const deleted = await vehicleRepository.delete(vehicleId);
+    await this.invalidateVehicleCaches();
+    if (this.cacheEnabled()) {
+      try {
+        await redisClient.del(`vehicles:detail:${vehicleId}`);
+      } catch (err) {
+        console.log('Redis detail cache delete error:', err.message);
+      }
     }
-    return await vehicleRepository.delete(vehicleId);
+    return deleted;
   }
 
   async addVehicleImages(vehicleId, files) {
@@ -128,7 +360,8 @@ export class VehicleService {
       throw new Error('Vehicle not found');
     }
 
-    if (!files || files.length === 0) {
+    const imageFiles = this.normalizeImageFiles(files);
+    if (imageFiles.length === 0) {
       throw new Error('No image files provided');
     }
 
@@ -137,7 +370,7 @@ export class VehicleService {
       const uploadedUrls = [];
 
       // Upload each file to image-service
-      for (const file of files) {
+      for (const file of imageFiles) {
         const formData = new FormData();
         formData.append('file', file.buffer, {
           filename: file.originalname,
@@ -160,6 +393,10 @@ export class VehicleService {
 
       return updatedVehicle;
     } catch (error) {
+      const upstream = error.response
+        ? ` status=${error.response.status} body=${JSON.stringify(error.response.data)}`
+        : '';
+      console.log(`Add vehicle images error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to upload vehicle images: ${error.message}`);
     }
   }
@@ -187,12 +424,18 @@ export class VehicleService {
 
       return updatedVehicle;
     } catch (error) {
+      const upstream = error.response
+        ? ` status=${error.response.status} body=${JSON.stringify(error.response.data)}`
+        : '';
+      console.log(`Delete vehicle image error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to delete vehicle image: ${error.message}`);
     }
   }
 
   async updateAvailability(vehicleId, isAvailable) {
-    return await this.updateVehicle(vehicleId, { is_available: isAvailable });
+    const vehicle = await this.updateVehicle(vehicleId, { is_available: isAvailable });
+    await this.invalidateVehicleCaches();
+    return vehicle;
   }
 }
 
