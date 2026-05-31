@@ -1,4 +1,4 @@
-﻿services:
+services:
   user-service:
     image: node:22-alpine
     working_dir: /app
@@ -35,6 +35,7 @@
       REDIS_URL: redis://:password@redis:6379
       IMAGE_SERVICE_URL: http://image-service:3007
       SERVICE_TOKEN: internal-service-token
+      AI_SERVICE_URL: http://ai-service:5010
       JWT_PUBLIC_KEY_PATH: ./public.key
       JWT_ALGORITHM: RS256
     depends_on:
@@ -257,7 +258,6 @@
     networks:
       - app-network
 
-
   ai-service:
     image: node:22-alpine
     working_dir: /app
@@ -269,8 +269,6 @@
     environment:
       PORT: 5010
       STATISTIC_SERVICE_URL: http://statistic-service:3011
-      AI_SERVICE_URL: http://ai-service:5010
-      AI_AGENT_SERVICE_URL: http://ai-agent-service:5011
       REVIEW_SERVICE_URL: http://review-service:3009
       VEHICLE_SERVICE_URL: http://vehicle-service:3002
       RENTAL_SERVICE_URL: http://rental-service:3003
@@ -279,10 +277,6 @@
       review-service:
         condition: service_started
       statistic-service:
-      ai-service:
-        condition: service_started
-      ai-agent-service:
-        condition: service_started
         condition: service_started
     networks:
       - app-network
@@ -304,6 +298,7 @@
         condition: service_started
     networks:
       - app-network
+
   api-gateway:
     image: node:22-alpine
     working_dir: /app
@@ -389,8 +384,6 @@ volumes:
   review_service_node_modules:
   notification_service_node_modules:
   statistic_service_node_modules:
-  ai_service_node_modules:
-  ai_agent_service_node_modules:
   ai_service_node_modules:
   ai_agent_service_node_modules:
   api_gateway_node_modules:
