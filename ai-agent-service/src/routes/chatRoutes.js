@@ -25,7 +25,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // Step 1: Extract intent and slots from natural language
-    const slots = extractIntent(message);
+    const slots = await extractIntent(message);
 
     if (slots.intent === 'UNKNOWN') {
       return res.json({
@@ -108,12 +108,12 @@ router.post('/chat', async (req, res) => {
  * POST /api/ai-agent/extract-intent
  * Debug endpoint to test intent extraction without searching.
  */
-router.post('/extract-intent', (req, res) => {
+router.post('/extract-intent', async (req, res) => {
   const { message } = req.body;
   if (!message) {
     return res.status(400).json({ error: 'message is required' });
   }
-  const slots = extractIntent(message);
+  const slots = await extractIntent(message);
   return res.json(slots);
 });
 

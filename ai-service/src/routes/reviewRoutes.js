@@ -51,7 +51,7 @@ router.post('/summarize', async (req, res) => {
       console.warn('[reviews] Could not fetch reviews:', err.message);
     }
 
-    const summary = summarizeReviews(vehicleId, reviews);
+    const summary = await summarizeReviews(vehicleId, reviews);
     setCache(vehicleId, summary);
 
     return res.json(summary);

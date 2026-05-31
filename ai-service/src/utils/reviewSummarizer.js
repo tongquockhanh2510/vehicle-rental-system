@@ -1,8 +1,4 @@
-/**
- * reviewSummarizer.js
- * Rule-based review summarizer.
- * Analyzes review texts and ratings to produce structured summaries.
- */
+import axios from 'axios';
 
 // Keywords that indicate positive sentiment
 const POSITIVE_KEYWORDS = [
@@ -83,7 +79,7 @@ function extractAspects(text) {
  * @param {Array<{rating: number, comment: string, created_at: string}>} reviews
  * @returns {object} structured summary
  */
-export function summarizeReviews(vehicleId, reviews) {
+export async function summarizeReviews(vehicleId, reviews) {
   if (!reviews || reviews.length === 0) {
     return {
       vehicleId,
@@ -103,6 +99,61 @@ export function summarizeReviews(vehicleId, reviews) {
 
   const totalRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
   const averageRating = totalRating / reviews.length;
+
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (geminiApiKey) {
+    try {
+      const serializedReviews = reviews.map((r, i) => `Review #${i+1} (${r.rating} stars): "${r.comment || ''}"`).join('\n');
+      const prompt = `You are an AI reviews analyzer for a peer-to-peer (P2P) vehicle rental system. Your task is to analyze the following user reviews for vehicle ID "${vehicleId}" and generate a structured JSON summary.
+
+Reviews:
+${serializedReviews}
+
+Please return ONLY a JSON object with the following schema:
+{
+  "summary": {
+    "pros": ["bullet points of pros in Vietnamese, e.g. 'Chủ xe thân thiện', 'Xe sạch sẽ'"],
+    "cons": ["bullet points of cons in Vietnamese, e.g. 'Máy lạnh yếu'"],
+    "commonComplaints": ["recurring issues mentioned by multiple users in Vietnamese"],
+    "ownerBehavior": "brief summary of how the owner treats renters and punctuality in Vietnamese",
+    "vehicleCondition": "brief summary of the car/motorcycle condition in Vietnamese",
+    "recommendation": "overall recommendation to potential renters in Vietnamese"
+  }
+}
+
+Strict follow these rules:
+1. Do not wrap the output in markdown block (do NOT use \`\`\`json). Just output raw JSON.
+2. If there are no negative points, "cons" and "commonComplaints" should be empty arrays.
+3. Write everything in the "summary" object in natural, friendly Vietnamese since the target users are Vietnamese renters.`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
+        },
+        { timeout: 7000 }
+      );
+
+      const responseText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (responseText) {
+        const result = JSON.parse(responseText.trim());
+        return {
+          vehicleId,
+          summary: result.summary,
+          averageRating: Math.round(averageRating * 10) / 10,
+          reviewCount: reviews.length,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    } catch (geminiError) {
+      console.warn('[ai-service] Gemini API reviews summarizer failed, falling back to rule-based parser:', geminiError.message);
+    }
+  }
 
   // Sentiment analysis
   const sentimentScores = reviews.map((r) => ({

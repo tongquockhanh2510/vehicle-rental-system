@@ -1,10 +1,4 @@
-/**
- * intentExtractor.js
- * Rule-based NLP intent extractor for Vietnamese and English.
- * Extracts: intent, vehicleType, location, startDate, endDate, maxPrice, passengerPurpose.
- *
- * Designed to be replaceable by an LLM call (OpenAI, Gemini, etc.) later.
- */
+import axios from 'axios';
 
 // ─── Vehicle type mappings ──────────────────────────────────────────────────
 const VEHICLE_TYPE_PATTERNS = {
@@ -237,9 +231,60 @@ function extractPassengerPurpose(text) {
  * @param {string} message
  * @returns {object} slots
  */
-export function extractIntent(message) {
+export async function extractIntent(message) {
   if (!message || typeof message !== 'string') {
     return { intent: 'UNKNOWN', error: 'Empty or invalid message' };
+  }
+
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (geminiApiKey) {
+    try {
+      const nowString = new Date().toISOString();
+      const prompt = `You are an AI assistant for a peer-to-peer (P2P) vehicle rental system. Your task is to extract intent and entities (slots) from the following user message: "${message}".
+
+The current year is ${new Date().getFullYear()}.
+
+Please return ONLY a JSON object with the following schema:
+{
+  "intent": "SEARCH_VEHICLE" | "BOOK_VEHICLE" | "CANCEL_BOOKING" | "QUERY_PRICE" | "UNKNOWN",
+  "vehicleType": "SEVEN_SEATER" | "PICKUP_TRUCK" | "MOTORCYCLE" | "BICYCLE" | "CAR" | null,
+  "location": "capitalized city/district/area name in Vietnam (e.g. 'Hồ Chí Minh', 'Hà Nội', 'Đà Lạt', 'Quận 1') or null",
+  "startDate": "ISO format YYYY-MM-DDT[HH:MM:SS] normalized or null",
+  "endDate": "ISO format YYYY-MM-DDT[HH:MM:SS] normalized or null",
+  "maxPrice": number (in VND, parse expressions like "1.5 triệu" to 1500000, "800k" to 800000) or null,
+  "passengerPurpose": "family trip" | "tourism" | "business" | "wedding" | "group trip" | null
+}
+
+Strict follow these rules:
+1. Do not wrap the output in markdown block (do NOT use \`\`\`json). Just output raw JSON.
+2. For dates (startDate, endDate), calculate them relatively based on today's timestamp: ${nowString}. E.g. "ngày mai" is tomorrow, "thứ sáu này" is this week's Friday, "tuần sau" is next week. If the user only specifies a start day, set end day to null.
+3. For vehicleType, choose only from: "SEVEN_SEATER" (7 chỗ, innova, fortuner), "PICKUP_TRUCK" (bán tải, pickup), "MOTORCYCLE" (xe máy, motor, scooter), "BICYCLE" (xe đạp, bike), "CAR" (4 chỗ, 5 chỗ, sedan, hatchback, ô tô, xe hơi). Otherwise null.
+4. If a field cannot be determined, set it to null.`;
+
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+        {
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
+        },
+        { timeout: 7000 }
+      );
+
+      const responseText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (responseText) {
+        const slots = JSON.parse(responseText.trim());
+        return {
+          ...slots,
+          rawMessage: message
+        };
+      }
+    } catch (geminiError) {
+      console.warn('[ai-agent] Gemini API intent extraction failed, falling back to rule-based parser:', geminiError.message);
+    }
   }
 
   const text = message.trim();
