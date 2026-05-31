@@ -3,6 +3,7 @@ import { createClient } from 'redis';
 import axios from 'axios';
 import FormData from 'form-data';
 import mongoose from 'mongoose';
+import { requestSmartPricing, requestTrustScore } from './aiClient.js';
 
 const vehicleRepository = new VehicleRepository();
 const redisClient = createClient({
@@ -141,6 +142,16 @@ export class VehicleService {
       const normalizedVehicleData = this.normalizeVehiclePayload(vehicleData);
       const vehicle = await vehicleRepository.create({ ...normalizedVehicleData, owner_id: userId, images: uploadedUrls });
       await this.invalidateVehicleCaches();
+
+      // After creation, request smart pricing asynchronously (non-blocking)
+      if (normalizedVehicleData.smart_pricing_enabled) {
+        this.updateSmartPricing(vehicle._id.toString(), {
+          vehicleType: vehicle.vehicle_type,
+          location: vehicle.pickup_location,
+          basePrice: vehicle.daily_rate,
+        }).catch((err) => console.error('[VehicleService] Smart pricing update failed:', err.message));
+      }
+
       return vehicle;
     } catch (error) {
       const upstream = error.response
@@ -149,6 +160,37 @@ export class VehicleService {
       console.log(`Create vehicle upload error:${upstream || ` ${error.message}`}`);
       throw new Error(`Failed to create vehicle: ${error.message}`);
     }
+  }
+
+  /**
+   * Call ai-service to get smart pricing and update the vehicle document.
+   */
+  async updateSmartPricing(vehicleId, { vehicleType, location, basePrice }) {
+    const result = await requestSmartPricing({ vehicleId, vehicleType, location, basePrice });
+    if (!result) return; // ai-service failed, keep base price
+
+    await vehicleRepository.update(vehicleId, {
+      suggested_price: result.suggestedPrice,
+      suggested_price_reason: result.reason,
+      ai_pricing_updated_at: new Date(),
+    });
+    console.log(`[VehicleService] Smart pricing updated for vehicle ${vehicleId}: ${result.suggestedPrice}`);
+  }
+
+  /**
+   * Call ai-service to calculate trust score and update the vehicle document.
+   */
+  async updateTrustScore(vehicleId, ownerId) {
+    const result = await requestTrustScore(vehicleId, ownerId);
+    if (!result) return;
+
+    await vehicleRepository.update(vehicleId, {
+      trust_score: result.trustScore,
+      trust_score_level: result.level,
+      trust_score_explanation: result.explanation,
+      trust_score_updated_at: new Date(),
+    });
+    console.log(`[VehicleService] Trust score updated for vehicle ${vehicleId}: ${result.trustScore}`);
   }
 
   async getVehicleById(vehicleId) {

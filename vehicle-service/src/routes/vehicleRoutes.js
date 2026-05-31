@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import vehicleService from '../services/VehicleService.js';
 import { authenticateToken } from '../middlewares/auth.js';
 import upload from '../middlewares/upload.js';
@@ -214,6 +214,34 @@ router.put('/:vehicleId/availability', async (req, res) => {
     res.json(vehicle);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/:vehicleId/smart-pricing', authenticateToken, async (req, res) => {
+  try {
+    const vehicle = await vehicleService.getVehicleById(req.params.vehicleId);
+
+    if (vehicle.owner_id.toString() !== req.userId) {
+      return res.status(403).json({ error: 'Not authorized to update smart pricing for this vehicle' });
+    }
+
+    const { enabled } = req.body;
+    const updatedVehicle = await vehicleService.updateVehicle(req.params.vehicleId, {
+      smart_pricing_enabled: !!enabled,
+    });
+
+    if (enabled) {
+      // Trigger async AI pricing update (non-blocking)
+      vehicleService.updateSmartPricing(req.params.vehicleId, {
+        vehicleType: vehicle.vehicle_type,
+        location: vehicle.pickup_location,
+        basePrice: vehicle.daily_rate,
+      }).catch((err) => console.error('[route] smart pricing update error:', err.message));
+    }
+
+    return res.json({ message: `Smart pricing ${enabled ? 'enabled' : 'disabled'}`, vehicle: updatedVehicle });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 });
 

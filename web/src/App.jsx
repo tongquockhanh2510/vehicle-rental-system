@@ -13,6 +13,7 @@ import BecomeOwnerIntroPage from './pages/public/BecomeOwnerIntroPage';
 import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import NotFoundPage from './pages/public/NotFoundPage';
+import AIAssistantPage from './pages/public/AIAssistantPage';
 
 import ExplorePage from './pages/renter/ExplorePage';
 import RentalRequestsPage from './pages/renter/RentalRequestsPage';
@@ -71,6 +72,7 @@ function App() {
               <Route path="/become-owner" element={<BecomeOwnerIntroPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/ai-assistant" element={<AIAssistantPage />} />
             </Route>
 
             <Route
