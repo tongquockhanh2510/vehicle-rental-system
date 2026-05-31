@@ -243,8 +243,10 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
               <button
                 key={item.value}
                 type="button"
+                aria-pressed={selected}
+                disabled={loading}
                 onClick={() => onSelectCategory(item.value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-60 ${
                   selected
                     ? "bg-cyan-500 text-slate-950"
                     : "border border-white/15 text-slate-200 hover:bg-white/10"
