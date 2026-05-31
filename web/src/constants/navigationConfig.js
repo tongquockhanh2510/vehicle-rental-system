@@ -1,11 +1,14 @@
-﻿export const PUBLIC_NAV = [
+export const PUBLIC_NAV = [
   { label: 'Khám phá phương tiện', to: '/vehicles' },
   { label: 'Cách hoạt động', to: '/how-it-works' },
+  { label: '✨ AI Trợ lý', to: '/ai-assistant' },
   { label: 'Đăng ký làm chủ xe', to: '/become-owner' }
 ];
 
 export const RENTER_MENU = [
-  { label: 'Khám phá', to: '/app/explore', icon: 'Compass' },
+  { label: 'Khám phá phương tiện', to: '/app/explore', icon: 'Compass' },
+  { label: 'Cách hoạt động', to: '/how-it-works', icon: 'HelpCircle' },
+  { label: 'AI Trợ lý', to: '/ai-assistant', icon: 'Sparkles' },
   { label: 'Yêu cầu thuê', to: '/app/requests', icon: 'ClipboardList' },
   { label: 'Hợp đồng thuê', to: '/app/contracts', icon: 'FileCheck2' },
   { label: 'Thanh toán của tôi', to: '/app/payments', icon: 'Wallet' },
@@ -36,5 +39,6 @@ export const ADMIN_MENU = [
   { label: 'Hợp đồng', to: '/admin/contracts', icon: 'FileCheck2' },
   { label: 'Thanh toán', to: '/admin/payments', icon: 'WalletCards' },
   { label: 'Tranh chấp', to: '/admin/disputes', icon: 'Scale' },
-  { label: 'Thống kê', to: '/admin/statistics', icon: 'BarChart3' }
+  { label: 'Thống kê', to: '/admin/statistics', icon: 'BarChart3' },
+  { label: 'AI Agent', to: '/admin/ai-agent', icon: 'Bot' }
 ];
