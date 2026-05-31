@@ -28,6 +28,24 @@ function upper(value) {
   return String(value || '').toUpperCase();
 }
 
+function parseDateOnly(value) {
+  const [year, month, day] = String(value || '').split('-').map(Number);
+  if (!year || !month || !day) return new Date(Number.NaN);
+  return new Date(year, month - 1, day);
+}
+
+function startOfToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+function startOfTomorrow() {
+  const tomorrow = startOfToday();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow;
+}
+
 function buildVehicleLocationSnapshot(vehicle = {}) {
   const cityDistrict = [vehicle.district, vehicle.city].filter(Boolean).join(', ');
   const pickupLocation =
@@ -175,13 +193,22 @@ export class RentalService {
 
     const startDateValue = rentalData.rental_start_date || rentalData.start_date;
     const endDateValue = rentalData.rental_end_date || rentalData.end_date;
-    const startDate = new Date(startDateValue);
-    const endDate = new Date(endDateValue);
+
+    // Date inputs arrive as YYYY-MM-DD. Parse them as local dates so timezone
+    // conversion cannot move the booking to the previous day.
+    const startDate = parseDateOnly(startDateValue);
+    const endDate = parseDateOnly(endDateValue);
+
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
       throw makeError('Invalid rental dates', 400);
     }
+
+    if (startDate < startOfTomorrow()) {
+      throw makeError('Ngày nhận xe phải sau ngày hiện tại.', 400);
+    }
+
     if (endDate < startDate) {
-      throw makeError('Rental end date must be after start date', 400);
+      throw makeError('Ngày trả xe phải bằng hoặc sau ngày nhận xe.', 400);
     }
 
     const todayStart = normalizeDayStart(new Date());
@@ -529,8 +556,8 @@ export class RentalService {
 
       const rentalStart = new Date(rental.rental_start_date);
       const rentalEnd = new Date(rental.rental_end_date);
-      const newStart = new Date(startDate);
-      const newEnd = new Date(endDate);
+      const newStart = parseDateOnly(startDate);
+      const newEnd = parseDateOnly(endDate);
       if (!(newEnd < rentalStart || newStart > rentalEnd)) {
         return false;
       }

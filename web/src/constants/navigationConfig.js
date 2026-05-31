@@ -1,6 +1,7 @@
-﻿export const PUBLIC_NAV = [
+export const PUBLIC_NAV = [
   { label: 'Khám phá phương tiện', to: '/vehicles' },
   { label: 'Cách hoạt động', to: '/how-it-works' },
+  { label: 'AI trợ lý', to: '/ai-assistant' },
   { label: 'Đăng ký làm chủ xe', to: '/become-owner' }
 ];
 
@@ -37,5 +38,6 @@ export const ADMIN_MENU = [
   { label: 'Hợp đồng', to: '/admin/contracts', icon: 'FileCheck2' },
   { label: 'Thanh toán', to: '/admin/payments', icon: 'WalletCards' },
   { label: 'Tranh chấp', to: '/admin/disputes', icon: 'Scale' },
-  { label: 'Thống kê', to: '/admin/statistics', icon: 'BarChart3' }
+  { label: 'Thống kê', to: '/admin/statistics', icon: 'BarChart3' },
+  { label: 'AI Agent', to: '/admin/ai-agent', icon: 'Bot' }
 ];

@@ -194,6 +194,19 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
     setVehicles(applyClientFilters(allVehicles, filters));
   };
 
+  const applyFiltersImmediately = (nextFilters) => {
+    const params = new URLSearchParams();
+    Object.entries(nextFilters).forEach(([key, value]) => {
+      const normalizedValue =
+        key === "vehicle_type" ? normalizeVehicleTypeValue(value) : value;
+      if (String(normalizedValue || "").trim()) {
+        params.set(key, normalizedValue);
+      }
+    });
+    setSearchParams(params);
+    fetchVehicles(nextFilters);
+  };
+
   const handleReset = () => {
     setFilters(defaultFilters);
     setSearchParams({});
@@ -202,10 +215,12 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
 
   const onSelectCategory = (type) => {
     const nextType = normalizeVehicleTypeValue(type);
-    setFilters((prev) => ({
-      ...prev,
-      vehicle_type: prev.vehicle_type === nextType ? "" : nextType,
-    }));
+    const nextFilters = {
+      ...filters,
+      vehicle_type: filters.vehicle_type === nextType ? "" : nextType,
+    };
+    setFilters(nextFilters);
+    applyFiltersImmediately(nextFilters);
   };
 
   return (
@@ -228,8 +243,10 @@ export default function CarsPage({ detailBase = "/vehicles" }) {
               <button
                 key={item.value}
                 type="button"
+                aria-pressed={selected}
+                disabled={loading}
                 onClick={() => onSelectCategory(item.value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-60 ${
                   selected
                     ? "bg-cyan-500 text-slate-950"
                     : "border border-white/15 text-slate-200 hover:bg-white/10"

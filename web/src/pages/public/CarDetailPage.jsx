@@ -6,7 +6,6 @@ import CarGallery from '../../components/car/CarGallery';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import PaymentSummary from '../../components/common/PaymentSummary';
-import RentalBillModal from '../../components/common/RentalBillModal';
 import SectionHeader from '../../components/common/SectionHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
@@ -20,21 +19,15 @@ const initialForm = {
   note: ''
 };
 
-const initialTerms = {
-  acceptedRules: false,
-  acceptedPayment: false,
-  acceptedApproval: false
-};
-
 function resolvePickupLocation(vehicle) {
   if (!vehicle) return 'Chưa cập nhật';
-  const cityDistrict = [vehicle.district, vehicle.city].filter(Boolean).join(', ');
+  const cityDistrict = [vehicle.city, vehicle.district].filter(Boolean).join(', ');
   return vehicle.pickup_location || cityDistrict || vehicle.allowed_region || 'Chưa cập nhật';
 }
 
 function resolveReturnLocation(vehicle) {
   if (!vehicle) return 'Chưa cập nhật';
-  const cityDistrict = [vehicle.district, vehicle.city].filter(Boolean).join(', ');
+  const cityDistrict = [vehicle.city, vehicle.district].filter(Boolean).join(', ');
   return (
     vehicle.return_location ||
     vehicle.pickup_location ||
@@ -44,60 +37,17 @@ function resolveReturnLocation(vehicle) {
   );
 }
 
-function getOwnerDisplayName(vehicle) {
-  const owner = vehicle?.owner || {};
-  const fullName = [owner.last_name, owner.first_name].filter(Boolean).join(' ').trim();
-  return fullName || owner.full_name || 'Chủ xe đã xác thực';
+function toDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-function buildDraftBill(vehicle, form, rentalDays) {
-  const dailyRate = Number(vehicle?.daily_rate || 0);
-  const depositAmount = Number(vehicle?.deposit_amount || 0);
-  const rentalAmount = dailyRate * rentalDays;
-  const platformFee = rentalAmount * 0.04;
-  const totalAmount = rentalAmount + platformFee + depositAmount;
-  const owner = vehicle?.owner || {};
-
-  return {
-    status: 'PENDING',
-    note: form?.note || '',
-    rental_start_date: form?.start_date,
-    rental_end_date: form?.end_date,
-    vehicle: {
-      brand: vehicle?.brand || '',
-      model: vehicle?.model || '',
-      year: vehicle?.year || '',
-      license_plate: vehicle?.license_plate || '',
-      vehicle_type: vehicle?.vehicle_type || '',
-      fuel_type: vehicle?.fuel_type || '',
-      transmission: vehicle?.transmission || '',
-      seats: vehicle?.seats || '',
-      image: Array.isArray(vehicle?.images) ? vehicle.images[0] || '' : '',
-      pickup_location: resolvePickupLocation(vehicle),
-      return_location: resolveReturnLocation(vehicle)
-    },
-    owner: {
-      name: getOwnerDisplayName(vehicle),
-      email: owner?.email || '',
-      phone: owner?.phone || '',
-      payout_info: {
-        ...(owner?.payout_info || {}),
-        bank_name: owner?.payout_info?.bank_name || owner?.bank_name || '',
-        bank_account_holder:
-          owner?.payout_info?.bank_account_holder || owner?.bank_account_holder || '',
-        bank_account_number:
-          owner?.payout_info?.bank_account_number || owner?.bank_account_number || ''
-      }
-    },
-    pricing: {
-      rental_days: rentalDays,
-      daily_rate: dailyRate,
-      deposit_amount: depositAmount,
-      rental_amount: rentalAmount,
-      platform_fee: platformFee,
-      total_amount: totalAmount
-    }
-  };
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 export default function CarDetailPage({
@@ -116,9 +66,6 @@ export default function CarDetailPage({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [billOpen, setBillOpen] = useState(false);
-  const [draftBill, setDraftBill] = useState(null);
-  const [terms, setTerms] = useState(initialTerms);
 
   useEffect(() => {
     const loadData = async () => {
@@ -147,10 +94,8 @@ export default function CarDetailPage({
     if (vehicleId) loadData();
   }, [vehicleId]);
 
-  const rentalDays = useMemo(
-    () => Math.max(1, calculateDays(form.start_date, form.end_date)),
-    [form]
-  );
+  const rentalDays = useMemo(() => calculateDays(form.start_date, form.end_date), [form]);
+  const minRentalStartDate = useMemo(() => toDateInputValue(addDays(new Date(), 1)), []);
   const vehicleStatus = String(vehicle?.status || '').toUpperCase() || 'PENDING';
   const isOwner = String(vehicle?.owner_id || '') === String(userId || '');
   const isAvailable =
@@ -158,18 +103,23 @@ export default function CarDetailPage({
   const pickupLocation = useMemo(() => resolvePickupLocation(vehicle), [vehicle]);
   const returnLocation = useMemo(() => resolveReturnLocation(vehicle), [vehicle]);
   const galleryImages = useMemo(() => getVehicleImages(vehicle), [vehicle]);
-  const canSubmitBill = Object.values(terms).every(Boolean) && !submitting;
-  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const handleInput = (name, value) => setForm((prev) => ({ ...prev, [name]: value }));
+  const handleInput = (name, value) =>
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === 'start_date' && next.end_date && next.end_date < value) {
+        next.end_date = value;
+      }
+      return next;
+    });
 
-  const openBillConfirm = (event) => {
+  const submitRequest = async (event) => {
     event.preventDefault();
     if (!isAuthenticated) {
       pushToast({
         tone: 'warning',
-        title: 'Cần đăng nhập',
-        message: 'Vui lòng đăng nhập để gửi yêu cầu thuê.'
+        title: 'Login required',
+        message: 'Please login before sending rental request.'
       });
       navigate('/login');
       return;
@@ -178,8 +128,8 @@ export default function CarDetailPage({
     if (isOwner) {
       pushToast({
         tone: 'warning',
-        title: 'Giới hạn chủ xe',
-        message: 'Bạn không thể thuê phương tiện do chính mình đăng.'
+        title: 'Owner restriction',
+        message: 'You cannot rent your own vehicle.'
       });
       return;
     }
@@ -187,41 +137,29 @@ export default function CarDetailPage({
     if (!form.start_date || !form.end_date) {
       pushToast({
         tone: 'warning',
-        title: 'Thiếu ngày thuê',
-        message: 'Vui lòng chọn ngày nhận xe và ngày trả xe.'
+        title: 'Missing date',
+        message: 'Please choose pickup and return date.'
       });
       return;
     }
 
-    const startDate = new Date(form.start_date);
-    const endDate = new Date(form.end_date);
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+    if (form.start_date < minRentalStartDate) {
       pushToast({
         tone: 'warning',
-        title: 'Ngày không hợp lệ',
-        message: 'Ngày trả xe phải sau hoặc bằng ngày nhận xe.'
+        title: 'Invalid start date',
+        message: 'Pickup date must be after current day.'
       });
       return;
     }
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    if (startDate < todayStart) {
+    if (form.end_date < form.start_date) {
       pushToast({
         tone: 'warning',
-        title: 'Ngày nhận xe không hợp lệ',
-        message: 'Ngày nhận xe phải từ ngày hiện tại trở đi.'
+        title: 'Invalid return date',
+        message: 'Return date must be equal or later than pickup date.'
       });
       return;
     }
-
-    setDraftBill(buildDraftBill(vehicle, form, rentalDays));
-    setTerms(initialTerms);
-    setBillOpen(true);
-  };
-
-  const confirmSubmitRequest = async () => {
-    if (!canSubmitBill) return;
 
     setSubmitting(true);
     try {
@@ -231,25 +169,22 @@ export default function CarDetailPage({
         end_date: form.end_date,
         note: form.note
       });
-
       pushToast({
         tone: 'success',
-        title: 'Đã gửi yêu cầu thuê',
-        message: 'Vui lòng chờ chủ xe xác nhận yêu cầu của bạn.'
+        title: 'Request sent',
+        message: 'Please wait for owner approval.'
       });
-
       setForm(initialForm);
-      setBillOpen(false);
       navigate(`${navigateAfterRequest}?tab=pending`);
     } catch (err) {
       pushToast({
         tone: 'error',
-        title: 'Gửi thất bại',
+        title: 'Submit failed',
         message:
           err?.response?.data?.error ||
           err?.response?.data?.message ||
           err?.message ||
-          'Không thể gửi yêu cầu thuê.'
+          'Cannot send rental request.'
       });
     } finally {
       setSubmitting(false);
@@ -261,18 +196,15 @@ export default function CarDetailPage({
   if (!vehicle) {
     return (
       <EmptyState
-        title="Không tìm thấy phương tiện"
-        description={
-          error ||
-          'Phương tiện bạn tìm không còn hiển thị hoặc đã được gỡ khỏi hệ thống.'
-        }
+        title="Vehicle not found"
+        description={error || 'This vehicle is no longer available in the marketplace.'}
         action={
           <button
             type="button"
             onClick={() => navigate(backTo)}
             className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
           >
-            Quay lại danh sách xe
+            Back to list
           </button>
         }
       />
@@ -282,8 +214,8 @@ export default function CarDetailPage({
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={`${vehicle.brand || 'Xe'} ${vehicle.model || ''}`}
-        subtitle={`${vehicle.year || '2024'} • ${vehicle.vehicle_type || 'CAR'} • ${vehicle.allowed_region || 'Việt Nam'}`}
+        title={`${vehicle.brand || 'Vehicle'} ${vehicle.model || ''}`}
+        subtitle={`${vehicle.year || '2024'} | ${vehicle.vehicle_type || 'CAR'} | ${vehicle.allowed_region || 'Việt Nam'}`}
         action={
           <button
             type="button"
@@ -297,18 +229,12 @@ export default function CarDetailPage({
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-5">
-          <CarGallery
-            images={galleryImages}
-            vehicle={vehicle}
-            title={`${vehicle.brand || 'Xe'} ${vehicle.model || ''}`}
-          />
+          <CarGallery images={galleryImages} vehicle={vehicle} title={`${vehicle.brand || 'Vehicle'} ${vehicle.model || ''}`} />
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-xl font-semibold text-white">Tổng quan xe</h3>
-              <StatusBadge
-                status={vehicle.is_available ? 'AVAILABLE' : vehicleStatus}
-              />
+            <h3 className="text-xl font-semibold text-white">Tổng quan phương tiện</h3>
+              <StatusBadge status={vehicle.is_available ? 'AVAILABLE' : vehicleStatus} />
             </div>
             <div className="mt-4 grid gap-3 text-sm text-slate-200 md:grid-cols-2">
               <p>Nhiên liệu: <span className="font-semibold text-white">{vehicle.fuel_type || 'PETROL'}</span></p>
@@ -323,31 +249,28 @@ export default function CarDetailPage({
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <h3 className="text-lg font-semibold text-white">Đánh giá & nhận xét</h3>
+            <h3 className="text-lg font-semibold text-white">Đánh giá</h3>
             {reviews.length ? (
               <div className="mt-4 space-y-3">
                 {reviews.slice(0, 4).map((review) => (
-                  <div
-                    key={review._id}
-                    className="rounded-xl border border-white/10 bg-slate-950/40 p-3"
-                  >
+                  <div key={review._id} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-white">
-                        {review.reviewer_name || 'Người dùng đã xác thực'}
+                        {review.reviewer_name || 'Người dùng xác thực'}
                       </p>
                       <span className="inline-flex items-center gap-1 text-amber-300">
                         <Star className="h-3.5 w-3.5" /> {review.rating || 5}
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-slate-300">
-                      {review.comment || 'Trải nghiệm thuê xe rất tốt.'}
+                      {review.comment || 'Trải nghiệm rất tốt.'}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="mt-3 text-sm text-slate-300">
-                Chưa có đánh giá. Hãy là người đầu tiên trải nghiệm xe này.
+                Chưa có đánh giá cho phương tiện này.
               </p>
             )}
           </div>
@@ -356,44 +279,37 @@ export default function CarDetailPage({
         <aside className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-slate-900/65 p-5">
             <h3 className="text-xl font-semibold text-white">
-              {formatCurrency(vehicle.daily_rate || 0)}{' '}
-              <span className="text-sm text-slate-300">/ ngày</span>
+              {formatCurrency(vehicle.daily_rate || 0)} <span className="text-sm text-slate-300">/ day</span>
             </h3>
-            <p className="mt-1 text-sm text-slate-300">
-              Tiền cọc: {formatCurrency(vehicle.deposit_amount || 0)}
-            </p>
+            <p className="mt-1 text-sm text-slate-300">Deposit: {formatCurrency(vehicle.deposit_amount || 0)}</p>
 
             <div className="mt-4 grid gap-2 text-xs text-slate-300">
               <p className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-cyan-300" />
-                Lịch thuê linh hoạt kèm dòng thời gian hợp đồng
+                Theo dõi tiến độ hợp đồng và các mốc thuê xe
               </p>
               <p className="flex items-center gap-2">
                 <MapPinned className="h-4 w-4 text-cyan-300" />
-                Phạm vi cho phép: {vehicle.allowed_region || 'Việt Nam'}
+                Phạm vi hoạt động: {vehicle.allowed_region || 'Việt Nam'}
               </p>
               <p className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-cyan-300" />
-                Bao gồm theo dõi và bảo vệ tranh chấp
+                Bảo vệ bằng tracking, kiểm tra xe và xử lý tranh chấp
               </p>
               <p className="flex items-center gap-2">
                 <UserCircle2 className="h-4 w-4 text-cyan-300" />
-                Chủ xe: {getOwnerDisplayName(vehicle)}
+                Chủ xe: {vehicle?.owner?.full_name || 'Chủ xe xác thực'}
               </p>
             </div>
           </div>
 
           {isOwner ? (
             <div className="rounded-2xl border border-blue-400/30 bg-blue-500/10 p-4 text-sm text-blue-100">
-              Đây là phương tiện của bạn. Bạn không thể gửi yêu cầu thuê chính phương tiện do mình đăng.
+              Đây là phương tiện của bạn. Bạn không thể gửi yêu cầu thuê chính xe do mình đăng.
               <button
                 type="button"
                 onClick={() =>
-                  navigate(
-                    isOwnerApproved
-                      ? `/owner/vehicles/${vehicle._id}/edit`
-                      : '/app/owner-application-status'
-                  )
+                  navigate(isOwnerApproved ? `/owner/vehicles/${vehicle._id}/edit` : '/app/owner-application-status')
                 }
                 className="mt-3 block rounded-xl bg-blue-500 px-4 py-2 font-semibold text-white"
               >
@@ -401,10 +317,7 @@ export default function CarDetailPage({
               </button>
             </div>
           ) : (
-            <form
-              onSubmit={openBillConfirm}
-              className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/65 p-4"
-            >
+            <form onSubmit={submitRequest} className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/65 p-4">
               <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
                 Gửi yêu cầu thuê
               </h4>
@@ -415,8 +328,8 @@ export default function CarDetailPage({
                   <input
                     type="date"
                     required
+                    min={minRentalStartDate}
                     value={form.start_date}
-                    min={todayIso}
                     onChange={(event) => handleInput('start_date', event.target.value)}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
                   />
@@ -426,8 +339,8 @@ export default function CarDetailPage({
                   <input
                     type="date"
                     required
+                    min={form.start_date || minRentalStartDate}
                     value={form.end_date}
-                    min={form.start_date || todayIso}
                     onChange={(event) => handleInput('end_date', event.target.value)}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none"
                   />
@@ -449,42 +362,24 @@ export default function CarDetailPage({
                 />
               </label>
 
-              <PaymentSummary
-                rentalDays={rentalDays}
-                dailyRate={vehicle.daily_rate || 0}
-                deposit={vehicle.deposit_amount || 0}
-              />
+              <PaymentSummary rentalDays={rentalDays} dailyRate={vehicle.daily_rate || 0} deposit={vehicle.deposit_amount || 0} />
 
               <button
                 type="submit"
                 disabled={submitting || !isAvailable}
                 className="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:scale-[1.01] hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-600"
               >
-                Xem bill xác nhận
+                {submitting ? 'Đang gửi...' : 'Gửi yêu cầu thuê'}
               </button>
               {!isAvailable ? (
                 <p className="text-xs text-amber-200">
-                  Phương tiện hiện không ở trạng thái sẵn sàng để nhận yêu cầu mới.
+                  Phương tiện hiện chưa sẵn sàng cho yêu cầu thuê mới.
                 </p>
               ) : null}
             </form>
           )}
         </aside>
       </div>
-
-      <RentalBillModal
-        open={billOpen}
-        onClose={() => setBillOpen(false)}
-        title="Xác nhận yêu cầu thuê"
-        bill={draftBill}
-        showTerms
-        termsState={terms}
-        onToggleTerm={(key, value) => setTerms((prev) => ({ ...prev, [key]: value }))}
-        onConfirm={confirmSubmitRequest}
-        confirmDisabled={!canSubmitBill}
-        confirmLabel="Gửi yêu cầu thuê"
-        loading={submitting}
-      />
     </div>
   );
 }

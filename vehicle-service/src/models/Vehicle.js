@@ -85,6 +85,49 @@ const vehicle_schema = new mongoose.Schema(
       type: Number,
       default: 5.0
     },
+    // ---- AI Smart Pricing ----
+    smart_pricing_enabled: {
+      type: Boolean,
+      default: false
+    },
+    suggested_price: {
+      type: Number,
+      default: null
+    },
+    suggested_price_reason: {
+      type: String,
+      default: null
+    },
+    ai_pricing_updated_at: {
+      type: Date,
+      default: null
+    },
+    // ---- AI Trust Score ----
+    trust_score: {
+      type: Number,
+      default: null
+    },
+    trust_score_level: {
+      type: String,
+      default: null
+    },
+    trust_score_explanation: {
+      type: String,
+      default: null
+    },
+    trust_score_updated_at: {
+      type: Date,
+      default: null
+    },
+    // ---- AI Review Summary ----
+    ai_review_summary: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
+    },
+    ai_review_summary_updated_at: {
+      type: Date,
+      default: null
+    },
     created_at: {
       type: Date,
       default: Date.now

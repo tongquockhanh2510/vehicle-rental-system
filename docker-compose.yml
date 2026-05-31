@@ -47,8 +47,6 @@ services:
     image: redis:7.2-alpine
     container_name: redis-vehicle-rental
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     command: redis-server --requirepass password --appendonly yes
     volumes:
       - redis_data:/data

@@ -35,6 +35,7 @@ services:
       REDIS_URL: redis://:password@redis:6379
       IMAGE_SERVICE_URL: http://image-service:3007
       SERVICE_TOKEN: internal-service-token
+      AI_SERVICE_URL: http://ai-service:5010
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256
     depends_on:
@@ -255,6 +256,60 @@ services:
     networks:
       - app-network
 
+  ai-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./ai-service:/app
+      - ai_service_node_modules:/app/node_modules
+    environment:
+      PORT: 5010
+      NODE_ENV: development
+      STATISTIC_SERVICE_URL: http://statistic-service:3011
+      REVIEW_SERVICE_URL: http://review-service:3009
+      VEHICLE_SERVICE_URL: http://vehicle-service:3002
+      RENTAL_SERVICE_URL: http://rental-service:3003
+      INSPECTION_SERVICE_URL: http://inspection-service:3012
+      USER_SERVICE_URL: http://user-service:3001
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      review-service:
+        condition: service_started
+      statistic-service:
+        condition: service_started
+      vehicle-service:
+        condition: service_started
+      rental-service:
+        condition: service_started
+    networks:
+      - app-network
+
+  ai-agent-service:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run start"
+    restart: unless-stopped
+    volumes:
+      - ./ai-agent-service:/app
+      - ai_agent_service_node_modules:/app/node_modules
+    environment:
+      PORT: 5011
+      NODE_ENV: development
+      VEHICLE_SERVICE_URL: http://vehicle-service:3002
+      RENTAL_SERVICE_URL: http://rental-service:3003
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      vehicle-service:
+        condition: service_started
+      rental-service:
+        condition: service_started
+    networks:
+      - app-network
+
   api-gateway:
     image: node:22-alpine
     working_dir: /app
@@ -277,6 +332,8 @@ services:
       REVIEW_SERVICE_URL: http://review-service:3009
       NOTIFICATION_SERVICE_URL: http://notification-service:3010
       STATISTIC_SERVICE_URL: http://statistic-service:3011
+      AI_SERVICE_URL: http://ai-service:5010
+      AI_AGENT_SERVICE_URL: http://ai-agent-service:5011
       JWT_PUBLIC_KEY_PATH: ./keys/public.key
       JWT_ALGORITHM: RS256
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
@@ -300,6 +357,10 @@ services:
       notification-service:
         condition: service_started
       statistic-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
+      ai-agent-service:
         condition: service_started
     networks:
       - app-network
@@ -334,5 +395,7 @@ volumes:
   review_service_node_modules:
   notification_service_node_modules:
   statistic_service_node_modules:
+  ai_service_node_modules:
+  ai_agent_service_node_modules:
   api_gateway_node_modules:
   web_node_modules:

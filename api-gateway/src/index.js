@@ -63,11 +63,13 @@ const services = {
   rentals: process.env.RENTAL_SERVICE_URL,
   contracts: process.env.CONTRACT_SERVICE_URL,
   payments: process.env.PAYMENT_SERVICE_URL,
-  tracking: process.env.TRACKING_SERVICE_URL,
+  tracking: process.env.TRACKING_SERVICE_URL || 'http://localhost:5005',
   disputes: process.env.DISPUTE_SERVICE_URL,
   reviews: process.env.REVIEW_SERVICE_URL,
   notifications: process.env.NOTIFICATION_SERVICE_URL,
-  statistics: process.env.STATISTIC_SERVICE_URL
+  statistics: process.env.STATISTIC_SERVICE_URL,
+  ai: process.env.AI_SERVICE_URL || 'http://localhost:5010',
+  aiAgent: process.env.AI_AGENT_SERVICE_URL || 'http://localhost:5011',
 };
 
 app.use(generalLimiter);
@@ -318,6 +320,18 @@ app.use('/api/reviews', authenticateToken, proxy('reviews'));
 app.use('/api/notifications', authenticateToken, proxy('notifications'));
 
 app.use('/api/statistics', authenticateToken, proxy('statistics'));
+
+// ================= AI SERVICES =================
+
+// ai-service: pricing suggest is public (no auth needed)
+app.use('/api/ai/pricing/suggest', proxy('ai'));
+
+// ai-service: other endpoints require auth
+app.use('/api/ai', authenticateToken, proxy('ai'));
+
+// ai-agent-service: chat and search
+app.use('/api/ai-agent', authenticateToken, proxy('aiAgent'));
+
 
 // 404 handler
 app.use((req, res) => {
