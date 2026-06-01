@@ -15,16 +15,30 @@ export function buildPayoutDisplay(payoutInfo = {}) {
   }
 
   const bank = payoutInfo?.bank_name || 'Ngân hàng';
-  const masked = payoutInfo?.masked_account_number || payoutInfo?.bank_account_number || '';
+  const masked = payoutInfo?.masked_account_number || '';
   if (!masked) return bank;
   return `${bank} • ${masked}`;
+}
+
+export function formatBankAccount(accountNumber, mode = 'full') {
+  const raw = String(accountNumber || '').trim();
+  if (!raw) return 'Chưa cập nhật';
+
+  if (mode === 'masked') {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length >= 4) {
+      return `••••${digits.slice(-4)}`;
+    }
+    return raw.length > 4 ? `••••${raw.slice(-4)}` : raw;
+  }
+
+  return raw;
 }
 
 export function getTransferAccountNumber(payoutInfo = {}) {
   return (
     payoutInfo?.bank_account_number ||
     payoutInfo?.account_number ||
-    payoutInfo?.masked_account_number ||
     ''
   );
 }
@@ -53,19 +67,81 @@ function normalizeBankCode(input = '') {
   return BANK_CODE_MAP[key] || '';
 }
 
-export function buildVietQrUrl(payoutInfo = {}, amount = 0, addInfo = '') {
+export function validateQrPayload(payoutInfo = {}, amount = 0, addInfo = '') {
   const accountNumber = getTransferAccountNumber(payoutInfo).replace(/\s+/g, '');
   const bankCode = normalizeBankCode(payoutInfo?.bank_code) || normalizeBankCode(payoutInfo?.bank_name);
+  const numericAmount = Math.max(0, Math.round(Number(amount || 0)));
+  const transferContent = String(addInfo || '').trim();
 
-  if (!bankCode || !accountNumber || !/^\d{6,}$/.test(accountNumber)) {
-    return '';
+  if (!bankCode) {
+    return {
+      ok: false,
+      reason: 'Chưa thể tạo QR vì thiếu mã ngân hàng (`bank_code`).',
+      bankCode: '',
+      accountNumber,
+      amount: numericAmount,
+      transferContent
+    };
+  }
+  if (!accountNumber) {
+    return {
+      ok: false,
+      reason: 'Chưa thể tạo QR vì thiếu số tài khoản chủ xe.',
+      bankCode,
+      accountNumber: '',
+      amount: numericAmount,
+      transferContent
+    };
+  }
+  if (!/^\d{6,}$/.test(accountNumber)) {
+    return {
+      ok: false,
+      reason: 'Chưa thể tạo QR vì số tài khoản chủ xe không hợp lệ.',
+      bankCode,
+      accountNumber,
+      amount: numericAmount,
+      transferContent
+    };
+  }
+  if (numericAmount <= 0) {
+    return {
+      ok: false,
+      reason: 'Chưa thể tạo QR vì tổng tiền thanh toán chưa hợp lệ.',
+      bankCode,
+      accountNumber,
+      amount: numericAmount,
+      transferContent
+    };
+  }
+  if (!transferContent) {
+    return {
+      ok: false,
+      reason: 'Chưa thể tạo QR vì thiếu nội dung chuyển khoản.',
+      bankCode,
+      accountNumber,
+      amount: numericAmount,
+      transferContent
+    };
   }
 
-  const encodedName = encodeURIComponent(payoutInfo?.bank_account_holder || 'CHU XE');
-  const encodedInfo = encodeURIComponent(addInfo || 'RENTCAR PAYMENT');
-  const numericAmount = Math.max(0, Math.round(Number(amount || 0)));
+  return {
+    ok: true,
+    reason: '',
+    bankCode,
+    accountNumber,
+    amount: numericAmount,
+    transferContent
+  };
+}
 
-  return `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?amount=${numericAmount}&addInfo=${encodedInfo}&accountName=${encodedName}`;
+export function buildVietQrUrl(payoutInfo = {}, amount = 0, addInfo = '') {
+  const validation = validateQrPayload(payoutInfo, amount, addInfo);
+  if (!validation.ok) return '';
+
+  const encodedName = encodeURIComponent(payoutInfo?.bank_account_holder || 'CHU XE');
+  const encodedInfo = encodeURIComponent(validation.transferContent || 'RENTCAR PAYMENT');
+
+  return `https://img.vietqr.io/image/${validation.bankCode}-${validation.accountNumber}-compact2.png?amount=${validation.amount}&addInfo=${encodedInfo}&accountName=${encodedName}`;
 }
 
 export function getRentalBillPayload(rental = {}) {

@@ -15,6 +15,7 @@ import {
 import { getRentalBillPayload, normalizeRentalStatus } from '../../utils/rentalBill';
 
 const FALLBACK_RENTAL_STATUSES = new Set([
+  'PENDING',
   'APPROVED',
   'ACTIVE',
   'RETURN_REQUESTED',
@@ -24,7 +25,7 @@ const FALLBACK_RENTAL_STATUSES = new Set([
 
 function mapRentalStatusToPaymentStatus(status) {
   const normalized = normalizeRentalStatus(status);
-  if (normalized === 'APPROVED') return 'PENDING';
+  if (normalized === 'PENDING' || normalized === 'APPROVED') return 'PENDING';
   if (normalized === 'DISPUTED') return 'DISPUTED';
   return 'PAID';
 }

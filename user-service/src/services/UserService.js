@@ -225,12 +225,14 @@ export class UserService {
         normalized.id_back_url ||
         '',
       bank_name: normalized.bank_name || '',
+      bank_code: normalized.bank_code || '',
       bank_account_number: normalized.bank_account_number || '',
       bank_account_holder: normalized.bank_account_holder || '',
       bank_branch: normalized.bank_branch || '',
       card_brand: normalized.card_brand || '',
       card_last4: normalized.card_last4 || (digits ? digits.slice(-4) : ''),
-      payout_method: normalized.payout_method || normalized.method || 'BANK'
+      payout_method: normalized.payout_method || normalized.method || 'BANK',
+      payout_note: normalized.payout_note || ''
     };
   }
 
@@ -256,10 +258,12 @@ export class UserService {
       payout_info: {
         method: ownerProfile.payout_method || 'BANK',
         bank_name: ownerProfile.bank_name,
+        bank_code: ownerProfile.bank_code || '',
         bank_account_holder: ownerProfile.bank_account_holder,
         bank_account_number: ownerProfile.bank_account_number,
         card_brand: ownerProfile.card_brand || '',
-        card_last4: ownerProfile.card_last4 || ''
+        card_last4: ownerProfile.card_last4 || '',
+        payout_note: ownerProfile.payout_note || ''
       },
       status: this.normalizeOwnerStatus(application.status),
       rejection_reason: application.rejection_reason || '',

@@ -55,6 +55,10 @@ const user_schema = new mongoose.Schema(
         type: String,
         default: ''
       },
+      bank_code: {
+        type: String,
+        default: ''
+      },
       bank_account_number: {
         type: String,
         default: ''

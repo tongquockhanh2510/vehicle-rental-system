@@ -330,6 +330,8 @@ app.use('/api/ai/pricing/suggest', proxy('ai'));
 app.use('/api/ai', authenticateToken, proxy('ai'));
 
 // ai-agent-service: chat and search
+app.use('/api/ai-agent/chat', proxy('aiAgent'));
+app.use('/api/ai-agent/extract-intent', proxy('aiAgent'));
 app.use('/api/ai-agent', authenticateToken, proxy('aiAgent'));
 
 

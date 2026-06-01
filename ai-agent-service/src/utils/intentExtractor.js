@@ -1,353 +1,303 @@
 import axios from 'axios';
 
-// ─── Vehicle type mappings ──────────────────────────────────────────────────
-const VEHICLE_TYPE_PATTERNS = {
-  SEVEN_SEATER: [
-    '7 chỗ', '7 seat', '7-seat', 'seven seat', 'xe 7', 'bảy chỗ',
-    '7 chỗ ngồi', 'innova', 'fortuner', '7-seater',
-  ],
-  PICKUP_TRUCK: [
-    'bán tải', 'pickup', 'pick-up', 'truck',
-  ],
-  MOTORCYCLE: [
-    'xe máy', 'motor', 'motorbike', 'motorcycle', 'xe mô tô', 'scooter',
-  ],
-  BICYCLE: [
-    'xe đạp', 'bicycle', 'bike',
-  ],
-  CAR: [
-    '4 chỗ', '4-seat', '4 seat', 'four seat', 'sedan', 'hatchback',
-    'ô tô', 'xe hơi', 'car', 'automobile',
-  ],
-};
-
-// ─── Location extraction ────────────────────────────────────────────────────
-const KNOWN_LOCATIONS = [
-  'hà nội', 'ha noi', 'hanoi',
-  'hồ chí minh', 'ho chi minh', 'hcm', 'sài gòn', 'saigon',
-  'đà nẵng', 'da nang', 'danang',
-  'đà lạt', 'da lat', 'dalat',
-  'nha trang',
-  'phú quốc', 'phu quoc',
-  'hội an', 'hoi an',
-  'sapa', 'sa pa',
-  'hạ long', 'ha long', 'halong',
-  'mũi né', 'mui ne',
-  'buôn ma thuột', 'buon ma thuot', 'bmt',
-  'ea súp', 'ea sup',
-  'huế', 'hue',
-  'quy nhơn', 'quy nhon',
-  'vũng tàu', 'vung tau',
-  'phan thiết', 'phan thiet',
+const VEHICLE_TYPE_PATTERNS = [
+  { value: 'SEVEN_SEATER', patterns: ['7 cho', '7 seat', '7-seat', 'seven seater', 'xe 7', 'bay cho', 'innova', 'carnival'] },
+  { value: 'PICKUP_TRUCK', patterns: ['ban tai', 'pickup', 'pick up', 'ford ranger', 'hilux', 'triton'] },
+  { value: 'MOTORCYCLE', patterns: ['xe may', 'motorbike', 'motorcycle', 'scooter', 'moto'] },
+  { value: 'BICYCLE', patterns: ['xe dap', 'bicycle', 'bike'] },
+  { value: 'CAR', patterns: ['o to', 'xe hoi', '4 cho', '5 cho', 'sedan', 'hatchback', 'suv'] }
 ];
 
-// ─── Price patterns ─────────────────────────────────────────────────────────
-// Matches: "1.5 triệu", "1 triệu rưỡi", "under 2 million", "tầm 800k", "1500000"
+const ELECTRIC_PATTERNS = ['xe dien', 'electric', 'ev', 'vinfast vf', 'tesla'];
+
+const LOCATION_ALIASES = [
+  { canonical: 'TP. Hồ Chí Minh', aliases: ['tp hcm', 'tphcm', 'tp.hcm', 'hcm', 'ho chi minh', 'hồ chí minh', 'sai gon', 'sài gòn', 'saigon'] },
+  { canonical: 'Hà Nội', aliases: ['ha noi', 'hà nội', 'hanoi'] },
+  { canonical: 'Đà Nẵng', aliases: ['da nang', 'đà nẵng', 'danang'] },
+  { canonical: 'Đà Lạt', aliases: ['da lat', 'đà lạt', 'dalat'] },
+  { canonical: 'Nha Trang', aliases: ['nha trang'] },
+  { canonical: 'Vũng Tàu', aliases: ['vung tau', 'vũng tàu'] },
+  { canonical: 'Hội An', aliases: ['hoi an', 'hội an'] },
+  { canonical: 'Phú Quốc', aliases: ['phu quoc', 'phú quốc'] }
+];
+
 const PRICE_PATTERNS = [
-  // Vietnamese: "1 triệu rưỡi" = 1.5 million
-  { pattern: /(\d+)\s*triệu\s*rưỡi/i, multiplier: 1000000, modifier: 1.5 },
-  // "X triệu Y trăm"
-  { pattern: /(\d+)\s*triệu\s*(\d+)\s*trăm/i, multiplier: 1000000, hasHundred: true },
-  // "X.Y triệu"
-  { pattern: /(\d+[.,]\d+)\s*triệu/i, multiplier: 1000000 },
-  // "X triệu"
-  { pattern: /(\d+)\s*triệu/i, multiplier: 1000000 },
-  // "X00k" or "Xk" (thousand)
-  { pattern: /(\d+)\s*k\b/i, multiplier: 1000 },
-  // "X million"
-  { pattern: /(\d+[.,]\d+)\s*million/i, multiplier: 1000000 },
-  { pattern: /(\d+)\s*million/i, multiplier: 1000000 },
-  // Raw number >= 100000
-  { pattern: /\b(\d{6,})\b/, multiplier: 1 },
+  /(\d+(?:[.,]\d+)?)\s*trieu\s*ruoi/i,
+  /(\d+(?:[.,]\d+)?)\s*trieu/i,
+  /(\d+(?:[.,]\d+)?)\s*million/i,
+  /(\d+)\s*k\b/i,
+  /\b(\d{6,})\b/
 ];
 
-// ─── Date/time normalization ─────────────────────────────────────────────────
-
-const WEEKDAY_VI = {
-  'thứ hai': 1, 'thứ 2': 1, 't2': 1,
-  'thứ ba': 2, 'thứ 3': 2, 't3': 2,
-  'thứ tư': 3, 'thứ 4': 3, 't4': 3,
-  'thứ năm': 4, 'thứ 5': 4, 't5': 4,
-  'thứ sáu': 5, 'thứ 6': 5, 't6': 5, 'friday': 5,
-  'thứ bảy': 6, 'thứ 7': 6, 't7': 6, 'saturday': 6,
-  'chủ nhật': 0, 'cn': 0, 'sunday': 0,
-  'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4,
+const WEEKDAY_MAP = {
+  'chu nhat': 0,
+  sunday: 0,
+  'thu hai': 1,
+  monday: 1,
+  'thu ba': 2,
+  tuesday: 2,
+  'thu tu': 3,
+  wednesday: 3,
+  'thu nam': 4,
+  thursday: 4,
+  'thu sau': 5,
+  friday: 5,
+  'thu bay': 6,
+  saturday: 6
 };
 
-const TIME_OF_DAY = {
-  'sáng': '08:00:00',
-  'morning': '08:00:00',
-  'trưa': '12:00:00',
-  'noon': '12:00:00',
-  'chiều': '17:00:00',
-  'afternoon': '17:00:00',
-  'tối': '20:00:00',
-  'evening': '20:00:00',
-  'night': '20:00:00',
-};
+function normalizeText(input = '') {
+  return String(input)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s/.-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-/**
- * Get next occurrence of a weekday (0=Sun, 6=Sat) from today.
- * @param {number} targetDay - 0..6
- * @param {string} [thisWeek] - 'this' or 'next'
- */
-function getNextWeekday(targetDay, thisWeek = 'this') {
-  const now = new Date();
-  const todayDay = now.getDay();
-  let diff = targetDay - todayDay;
-
-  if (thisWeek === 'this') {
-    if (diff <= 0) diff += 7; // Go to next week if already passed
-  } else {
-    if (diff <= 0) diff += 7;
-    diff += 7;
+function parseJsonLoose(raw = '') {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const clean = text.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch {
+    return null;
   }
+}
 
+function formatDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getNextWeekday(targetWeekday, nextWeek = false) {
+  const now = new Date();
+  const today = now.getDay();
+  let diff = targetWeekday - today;
+  if (diff <= 0) diff += 7;
+  if (nextWeek) diff += 7;
   const result = new Date(now);
   result.setDate(now.getDate() + diff);
   return result;
 }
 
-/**
- * Extract a date from Vietnamese/English text.
- * Returns a Date or null.
- */
-function extractDateFromText(text) {
-  const lower = text.toLowerCase();
+function parseDateSegment(segment = '') {
+  const normalized = normalizeText(segment);
+  if (!normalized) return null;
 
-  // "hôm nay" / "today"
-  if (/hôm nay|today/.test(lower)) return new Date();
-
-  // "ngày mai" / "tomorrow"
-  if (/ngày mai|tomorrow/.test(lower)) {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d;
+  if (normalized.includes('hom nay') || normalized.includes('today')) {
+    return new Date();
+  }
+  if (normalized.includes('ngay mai') || normalized.includes('tomorrow')) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
   }
 
-  // Check for weekday names
-  for (const [name, dayNum] of Object.entries(WEEKDAY_VI)) {
-    if (lower.includes(name)) {
-      const isNext = /tuần sau|next week/.test(lower);
-      return getNextWeekday(dayNum, isNext ? 'next' : 'this');
+  const iso = normalized.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (iso) return new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00`);
+
+  const dmy = normalized.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{4}))?\b/);
+  if (dmy) {
+    const year = dmy[3] ? Number(dmy[3]) : new Date().getFullYear();
+    const month = String(Number(dmy[2])).padStart(2, '0');
+    const day = String(Number(dmy[1])).padStart(2, '0');
+    return new Date(`${year}-${month}-${day}T00:00:00`);
+  }
+
+  const isNextWeek = normalized.includes('tuan sau') || normalized.includes('next week');
+  for (const [name, weekday] of Object.entries(WEEKDAY_MAP)) {
+    if (normalized.includes(name)) {
+      return getNextWeekday(weekday, isNextWeek);
     }
-  }
-
-  // ISO or DD/MM/YYYY date
-  const isoMatch = text.match(/(\d{4}-\d{2}-\d{2})/);
-  if (isoMatch) return new Date(isoMatch[1]);
-
-  const dmyMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dmyMatch) {
-    return new Date(`${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`);
   }
 
   return null;
 }
 
-/**
- * Extract time of day from text (e.g., "sáng thứ 6" → 08:00:00).
- */
-function extractTimeFromText(text) {
-  const lower = text.toLowerCase();
-  for (const [word, time] of Object.entries(TIME_OF_DAY)) {
-    if (lower.includes(word)) return time;
+function extractDateRange(message) {
+  const raw = String(message || '');
+  const normalized = normalizeText(raw);
+  const fromTo = normalized.match(/(?:tu|from)\s+(.+?)\s+(?:den|to)\s+(.+?)(?:,|$)/i);
+  if (fromTo) {
+    return {
+      startDate: formatDate(parseDateSegment(fromTo[1])),
+      endDate: formatDate(parseDateSegment(fromTo[2]))
+    };
   }
-  return '08:00:00'; // default morning
+
+  const single = parseDateSegment(normalized);
+  return {
+    startDate: formatDate(single),
+    endDate: null
+  };
 }
 
-/**
- * Extract max price from text.
- */
-function extractMaxPrice(text) {
-  for (const { pattern, multiplier, modifier, hasHundred } of PRICE_PATTERNS) {
-    const match = text.match(pattern);
-    if (match) {
-      if (modifier) {
-        return Math.round(Number(match[1]) * modifier * multiplier);
-      }
-      if (hasHundred) {
-        const million = Number(match[1]);
-        const hundred = Number(match[2]);
-        return Math.round((million + hundred * 0.1) * multiplier);
-      }
-      const num = Number(match[1].replace(',', '.'));
-      return Math.round(num * multiplier);
-    }
-  }
-  return null;
-}
-
-/**
- * Extract vehicle type from text.
- */
-function extractVehicleType(text) {
-  const lower = text.toLowerCase();
-  for (const [type, patterns] of Object.entries(VEHICLE_TYPE_PATTERNS)) {
-    if (patterns.some((p) => lower.includes(p))) {
-      return type;
-    }
-  }
-  return null;
-}
-
-/**
- * Extract location from text.
- */
-function extractLocation(text) {
-  const lower = text.toLowerCase();
-  for (const loc of KNOWN_LOCATIONS) {
-    if (lower.includes(loc)) {
-      // Return proper-cased location name
-      return loc.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-  }
-
-  // Try to extract after "ở", "tại", "in", "at"
-  const locationPrepositions = /(?:ở|tại|in|at|đến|to)\s+([A-ZÀ-Ỵa-zà-ỵ\s,]+?)(?:\s+từ|\s+ngày|\s+lúc|,|$)/i;
-  const match = text.match(locationPrepositions);
-  if (match) return match[1].trim();
-
-  return null;
-}
-
-/**
- * Detect passenger purpose.
- */
-function extractPassengerPurpose(text) {
-  const lower = text.toLowerCase();
-  if (/gia đình|family/.test(lower)) return 'family trip';
-  if (/du lịch|travel|tourism/.test(lower)) return 'tourism';
-  if (/công tác|business|work/.test(lower)) return 'business';
-  if (/đám cưới|wedding/.test(lower)) return 'wedding';
-  if (/nhóm bạn|group|friends/.test(lower)) return 'group trip';
-  return null;
-}
-
-/**
- * Main intent extractor.
- * Supports Vietnamese and English.
- *
- * @param {string} message
- * @returns {object} slots
- */
-export async function extractIntent(message) {
-  if (!message || typeof message !== 'string') {
-    return { intent: 'UNKNOWN', error: 'Empty or invalid message' };
-  }
-
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (geminiApiKey) {
-    try {
-      const nowString = new Date().toISOString();
-      const prompt = `You are an AI assistant for a peer-to-peer (P2P) vehicle rental system. Your task is to extract intent and entities (slots) from the following user message: "${message}".
-
-The current year is ${new Date().getFullYear()}.
-
-Please return ONLY a JSON object with the following schema:
-{
-  "intent": "SEARCH_VEHICLE" | "BOOK_VEHICLE" | "CANCEL_BOOKING" | "QUERY_PRICE" | "UNKNOWN",
-  "vehicleType": "SEVEN_SEATER" | "PICKUP_TRUCK" | "MOTORCYCLE" | "BICYCLE" | "CAR" | null,
-  "location": "capitalized city/district/area name in Vietnam (e.g. 'Hồ Chí Minh', 'Hà Nội', 'Đà Lạt', 'Quận 1') or null",
-  "startDate": "ISO format YYYY-MM-DDT[HH:MM:SS] normalized or null",
-  "endDate": "ISO format YYYY-MM-DDT[HH:MM:SS] normalized or null",
-  "maxPrice": number (in VND, parse expressions like "1.5 triệu" to 1500000, "800k" to 800000) or null,
-  "passengerPurpose": "family trip" | "tourism" | "business" | "wedding" | "group trip" | null
-}
-
-Strict follow these rules:
-1. Do not wrap the output in markdown block (do NOT use \`\`\`json). Just output raw JSON.
-2. For dates (startDate, endDate), calculate them relatively based on today's timestamp: ${nowString}. E.g. "ngày mai" is tomorrow, "thứ sáu này" is this week's Friday, "tuần sau" is next week. If the user only specifies a start day, set end day to null.
-3. For vehicleType, choose only from: "SEVEN_SEATER" (7 chỗ, innova, fortuner), "PICKUP_TRUCK" (bán tải, pickup), "MOTORCYCLE" (xe máy, motor, scooter), "BICYCLE" (xe đạp, bike), "CAR" (4 chỗ, 5 chỗ, sedan, hatchback, ô tô, xe hơi). Otherwise null.
-4. If a field cannot be determined, set it to null.`;
-
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-        {
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            responseMimeType: 'application/json'
-          }
-        },
-        { timeout: 7000 }
-      );
-
-      const responseText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (responseText) {
-        const slots = JSON.parse(responseText.trim());
-        return {
-          ...slots,
-          rawMessage: message
-        };
-      }
-    } catch (geminiError) {
-      console.warn('[ai-agent] Gemini API intent extraction failed, falling back to rule-based parser:', geminiError.message);
-    }
-  }
-
-  const text = message.trim();
-  const lower = text.toLowerCase();
-
-  // ─── Detect intent ─────────────────────────────────────────────────────────
-  let intent = 'SEARCH_VEHICLE';
-
-  if (/đặt xe|book|booking|thuê xe/.test(lower)) {
-    intent = 'BOOK_VEHICLE';
-  } else if (/hủy|cancel/.test(lower)) {
-    intent = 'CANCEL_BOOKING';
-  } else if (/giá|price|cost|bao nhiêu/.test(lower)) {
-    intent = 'QUERY_PRICE';
-  } else if (/tìm|find|search|kiếm|cần xe/.test(lower)) {
-    intent = 'SEARCH_VEHICLE';
-  }
-
-  // ─── Extract slots ──────────────────────────────────────────────────────────
-  const vehicleType = extractVehicleType(text);
-  const location = extractLocation(text);
-  const maxPrice = extractMaxPrice(text);
-  const passengerPurpose = extractPassengerPurpose(text);
-
-  // ─── Date extraction ────────────────────────────────────────────────────────
-  // Try to split text into "from ... to ..." segments
-  let startDate = null;
-  let endDate = null;
-
-  const fromToMatch = text.match(
-    /(?:từ|from)\s+(.+?)\s+(?:đến|to)\s+(.+?)(?:\s*,|\s*giá|\s*budget|\s*tầm|$)/i
+function extractLocation(message = '') {
+  const normalized = normalizeText(message);
+  const found = LOCATION_ALIASES.find((item) =>
+    item.aliases.some((alias) => normalized.includes(normalizeText(alias)))
   );
+  if (found) return found.canonical;
 
-  if (fromToMatch) {
-    const startText = fromToMatch[1];
-    const endText = fromToMatch[2];
-    const startTime = extractTimeFromText(startText);
-    const endTime = extractTimeFromText(endText);
-    const startD = extractDateFromText(startText);
-    const endD = extractDateFromText(endText);
+  const direct = normalized.match(/(?:o|tai|in|at)\s+([a-z0-9.\s]+?)(?:\s+(?:tu|from|den|to|gia|budget)|$)/i);
+  if (direct?.[1]) {
+    return direct[1]
+      .trim()
+      .split(' ')
+      .map((token) => (token ? token[0].toUpperCase() + token.slice(1) : token))
+      .join(' ');
+  }
 
-    if (startD) {
-      startDate = `${startD.toISOString().split('T')[0]}T${startTime}`;
+  return null;
+}
+
+function extractVehicle(message = '') {
+  const normalized = normalizeText(message);
+  const hasElectric = ELECTRIC_PATTERNS.some((item) => normalized.includes(normalizeText(item)));
+
+  for (const item of VEHICLE_TYPE_PATTERNS) {
+    if (item.patterns.some((pattern) => normalized.includes(pattern))) {
+      return {
+        vehicleType: item.value,
+        fuelType: hasElectric ? 'ELECTRIC' : null
+      };
     }
-    if (endD) {
-      endDate = `${endD.toISOString().split('T')[0]}T${endTime}`;
-    }
-  } else {
-    // Try individual extraction
-    const startD = extractDateFromText(text);
-    if (startD) {
-      startDate = `${startD.toISOString().split('T')[0]}T08:00:00`;
-    }
+  }
+
+  if (hasElectric) {
+    return {
+      vehicleType: null,
+      fuelType: 'ELECTRIC'
+    };
   }
 
   return {
-    intent,
-    vehicleType,
-    location,
-    startDate,
-    endDate,
-    maxPrice,
-    passengerPurpose,
-    rawMessage: text,
+    vehicleType: null,
+    fuelType: null
+  };
+}
+
+function extractMaxPrice(message = '') {
+  const normalized = normalizeText(message);
+  for (const pattern of PRICE_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const value = Number(String(match[1]).replace(',', '.'));
+    if (!Number.isFinite(value) || value <= 0) continue;
+
+    if (pattern.source.includes('trieu\\s*ruoi')) {
+      return Math.round(value * 1500000);
+    }
+    if (pattern.source.includes('trieu') || pattern.source.includes('million')) {
+      return Math.round(value * 1000000);
+    }
+    if (pattern.source.includes('\\s*k')) {
+      return Math.round(value * 1000);
+    }
+    return Math.round(value);
+  }
+  return null;
+}
+
+function extractPassengerPurpose(message = '') {
+  const normalized = normalizeText(message);
+  if (normalized.includes('gia dinh') || normalized.includes('family')) return 'family trip';
+  if (normalized.includes('du lich') || normalized.includes('travel') || normalized.includes('tour')) return 'tourism';
+  if (normalized.includes('cong tac') || normalized.includes('business') || normalized.includes('work')) return 'business';
+  if (normalized.includes('dam cuoi') || normalized.includes('wedding')) return 'wedding';
+  if (normalized.includes('nhom ban') || normalized.includes('friends') || normalized.includes('group')) return 'group trip';
+  return null;
+}
+
+function extractIntentType(message = '') {
+  const normalized = normalizeText(message);
+  if (!normalized) return 'UNKNOWN';
+  if (/(huy|cancel)/i.test(normalized)) return 'CANCEL_BOOKING';
+  if (/(dat xe|book|booking)/i.test(normalized)) return 'BOOK_VEHICLE';
+  if (/(thue|rental|tim|kiem|find|search|can xe)/i.test(normalized)) return 'SEARCH_VEHICLE';
+  if (/(gia|bao nhieu|price|cost)/i.test(normalized)) return 'QUERY_PRICE';
+  return 'SEARCH_VEHICLE';
+}
+
+async function extractByGemini(message, fallback) {
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!geminiApiKey) return null;
+
+  const prompt = `Extract vehicle rental intent from this user message and return JSON only.
+Message: "${message}"
+Schema:
+{
+  "intent":"SEARCH_VEHICLE|BOOK_VEHICLE|CANCEL_BOOKING|QUERY_PRICE|UNKNOWN",
+  "vehicleType":"SEVEN_SEATER|PICKUP_TRUCK|MOTORCYCLE|BICYCLE|CAR|null",
+  "fuelType":"ELECTRIC|PETROL|DIESEL|HYBRID|null",
+  "location":"string|null",
+  "startDate":"YYYY-MM-DD|null",
+  "endDate":"YYYY-MM-DD|null",
+  "maxPrice":number|null,
+  "passengerPurpose":"family trip|tourism|business|wedding|group trip|null"
+}
+Keep values realistic and return strict JSON without markdown.
+Fallback context:
+${JSON.stringify(fallback)}`;
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
+      },
+      { timeout: 4000 }
+    );
+
+    const text = response.data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('') || '';
+    return parseJsonLoose(text);
+  } catch (error) {
+    console.warn('[ai-agent] Gemini intent fallback:', error.message);
+    return null;
+  }
+}
+
+export async function extractIntent(message) {
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return { intent: 'UNKNOWN', error: 'Empty or invalid message' };
+  }
+
+  const vehicle = extractVehicle(message);
+  const range = extractDateRange(message);
+  const base = {
+    intent: extractIntentType(message),
+    vehicleType: vehicle.vehicleType,
+    fuelType: vehicle.fuelType,
+    location: extractLocation(message),
+    startDate: range.startDate,
+    endDate: range.endDate,
+    maxPrice: extractMaxPrice(message),
+    passengerPurpose: extractPassengerPurpose(message),
+    rawMessage: message.trim()
+  };
+
+  const ai = await extractByGemini(message, base);
+  if (!ai || typeof ai !== 'object') {
+    return base;
+  }
+
+  return {
+    intent: ai.intent || base.intent,
+    vehicleType: ai.vehicleType || base.vehicleType,
+    fuelType: ai.fuelType || base.fuelType,
+    location: ai.location || base.location,
+    startDate: ai.startDate || base.startDate,
+    endDate: ai.endDate || base.endDate,
+    maxPrice: Number.isFinite(Number(ai.maxPrice)) ? Number(ai.maxPrice) : base.maxPrice,
+    passengerPurpose: ai.passengerPurpose || base.passengerPurpose,
+    rawMessage: base.rawMessage
   };
 }

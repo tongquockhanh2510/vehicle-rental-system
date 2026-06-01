@@ -58,12 +58,14 @@ function mapApplicationDoc(application) {
       profile.id_back_url ||
       '',
     bank_name: profile.bank_name || '',
+    bank_code: profile.bank_code || '',
     bank_account_number: profile.bank_account_number || '',
     bank_account_holder: profile.bank_account_holder || '',
     bank_branch: profile.bank_branch || '',
     card_brand: profile.card_brand || '',
     card_last4: profile.card_last4 || last4(profile.bank_account_number || ''),
-    payout_method: profile.payout_method || profile.method || 'BANK'
+    payout_method: profile.payout_method || profile.method || 'BANK',
+    payout_note: profile.payout_note || ''
   };
 
   return {
@@ -79,18 +81,20 @@ function mapApplicationDoc(application) {
     id_card_front_url: ownerProfile.id_card_front_url,
     id_card_back_url: ownerProfile.id_card_back_url,
     bank_name: ownerProfile.bank_name,
+    bank_code: ownerProfile.bank_code,
     bank_account_number: ownerProfile.bank_account_number,
     bank_account_holder: ownerProfile.bank_account_holder,
     bank_branch: ownerProfile.bank_branch,
     payout_info: {
       method: ownerProfile.payout_method || 'BANK',
       bank_name: ownerProfile.bank_name,
+      bank_code: ownerProfile.bank_code,
       bank_account_holder: ownerProfile.bank_account_holder,
       bank_account_number: ownerProfile.bank_account_number,
       masked_account_number: maskAccountNumber(ownerProfile.bank_account_number),
       card_brand: ownerProfile.card_brand || '',
       card_last4: ownerProfile.card_last4 || '',
-      payout_note: ''
+      payout_note: ownerProfile.payout_note || ''
     },
     status: toOwnerStatus(application.status),
     review_note: application.review_note || '',
@@ -300,13 +304,15 @@ router.put('/:applicationId/approve', authenticateToken, async (req, res) => {
     user.payout_info = {
       method: application.owner_profile?.payout_method || application.owner_profile?.method || 'BANK',
       bank_name: application.owner_profile?.bank_name || '',
+      bank_code: application.owner_profile?.bank_code || '',
       bank_account_number: application.owner_profile?.bank_account_number || '',
       bank_account_holder: application.owner_profile?.bank_account_holder || '',
       card_brand: application.owner_profile?.card_brand || '',
       card_last4:
         application.owner_profile?.card_last4 ||
         last4(application.owner_profile?.bank_account_number || ''),
-      payout_note: 'Đã xác minh từ hồ sơ chủ xe'
+      payout_note:
+        application.owner_profile?.payout_note || 'Đã xác minh từ hồ sơ chủ xe'
     };
     user.updated_at = now;
     await user.save();

@@ -13,8 +13,10 @@ import {
   buildPayoutDisplay,
   buildVietQrUrl,
   describeBillPeriod,
+  formatBankAccount,
   getPricingRows,
-  getTransferAccountNumber
+  getTransferAccountNumber,
+  validateQrPayload
 } from '../../utils/rentalBill';
 import { getFallbackCarImage, resolveImage } from '../../utils/image';
 
@@ -39,6 +41,10 @@ export default function RentalBillView({
 
   const qrUrl = useMemo(
     () => buildVietQrUrl(payoutInfo, Number(bill?.pricing?.total_amount || 0), transferContent),
+    [payoutInfo, bill?.pricing?.total_amount, transferContent]
+  );
+  const qrValidation = useMemo(
+    () => validateQrPayload(payoutInfo, Number(bill?.pricing?.total_amount || 0), transferContent),
     [payoutInfo, bill?.pricing?.total_amount, transferContent]
   );
 
@@ -127,9 +133,14 @@ export default function RentalBillView({
               Ngân hàng:{' '}
               <span className="font-semibold text-white">{payoutInfo?.bank_name || 'Chưa cập nhật'}</span>
             </p>
+            <p className="mt-1 text-xs text-slate-300">
+              Mã ngân hàng:{' '}
+              <span className="font-semibold text-white">{payoutInfo?.bank_code || 'Chưa cập nhật'}</span>
+            </p>
             <div className="mt-1 flex items-center justify-between gap-2">
               <p className="text-xs text-slate-300">
-                Số tài khoản: <span className="font-semibold text-white">{accountNumber || 'Chưa cập nhật'}</span>
+                Số tài khoản:{' '}
+                <span className="font-semibold text-white">{formatBankAccount(accountNumber, 'full')}</span>
               </p>
               {accountNumber ? (
                 <button
@@ -144,6 +155,15 @@ export default function RentalBillView({
             <p className="mt-1 text-xs text-slate-300">
               Nội dung CK: <span className="font-semibold text-white">{transferContent}</span>
             </p>
+            <div className="mt-1 flex justify-end">
+              <button
+                type="button"
+                onClick={() => navigator.clipboard?.writeText(transferContent)}
+                className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/10"
+              >
+                <Copy className="h-3 w-3" /> Sao chép nội dung CK
+              </button>
+            </div>
           </div>
         </div>
 
@@ -185,9 +205,7 @@ export default function RentalBillView({
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-slate-300">
-                Chưa thể tạo QR vì thiếu mã ngân hàng hoặc số tài khoản hợp lệ.
-              </p>
+              <p className="text-xs text-slate-300">{qrValidation.reason}</p>
             )}
           </div>
         </div>

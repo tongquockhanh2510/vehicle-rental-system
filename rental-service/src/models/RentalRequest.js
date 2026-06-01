@@ -54,7 +54,9 @@ const rental_request_schema = new mongoose.Schema(
       payout_info: {
         method: String,
         bank_name: String,
+        bank_code: String,
         bank_account_holder: String,
+        bank_account_number: String,
         masked_account_number: String,
         card_brand: String,
         card_last4: String,
