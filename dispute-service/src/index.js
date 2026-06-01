@@ -6,7 +6,7 @@ import disputeRoutes from './routes/disputeRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.DISPUTE_SERVICE_PORT;
+const PORT = process.env.PORT || process.env.DISPUTE_SERVICE_PORT || 3008;
 
 app.use(express.json());
 

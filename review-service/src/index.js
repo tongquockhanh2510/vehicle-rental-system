@@ -7,7 +7,7 @@ import Review from './models/Review.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.REVIEW_SERVICE_PORT || 3009;
+const PORT = process.env.PORT || process.env.REVIEW_SERVICE_PORT || 3009;
 
 app.use(express.json());
 

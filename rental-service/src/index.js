@@ -6,7 +6,7 @@ import rentalRoutes from './routes/rentalRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.RENTAL_SERVICE_PORT || 3003;
+const PORT = process.env.PORT || process.env.RENTAL_SERVICE_PORT || 3003;
 
 app.use(express.json());
 

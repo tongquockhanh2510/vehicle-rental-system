@@ -7,7 +7,7 @@ import notificationService from './services/NotificationService.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.NOTIFICATION_SERVICE_PORT || 3010;
+const PORT = process.env.PORT || process.env.NOTIFICATION_SERVICE_PORT || 3010;
 
 app.use(express.json());
 

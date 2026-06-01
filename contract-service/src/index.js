@@ -6,7 +6,7 @@ import contractService from './services/ContractService.js';
 
 
 const app = express();
-const PORT = process.env.CONTRACT_SERVICE_PORT;
+const PORT = process.env.PORT || process.env.CONTRACT_SERVICE_PORT || 3004;
 
 app.use(express.json());
 

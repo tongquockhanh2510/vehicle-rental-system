@@ -7,7 +7,7 @@ import { createStatisticsRoutes } from './routes/statisticsRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.STATISTIC_SERVICE_PORT || 3011;
+const PORT = process.env.PORT || process.env.STATISTIC_SERVICE_PORT || 3011;
 
 app.use(express.json());
 

@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import vehicleRoutes from './routes/vehicleRoutes.js';
 
 const app = express();
-const PORT = process.env.VEHICLE_SERVICE_PORT;
+const PORT = process.env.PORT || process.env.VEHICLE_SERVICE_PORT || 3002;
 
 app.use(express.json());
 

@@ -29,11 +29,18 @@ export class UserService {
   }
 
   getPrivateKey() {
+    const inlinePrivateKey = process.env.JWT_PRIVATE_KEY;
+    if (inlinePrivateKey) {
+      return inlinePrivateKey.replace(/\\n/g, '\n');
+    }
+
     const privateKeyPath = path.resolve(process.env.JWT_PRIVATE_KEY_PATH || './keys/private.key');
     try {
       return fs.readFileSync(privateKeyPath, 'utf8');
     } catch (error) {
-      throw new Error(`Cannot read private key at ${privateKeyPath}`);
+      throw new Error(
+        `Cannot read JWT private key. Set JWT_PRIVATE_KEY or JWT_PRIVATE_KEY_PATH. Tried: ${privateKeyPath}`
+      );
     }
   }
 

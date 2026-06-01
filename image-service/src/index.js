@@ -6,7 +6,7 @@ import imageRoutes from './routes/imageRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.IMAGE_SERVICE_PORT;
+const PORT = process.env.PORT || process.env.IMAGE_SERVICE_PORT || 3007;
 
 app.use(express.json());
 app.use('/uploads', express.static(path.resolve('./uploads')));

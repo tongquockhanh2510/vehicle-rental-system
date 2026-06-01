@@ -7,7 +7,7 @@ import ownerApplicationRoutes from './routes/ownerApplicationRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.USER_SERVICE_PORT;
+const PORT = process.env.PORT || process.env.USER_SERVICE_PORT || 3001;
 
 // Middleware
 app.use(express.json());
